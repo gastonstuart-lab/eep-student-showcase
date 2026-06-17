@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    function isShortString(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
+    function isOptionalUrl(value) {
+      return value is string && (value == '' || value.matches('https://.*'));
+    }
+
+    function isValidProjectCreate() {
+      return request.resource.data.keys().hasOnly([
+        'title',
+        'groupName',
+        'className',
+        'members',
+        'category',
+        'description',
+        'audience',
+        'impact',
+        'googleSitesUrl',
+        'imageUrl',
+        'status',
+        'featured',
+        'studentPick',
+        'createdAt',
+        'updatedAt'
+      ])
+      && isShortString(request.resource.data.title, 120)
+      && isShortString(request.resource.data.groupName, 120)
+      && isShortString(request.resource.data.className, 80)
+      && isShortString(request.resource.data.members, 300)
+      && request.resource.data.category in [
+        'Local Businesses',
+        'School Clubs',
+        'Travel & Food Guides',
+        'Student Help',
+        'Campaigns',
+        'Creative Projects'
+      ]
+      && isShortString(request.resource.data.description, 900)
+      && isShortString(request.resource.data.audience, 500)
+      && isShortString(request.resource.data.impact, 500)
+      && request.resource.data.googleSitesUrl is string
+      && request.resource.data.googleSitesUrl.matches('https://sites\\.google\\.com/.*')
+      && isOptionalUrl(request.resource.data.imageUrl)
+      && request.resource.data.status == 'pending'
+      && request.resource.data.featured == false
+      && request.resource.data.studentPick == false
+      && request.resource.data.createdAt == request.time
+      && request.resource.data.updatedAt == request.time;
+    }
+
+    match /projects/{projectId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow create: if isValidProjectCreate() || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /contentItems/{contentItemId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /hubPages/{hubPageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "eep-student-showcase"
+  },
+  "targets": {
+    "eep-student-showcase": {
+      "hosting": {
+        "iedhub": [
+          "ied-hub"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
