@@ -311,6 +311,7 @@ function Shell() {
   const { user, logout } = useAuth()
   const { mode, t, text } = useLanguage()
   const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const chromeText = (key: TranslationKey) => {
     const entry = text(key)
 
@@ -327,25 +328,41 @@ function Shell() {
             <small>Learning Showcase</small>
           </span>
         </Link>
+        <button
+          className="mobile-menu-button"
+          type="button"
+          aria-controls="topbar-actions"
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          Menu
+        </button>
         <nav className="main-nav" aria-label={t('primaryNavigation')}>
-          <NavLink to="/">IED</NavLink>
-          <NavLink to="/eep">EEP</NavLink>
-          <NavLink to="/esl">ESL</NavLink>
-          <NavLink to="/about">{chromeText('navAbout')}</NavLink>
+          <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
+          <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
+          <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
+          <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
         </nav>
-        <div className="topbar-actions">
+        <div id="topbar-actions" className={`topbar-actions${mobileMenuOpen ? ' is-open' : ''}`}>
           <LanguageToggle />
           {user ? (
             <>
-              <Link className="small-button" to="/admin">
+              <Link className="small-button" to="/admin" onClick={() => setMobileMenuOpen(false)}>
                 {chromeText('navAdmin')}
               </Link>
-              <button className="small-button" type="button" onClick={() => void logout()}>
+              <button
+                className="small-button"
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  void logout()
+                }}
+              >
                 {chromeText('signOut')}
               </button>
             </>
           ) : (
-            <Link className="small-button" to="/login">
+            <Link className="small-button" to="/login" onClick={() => setMobileMenuOpen(false)}>
               Login
             </Link>
           )}
