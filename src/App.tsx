@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type FormEvent, type ReactElement, type ReactNode } from 'react'
+﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactElement, type ReactNode } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -318,6 +318,32 @@ function Shell() {
     return mode === 'zh-Hant' ? entry.zh : entry.en
   }
 
+  useEffect(() => {
+    const revealItems = Array.from(document.querySelectorAll<HTMLElement>('.reveal'))
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      revealItems.forEach((item) => item.classList.add('is-visible'))
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+    )
+
+    revealItems.forEach((item) => observer.observe(item))
+
+    return () => observer.disconnect()
+  }, [location.pathname])
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -371,7 +397,7 @@ function Shell() {
 
       {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
 
-      <main>
+      <main className="page-transition" key={location.pathname}>
         {location.pathname !== '/' && <BackNavigation />}
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -486,87 +512,91 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 }
 
 function HomePage() {
-  const { hubPage, loading, error } = useHubPage('ied')
+  const { t } = useLanguage()
   const { contentItems, loading: contentLoading, error: contentError } = useAllPublishedContentItems()
-  const { projects } = useProjects('approved')
-  const featuredItems = contentItems.filter((item) => item.featured).slice(0, 4)
-  const featuredProjects = (projects.length ? projects : demoPreviewProjects).filter((project) => project.featured).slice(0, 3)
-
-  if (!hubPage) {
-    return <PageMessage title="Hub not found" body="The IED homepage could not be loaded." />
-  }
+  const iedContentItems = useMemo(() => contentItems.filter((item) => item.sectionId === 'ied'), [contentItems])
+  const hasPublishedIedContent = !contentLoading && !contentError && iedContentItems.length > 0
+  const heroPhotoStyle = {
+    '--ied-hero-image': 'url("/images/ied-campus.png")',
+  } as CSSProperties
 
   return (
     <section className="hub-page ied-home">
-      <HubHero hubPage={hubPage} eyebrow="International Education Department" loading={loading} error={error} />
-      <div className="hub-route-grid">
-        <Link className="hub-route-card visual-card visual-eep featured" to="/eep">
-          <span>Enter EEP</span>
-          <h2>Student Website Showcase</h2>
-          <p>Browse approved student websites, submit new projects, and celebrate public student work.</p>
-          <strong>Enter Hub</strong>
-        </Link>
-        <Link className="hub-route-card visual-card visual-esl" to="/esl">
-          <span>Enter ESL</span>
-          <h2>Subject Learning Hubs</h2>
-          <p>Explore Science, Language Arts, Performance Arts, and Social Studies resources and updates.</p>
-          <strong>Enter Hub</strong>
-        </Link>
-      </div>
-
-      <section className="hub-band">
-        <div>
-          <p className="eyebrow">IED at a glance</p>
-          <h2>English learning connected to real audiences</h2>
-          <p>
-            Students practice communication through projects, presentations, digital publishing, performances,
-            research, reflection, and collaboration.
-          </p>
-          <p className="supporting-line">Traditional Chinese support / 繁體中文支援</p>
+      <section className="ied-home-hero" aria-labelledby="ied-home-title" style={heroPhotoStyle}>
+        <div className="ied-home-hero-copy">
+          <p className="eyebrow">{t('iedHeroEyebrow')}</p>
+          <h1 id="ied-home-title">{t('iedHeroTitle')}</h1>
+          <p className="subtitle">{t('iedHeroEmphasis')}</p>
+          <p>{t('iedHeroBody')}</p>
+          <div className="hero-actions">
+            <Link className="primary-button blue" to="/eep">
+              Enter EEP &rarr;
+            </Link>
+            <Link className="secondary-button" to="/esl">
+              Enter ESL &rarr;
+            </Link>
+            {hasPublishedIedContent && (
+              <a className="tertiary-button hero-scroll-button" href="#ied-published-content">
+                {t('viewLatestIedUpdates')} ↓
+              </a>
+            )}
+          </div>
         </div>
-        <article>
-          <span>EEP</span>
-          <p>Website publishing and project showcases</p>
-        </article>
-        <article>
-          <span>ESL</span>
-          <p>Subject learning hubs and classroom resources</p>
-        </article>
+        <div className="ied-home-hero-photo" aria-hidden="true"></div>
       </section>
 
-      {contentLoading && <PageMessage title="Loading IED updates" body="Fetching published hub updates..." />}
-      {contentError && <PageMessage title="Could not load IED updates" body={contentError} />}
-      <div className="performance-layout">
-        <div className="performance-main">
-          <ContentSection
-            title="Latest IED Updates"
-            items={contentItems.slice(0, 4)}
-          />
-          <ContentSection
-            title="Featured Student Work"
-            items={featuredItems}
-            highlight
-          />
-        </div>
-        <aside className="performance-sidebar">
-          <section className="content-module">
-            <div className="section-heading">
-              <h2>Featured EEP Projects</h2>
+      <div className="hub-route-grid programme-pathways reveal reveal-stagger">
+        <Link className="hub-route-card programme-card programme-eep" to="/eep">
+          <div className="programme-card-copy">
+            <span className="programme-kicker">{t('eepProgramme')}</span>
+            <h2>EEP Learning Hub</h2>
+            <p>{t('eepHomeDescription')}</p>
+            <div className="programme-badges" aria-label="EEP features">
+              <span>{t('eepFeatureBooksStories')}</span>
+              <span>{t('eepFeatureReadingVocab')}</span>
+              <span>{t('eepFeatureCreativeWork')}</span>
+              <span>{t('eepFeatureProjectsShowcases')}</span>
             </div>
-            <div className="content-list compact">
-              {featuredProjects.map((project) => (
-                <Link className="spotlight-item" key={project.id} to={`/projects/${project.id}`}>
-                  <img src={project.imageUrl || fallbackImage(project)} alt="" />
-                  <span>
-                    <strong>{project.title}</strong>
-                    <small>{project.groupName}</small>
-                  </span>
-                </Link>
-              ))}
+          </div>
+          <div className="programme-illustration programme-illustration-eep" aria-hidden="true">
+            <img src="/images/eep-illustration.png" alt="" />
+          </div>
+          <span className="programme-card-action">{t('exploreEepHub')} &rarr;</span>
+        </Link>
+        <Link className="hub-route-card programme-card programme-esl" to="/esl">
+          <div className="programme-card-copy">
+            <span className="programme-kicker">{t('eslProgramme')}</span>
+            <h2>ESL Learning Hub</h2>
+            <p>{t('eslHomeDescription')}</p>
+            <div className="programme-badges" aria-label="ESL subjects">
+              <span>Science</span>
+              <span>Language Arts</span>
+              <span>Performance Arts</span>
+              <span>Social Studies</span>
             </div>
-          </section>
-        </aside>
+          </div>
+          <div className="programme-illustration programme-illustration-esl" aria-hidden="true">
+            <img src="/images/esl-illustration.png" alt="" />
+          </div>
+          <span className="programme-card-action">{t('exploreEslHub')} &rarr;</span>
+        </Link>
       </div>
+
+      {hasPublishedIedContent && (
+        <section className="content-module ied-published-content reveal" id="ied-published-content" aria-labelledby="ied-published-heading">
+          <div className="section-heading ied-published-heading">
+            <div>
+              <h2 id="ied-published-heading">{t('latestFromIed')}</h2>
+              <p>{t('latestFromIedSupport')}</p>
+            </div>
+          </div>
+          <div className="content-list ied-published-grid">
+            {iedContentItems.map((item) => (
+              <ContentCard item={item} key={item.id} />
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   )
 }
@@ -609,7 +639,7 @@ function EepShowcasePage() {
 
   return (
     <>
-      <section className="hero-section">
+      <section className="hero-section showcase-hero">
         <div className="hero-copy">
           <UiText id="heroEyebrow" as="p" className="eyebrow" />
           <UiText id="heroTitle" as="h1" />
@@ -628,7 +658,7 @@ function EepShowcasePage() {
       </section>
       <div className="wave-divider" aria-hidden="true"></div>
 
-      <section className="category-bar" id="categories" aria-label={t('projectCategories')}>
+      <section className="category-bar reveal" id="categories" aria-label={t('projectCategories')}>
         {(['All Projects', ...categories] as const).map((item) => (
           <button
             className={category === item ? 'category-pill active' : 'category-pill'}
@@ -642,7 +672,7 @@ function EepShowcasePage() {
         ))}
       </section>
 
-      <section className="content-grid showcase-dashboard" id="projects">
+      <section className="content-grid showcase-dashboard reveal" id="projects">
         <div className="gallery-main">
           <div className="section-heading">
             <div>
@@ -689,7 +719,7 @@ function EepShowcasePage() {
         </aside>
       </section>
 
-      <section className="impact-strip">
+      <section className="impact-strip reveal">
         <div>
           <UiText id="impactTitle" as="h2" />
           <UiText id="impactBody" as="p" />
@@ -713,6 +743,7 @@ function EepShowcasePage() {
 
 function HubPageView({ sectionId }: { sectionId: string }) {
   const config = hubConfigById[sectionId]
+  const { user } = useAuth()
   const { hubPage, loading, error } = useHubPage(sectionId)
   const { contentItems, loading: contentLoading, error: contentError } = useContentItems(sectionId, 'published')
   const { projects } = useProjects('approved')
@@ -729,32 +760,57 @@ function HubPageView({ sectionId }: { sectionId: string }) {
   const resources = contentItems.filter((item) => item.type === 'resource' || item.type === 'link').slice(0, 4)
   const recent = contentItems.slice(0, 5)
   const eepProjects = (projects.length ? projects : demoPreviewProjects).filter((project) => project.featured).slice(0, 3)
+  const displayHubPage = getDisplayHubPage(config.sectionId, hubPage, Boolean(user))
+  const programCards = getProgramCards(config.sectionId)
+  const subjectHighlights = getSubjectHighlights(config.sectionId)
 
   return (
     <section className={config.kind === 'subject' ? 'performance-page hub-page' : 'department-page hub-page'}>
-      <HubHero hubPage={hubPage} eyebrow={config.eyebrow} loading={loading} error={error} />
+      <HubHero
+        hubPage={displayHubPage}
+        eyebrow={config.eyebrow}
+        loading={loading}
+        error={error}
+        visual={getHeroVisual(config.sectionId)}
+      />
 
-      {childConfigs.length > 0 && (
-        <div className={config.sectionId === 'esl' ? 'hub-route-grid subject-grid' : 'hub-route-grid'}>
-          {childConfigs.map((childConfig) => (
-            <Link
-              className={`hub-route-card visual-card ${getHubVisualClass(childConfig.sectionId)}${
-                childConfig.sectionId === 'esl-performance-arts' || childConfig.sectionId === 'eep' ? ' featured' : ''
-              }`}
-              key={childConfig.sectionId}
-              to={childConfig.route}
-            >
-              <span>{childConfig.kind === 'subject' ? 'Subject Hub' : 'Enter Hub'}</span>
-              <h2>{childConfig.sectionName}</h2>
-              <p>{childConfig.defaults.subtitle}</p>
-              <strong>Enter Hub</strong>
-            </Link>
+      {programCards.length > 0 && (
+        <div className="programme-feature-grid reveal reveal-stagger">
+          {programCards.map((card) => (
+            <ProgrammeFeatureCard card={card} key={card.title} />
           ))}
         </div>
       )}
 
+      {!programCards.length && childConfigs.length > 0 && (
+        <div className="hub-route-grid subject-grid reveal reveal-stagger">
+          {childConfigs.map((childConfig) => (
+            <ProgrammeFeatureCard
+              card={{
+                title: childConfig.sectionName,
+                kicker: 'Subject Hub',
+                body: childConfig.defaults.subtitle,
+                visual: getHubVisualClass(childConfig.sectionId),
+                primaryLabel: 'Enter Hub',
+                primaryUrl: childConfig.route,
+                tone: 'esl',
+              }}
+              key={childConfig.sectionId}
+            />
+          ))}
+        </div>
+      )}
+
+      {config.kind === 'subject' && (
+        <SubjectIntroStrip
+          sectionId={config.sectionId}
+          highlights={subjectHighlights}
+          accent={config.defaults.accent}
+        />
+      )}
+
       {sectionId === 'eep' && (
-        <section className="hub-band">
+        <section className="hub-band reveal">
           <div>
             <p className="eyebrow">EEP Workflow</p>
             <h2>Student websites from submission to public showcase</h2>
@@ -777,10 +833,10 @@ function HubPageView({ sectionId }: { sectionId: string }) {
       {contentError && <PageMessage title="Could not load hub content" body={contentError} />}
 
       {!contentLoading && !contentError && !contentItems.length && config.kind === 'subject' && (
-        <p className="module-note quiet">More updates coming soon.</p>
+        <EmptySubjectState sectionId={config.sectionId} sectionName={config.sectionName} showAdminLink={Boolean(user)} />
       )}
 
-      <div className="performance-layout">
+      <div className="performance-layout reveal">
         <div className="performance-main">
           <ContentSection title="Latest Updates" items={announcements} />
           <ContentSection title="Featured Work" items={featured} highlight />
@@ -806,19 +862,283 @@ function HubPageView({ sectionId }: { sectionId: string }) {
   )
 }
 
+interface ProgrammeFeature {
+  title: string
+  kicker: string
+  body: string
+  visual: string
+  primaryLabel?: string
+  primaryUrl?: string
+  secondaryLabel?: string
+  secondaryUrl?: string
+  tone: 'eep' | 'esl' | 'science' | 'language' | 'performance' | 'social'
+}
+
+function ProgrammeFeatureCard({ card }: { card: ProgrammeFeature }) {
+  const cardContent = (
+    <>
+      <div className="programme-feature-copy">
+        <span className="programme-kicker">{card.kicker}</span>
+        <h2>{card.title}</h2>
+        <p>{card.body}</p>
+      </div>
+      <div className={`programme-feature-art visual-card ${card.visual}`} aria-hidden="true"></div>
+      <div className="programme-feature-actions">
+        {card.primaryUrl && card.primaryLabel ? (
+          <Link className={`programme-card-action programme-action-${card.tone}`} to={card.primaryUrl}>
+            {card.primaryLabel}
+          </Link>
+        ) : (
+          <span className={`programme-card-action programme-action-${card.tone} is-static`}>{card.primaryLabel ?? 'Coming soon'}</span>
+        )}
+        {card.secondaryUrl && card.secondaryLabel && (
+          <Link className="programme-card-action programme-action-secondary" to={card.secondaryUrl}>
+            {card.secondaryLabel}
+          </Link>
+        )}
+      </div>
+    </>
+  )
+
+  return <article className={`programme-feature-card programme-feature-${card.tone}`}>{cardContent}</article>
+}
+
+function SubjectIntroStrip({
+  sectionId,
+  highlights,
+  accent,
+}: {
+  sectionId: string
+  highlights: string[]
+  accent: string
+}) {
+  return (
+    <section
+      className={`subject-intro-strip reveal ${getHubVisualClass(sectionId)}`}
+      style={{ '--subject-accent': accent } as CSSProperties}
+    >
+      <div>
+        <p className="eyebrow">Learning Focus</p>
+        <h2>{getSubjectFocusTitle(sectionId)}</h2>
+        <p>{getSubjectFocusBody(sectionId)}</p>
+      </div>
+      <div className="subject-focus-list">
+        {highlights.map((highlight) => (
+          <span key={highlight}>{highlight}</span>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function EmptySubjectState({
+  sectionId,
+  sectionName,
+  showAdminLink,
+}: {
+  sectionId: string
+  sectionName: string
+  showAdminLink: boolean
+}) {
+  return (
+    <section className={`empty-subject-state reveal ${getHubVisualClass(sectionId)}`}>
+      <div className="empty-subject-icon" aria-hidden="true"></div>
+      <div>
+        <p className="eyebrow">Coming Into View</p>
+        <h2>{sectionName} resources will appear here</h2>
+        <p>
+          New {sectionName.toLowerCase()} learning resources, class updates, student work, and useful links will appear here as
+          they are published.
+        </p>
+        {showAdminLink && (
+          <Link className="secondary-button" to={`/admin/hubs/${sectionId}`}>
+            Manage this hub
+          </Link>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function getDisplayHubPage(sectionId: string, hubPage: HubPageData, isAuthenticated: boolean): HubPageData {
+  if (sectionId === 'eep') {
+    return {
+      ...hubPage,
+      title: 'EEP Learning Hub',
+      subtitle: 'Books, stories, language activities, creative work, and student publishing.',
+      intro: 'Explore stories, books, reading, vocabulary, writing, discussion, creative responses, class challenges, and student projects from across EEP.',
+      description:
+        'The Student Website Showcase remains part of EEP, now placed within the wider Projects & Showcases pathway.',
+      primaryButtonText: 'Browse Showcase',
+      primaryButtonUrl: '/eep/showcase',
+      secondaryButtonText: 'Submit Project',
+      secondaryButtonUrl: '/eep/showcase/submit',
+    }
+  }
+
+  if (sectionId === 'esl') {
+    return {
+      ...hubPage,
+      title: 'ESL Learning Hub',
+      subtitle: 'Subject learning, resources, activities, and updates across the ESL programme.',
+      intro: 'Explore Science, Language Arts, Performance Arts, and Social Studies learning spaces.',
+      description:
+        'Each subject hub gathers class updates, resources, student work, events, media links, and reusable learning materials.',
+      primaryButtonText: 'Science',
+      primaryButtonUrl: '/esl/science',
+      secondaryButtonText: 'Performance Arts',
+      secondaryButtonUrl: '/esl/performance-arts',
+    }
+  }
+
+  if (sectionId.startsWith('esl-') && !isAuthenticated) {
+    return {
+      ...hubPage,
+      secondaryButtonText: '',
+      secondaryButtonUrl: '',
+    }
+  }
+
+  return hubPage
+}
+
+function getProgramCards(sectionId: string): ProgrammeFeature[] {
+  if (sectionId === 'eep') {
+    return [
+      {
+        title: 'Books & Stories',
+        kicker: 'EEP Reading',
+        body: 'Class reading, story worlds, book responses, recommendations, and shared reading moments.',
+        visual: 'visual-eep',
+        primaryLabel: 'Explore Books & Stories',
+        tone: 'eep',
+      },
+      {
+        title: 'Reading & Vocabulary',
+        kicker: 'Language Growth',
+        body: 'Useful word work, reading routines, vocabulary practice, and language-building activities.',
+        visual: 'visual-language-arts',
+        primaryLabel: 'Explore Reading & Vocabulary',
+        tone: 'eep',
+      },
+      {
+        title: 'Creative Work',
+        kicker: 'Student Voice',
+        body: 'Creative writing, multimedia responses, posters, presentations, and student-made class work.',
+        visual: 'visual-performance-arts',
+        primaryLabel: 'Explore Creative Work',
+        tone: 'eep',
+      },
+      {
+        title: 'Projects & Showcases',
+        kicker: 'Public Work',
+        body: 'Student projects and the existing Student Website Showcase browse and submission flow.',
+        visual: 'visual-eep-projects',
+        primaryLabel: 'Browse Showcase',
+        primaryUrl: '/eep/showcase',
+        secondaryLabel: 'Submit Project',
+        secondaryUrl: '/eep/showcase/submit',
+        tone: 'eep',
+      },
+    ]
+  }
+
+  if (sectionId === 'esl') {
+    return [
+      {
+        title: 'Science',
+        kicker: 'Subject Hub',
+        body: 'Inquiry, experiments, vocabulary, explanations, and evidence-based student thinking.',
+        visual: 'visual-science',
+        primaryLabel: 'Enter Science',
+        primaryUrl: '/esl/science',
+        tone: 'science',
+      },
+      {
+        title: 'Language Arts',
+        kicker: 'Subject Hub',
+        body: 'Reading, writing, speaking, discussion, craft, reflection, and published responses.',
+        visual: 'visual-language-arts',
+        primaryLabel: 'Enter Language Arts',
+        primaryUrl: '/esl/language-arts',
+        tone: 'language',
+      },
+      {
+        title: 'Performance Arts',
+        kicker: 'Subject Hub',
+        body: 'Voice, movement, story, rehearsal, performance reflection, and public sharing.',
+        visual: 'visual-performance-arts',
+        primaryLabel: 'Enter Performance Arts',
+        primaryUrl: '/esl/performance-arts',
+        tone: 'performance',
+      },
+      {
+        title: 'Social Studies',
+        kicker: 'Subject Hub',
+        body: 'Culture, geography, history, discussion, perspective-taking, and civic learning.',
+        visual: 'visual-social-studies',
+        primaryLabel: 'Enter Social Studies',
+        primaryUrl: '/esl/social-studies',
+        tone: 'social',
+      },
+    ]
+  }
+
+  return []
+}
+
+function getSubjectHighlights(sectionId: string) {
+  const highlights: Record<string, string[]> = {
+    'esl-science': ['Inquiry', 'Experiments', 'Evidence', 'Academic Vocabulary'],
+    'esl-language-arts': ['Reading', 'Writing Craft', 'Discussion', 'Published Responses'],
+    'esl-performance-arts': ['Voice', 'Movement', 'Rehearsal', 'Reflection'],
+    'esl-social-studies': ['Culture', 'Geography', 'History', 'Perspective'],
+  }
+
+  return highlights[sectionId] ?? []
+}
+
+function getSubjectFocusTitle(sectionId: string) {
+  const titles: Record<string, string> = {
+    'esl-science': 'Investigate, explain, and connect evidence.',
+    'esl-language-arts': 'Read closely, write clearly, and share ideas.',
+    'esl-performance-arts': 'Build expressive English through performance.',
+    'esl-social-studies': 'Understand communities, places, and perspectives.',
+  }
+
+  return titles[sectionId] ?? 'Explore learning through English.'
+}
+
+function getSubjectFocusBody(sectionId: string) {
+  const bodies: Record<string, string> = {
+    'esl-science':
+      'Students use English to ask questions, describe processes, explain evidence, and connect scientific thinking to the world around them.',
+    'esl-language-arts':
+      'Students develop voice and confidence through purposeful reading, discussion, writing craft, feedback, and publication.',
+    'esl-performance-arts':
+      'Students practice voice, movement, story, audience awareness, and reflection through carefully prepared performance work.',
+    'esl-social-studies':
+      'Students use English to compare cultures, interpret places and events, and discuss civic ideas with care and clarity.',
+  }
+
+  return bodies[sectionId] ?? 'Learning updates, resources, and student work will gather here as the hub grows.'
+}
+
 function HubHero({
   hubPage,
   eyebrow,
   loading,
   error,
+  visual,
 }: {
   hubPage: HubPageData
   eyebrow: string
   loading?: boolean
   error?: string
+  visual?: string
 }) {
   return (
-    <section className="performance-hero hub-hero">
+    <section className={`performance-hero hub-hero${visual ? ` hub-hero-${visual}` : ''}`}>
       <div className="performance-hero-copy">
         <p className="eyebrow">{eyebrow}</p>
         <h1>{hubPage.title}</h1>
@@ -840,7 +1160,16 @@ function HubHero({
         {loading && <p className="muted">Loading saved hub settings...</p>}
         {error && <p className="form-message">{error}</p>}
       </div>
-      {hubPage.heroImageUrl ? (
+      {visual === 'eep' ? (
+        <div className="hub-hero-image hub-hero-image-background hub-hero-image-eep" aria-hidden="true" />
+      ) : visual === 'esl' ? (
+        <div className="hub-hero-image hub-hero-image-background hub-hero-image-esl" aria-hidden="true" />
+      ) : visual && visual.startsWith('esl-') ? (
+        <div
+          className={`hub-hero-image hub-hero-image-background hub-hero-subject visual-card ${getHubVisualClass(visual)}`}
+          aria-hidden="true"
+        />
+      ) : hubPage.heroImageUrl ? (
         <img className="hub-hero-image" src={hubPage.heroImageUrl} alt="" />
       ) : (
         <div className="performance-stage" aria-hidden="true">
@@ -851,6 +1180,14 @@ function HubHero({
       )}
     </section>
   )
+}
+
+function getHeroVisual(sectionId: string) {
+  if (sectionId === 'eep' || sectionId === 'esl' || sectionId.startsWith('esl-')) {
+    return sectionId
+  }
+
+  return undefined
 }
 
 function ContentSection({
@@ -897,25 +1234,47 @@ function getHubVisualClass(sectionId: string) {
 }
 
 function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
+  const { t } = useLanguage()
   const targetUrl = item.linkUrl || item.mediaUrl
+  const cardDate = formatContentDate(item)
 
   return (
-    <article className={compact ? 'content-card compact' : 'content-card'}>
+    <article className={`${compact ? 'content-card compact' : 'content-card'}${targetUrl ? ' has-link' : ''}`}>
       {item.imageUrl && !compact && <img src={item.imageUrl} alt="" />}
       <div>
         <span className="badge">{contentTypeLabels[item.type]}</span>
         <h3>{item.title}</h3>
-        {item.eventDate && <p className="meta">{formatEventDate(item.eventDate)}</p>}
+        {cardDate && <p className="meta">{cardDate}</p>}
         <p>{item.summary}</p>
         {!compact && item.body && <p className="muted">{item.body}</p>}
         {targetUrl && (
           <a className="small-link" href={targetUrl} target="_blank" rel="noreferrer">
-            Open link
+            {t('openContentLink')}
           </a>
         )}
       </div>
     </article>
   )
+}
+
+function formatContentDate(item: ContentItem) {
+  if (item.eventDate) {
+    return formatEventDate(item.eventDate)
+  }
+
+  const stamp = item.updatedAt ?? item.createdAt
+
+  if (!stamp || typeof stamp.toDate !== 'function') {
+    return ''
+  }
+
+  const date = stamp.toDate()
+
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
 function formatEventDate(value: string) {
@@ -990,7 +1349,7 @@ function ProjectCard({ project }: { project: Project }) {
   const { t } = useLanguage()
 
   return (
-    <article className="project-card">
+    <article className="project-card reveal">
       <img src={project.imageUrl || fallbackImage(project)} alt="" />
       <div className="project-card-body">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
@@ -1016,7 +1375,7 @@ function Spotlight({ titleKey, projects }: { titleKey: TranslationKey; projects:
   const { t } = useLanguage()
 
   return (
-    <section className="spotlight">
+    <section className="spotlight reveal">
       <h2>{t(titleKey)}</h2>
       {projects.length ? (
         projects.map((project) => (
@@ -1052,7 +1411,7 @@ function ProjectDetailPage() {
   }
 
   return (
-    <section className="detail-page">
+    <section className="detail-page page-panel">
       <img className="detail-image" src={project.imageUrl || fallbackImage(project)} alt="" />
       <div className="detail-content">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
@@ -1122,7 +1481,7 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
   }
 
   return (
-    <section className="form-page">
+    <section className="form-page page-panel">
       <PageHeading
         eyebrow={t('submitPageEyebrow')}
         title={submissionDestination.title}
@@ -1162,7 +1521,7 @@ function StudentGuideEmbed() {
   const { t } = useLanguage()
 
   return (
-    <section className="student-guide">
+      <section className="student-guide reveal">
       <div className="student-guide-copy">
         <UiText id="studentGuideEyebrow" as="p" className="eyebrow" />
         <UiText id="studentGuideTitle" as="h2" />
@@ -1223,15 +1582,12 @@ function AboutPage() {
           </div>
         </div>
         <figure className="about-photo">
-          <img
-            src="https://commons.wikimedia.org/wiki/Special:FilePath/Photo%20of%20THU%20EHS.jpg"
-            alt={t('campusAlt')}
-          />
+          <img src="/images/ied-campus.png" alt={t('campusAlt')} />
           <figcaption>{t('campusCaption')}</figcaption>
         </figure>
       </section>
 
-      <section className="ied-stats" aria-label={t('schoolAtGlance')}>
+      <section className="ied-stats reveal" aria-label={t('schoolAtGlance')}>
         <article>
           <span>1958</span>
           <p>{t('schoolRoots')}</p>
@@ -1246,7 +1602,7 @@ function AboutPage() {
         </article>
       </section>
 
-      <div className="about-grid ied-grid">
+      <div className="about-grid ied-grid reveal reveal-stagger">
         <article>
           <UiText id="globalCommunicationTitle" as="h2" />
           <UiText id="globalCommunicationBody" as="p" />
@@ -1265,7 +1621,7 @@ function AboutPage() {
         </article>
       </div>
 
-      <section className="about-showcase-link">
+      <section className="about-showcase-link reveal">
         <div>
           <UiText id="studentWebsites" as="p" className="eyebrow" />
           <UiText id="publicWorkTitle" as="h2" />

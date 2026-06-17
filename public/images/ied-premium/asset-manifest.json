@@ -1,0 +1,109 @@
+{
+  "version": "2.0-final",
+  "installRoot": "project root",
+  "basePath": "/images/ied-premium",
+  "desktopHeroSize": [
+    1600,
+    900
+  ],
+  "mobileHeroSize": [
+    900,
+    1125
+  ],
+  "cardSize": [
+    800,
+    600
+  ],
+  "assets": [
+    {
+      "key": "ied-home",
+      "title": "IED Homepage",
+      "route": "/",
+      "desktopHero": "/images/ied-premium/heroes/ied-home-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/ied-home-mobile.webp",
+      "card": "/images/ied-premium/cards/ied-home-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "ied-about",
+      "title": "About IED",
+      "route": "/about",
+      "desktopHero": "/images/ied-premium/heroes/ied-about-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/ied-about-mobile.webp",
+      "card": "/images/ied-premium/cards/ied-about-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "eep",
+      "title": "EEP Learning Hub",
+      "route": "/eep",
+      "desktopHero": "/images/ied-premium/heroes/eep-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/eep-mobile.webp",
+      "card": "/images/ied-premium/cards/eep-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "esl",
+      "title": "ESL Learning Hub",
+      "route": "/esl",
+      "desktopHero": "/images/ied-premium/heroes/esl-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/esl-mobile.webp",
+      "card": "/images/ied-premium/cards/esl-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "science",
+      "title": "Science Hub",
+      "route": "/esl/science",
+      "desktopHero": "/images/ied-premium/heroes/science-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/science-mobile.webp",
+      "card": "/images/ied-premium/cards/science-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "language-arts",
+      "title": "Language Arts Hub",
+      "route": "/esl/language-arts",
+      "desktopHero": "/images/ied-premium/heroes/language-arts-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/language-arts-mobile.webp",
+      "card": "/images/ied-premium/cards/language-arts-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "performance-arts",
+      "title": "Performance Arts Hub",
+      "route": "/esl/performance-arts",
+      "desktopHero": "/images/ied-premium/heroes/performance-arts-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/performance-arts-mobile.webp",
+      "card": "/images/ied-premium/cards/performance-arts-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "social-studies",
+      "title": "Social Studies Hub",
+      "route": "/esl/social-studies",
+      "desktopHero": "/images/ied-premium/heroes/social-studies-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/social-studies-mobile.webp",
+      "card": "/images/ied-premium/cards/social-studies-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    },
+    {
+      "key": "showcase",
+      "title": "Student Website Showcase",
+      "route": "/eep/showcase",
+      "desktopHero": "/images/ied-premium/heroes/showcase-hero.webp",
+      "mobileHero": "/images/ied-premium/mobile/showcase-mobile.webp",
+      "card": "/images/ied-premium/cards/showcase-card.webp",
+      "recommendedDesktopLayout": "text left, image right/full bleed",
+      "recommendedMobileLayout": "text first, image below"
+    }
+  ]
+}

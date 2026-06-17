@@ -1,0 +1,272 @@
+[
+  {
+    "file": "public/images/ied-premium/heroes/eep-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/esl-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/ied-about-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/ied-home-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/language-arts-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/performance-arts-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/science-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/showcase-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/heroes/social-studies-hero.webp",
+    "format": "WEBP",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/eep-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/esl-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/ied-about-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/ied-home-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/language-arts-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/performance-arts-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/science-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/showcase-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/mobile/social-studies-mobile.webp",
+    "format": "WEBP",
+    "size": [
+      900,
+      1125
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/eep-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/esl-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/ied-about-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/ied-home-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/language-arts-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/performance-arts-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/science-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/showcase-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-premium/cards/social-studies-card.webp",
+    "format": "WEBP",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/ied-campus.png",
+    "format": "PNG",
+    "size": [
+      1600,
+      900
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/eep-illustration.png",
+    "format": "PNG",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  },
+  {
+    "file": "public/images/esl-illustration.png",
+    "format": "PNG",
+    "size": [
+      800,
+      600
+    ],
+    "valid": true
+  }
+]

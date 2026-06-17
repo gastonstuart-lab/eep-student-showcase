@@ -30,6 +30,41 @@ export const translations = {
   back: { en: 'Back', zh: '返回' },
   languageToggle: { en: 'Language', zh: '語言' },
 
+  iedHeroEyebrow: { en: 'INTERNATIONAL EDUCATION DEPARTMENT', zh: '國際教育處' },
+  iedHeroTitle: { en: 'IED Learning Showcase Hub', zh: 'IED 學習成果展示中心' },
+  iedHeroEmphasis: {
+    en: 'Student learning, creative work, and department updates in one public home.',
+    zh: '學生學習、創意作品與部門最新動態，集中於同一個公開平台。',
+  },
+  iedHeroBody: {
+    en: 'Explore learning across EEP and ESL, discover student work, and stay connected with the International Education Department.',
+    zh: '探索 EEP 與 ESL 的學習內容，了解學生作品，並持續掌握國際教育處的最新訊息。',
+  },
+  exploreIedUpdates: { en: 'Explore IED Updates', zh: '查看 IED 最新動態' },
+  viewLatestIedUpdates: { en: 'View latest IED updates', zh: '查看 IED 最新消息' },
+  latestFromIed: { en: 'Latest from IED', zh: 'IED 最新消息' },
+  latestFromIedSupport: {
+    en: 'Department updates, resources, events, and highlights.',
+    zh: '部門公告、學習資源、活動資訊與精選亮點。',
+  },
+  eepProgramme: { en: 'EEP Programme', zh: 'EEP 課程' },
+  eslProgramme: { en: 'ESL Programme', zh: 'ESL 課程' },
+  eepHomeDescription: {
+    en: 'Explore stories, books, language activities, creative work, class challenges, and student projects from across EEP.',
+    zh: '探索 EEP 的故事與書籍、語言活動、創意作品、班級挑戰與學生專題。',
+  },
+  eslHomeDescription: {
+    en: 'Explore subject learning, resources, activities, and updates across the ESL programme.',
+    zh: '探索 ESL 課程中的學科學習、教學資源、學習活動與最新更新。',
+  },
+  eepFeatureBooksStories: { en: 'Books & Stories', zh: '書籍與故事' },
+  eepFeatureReadingVocab: { en: 'Reading & Vocabulary', zh: '閱讀與字彙' },
+  eepFeatureCreativeWork: { en: 'Creative Work', zh: '創意作品' },
+  eepFeatureProjectsShowcases: { en: 'Projects & Showcases', zh: '專題與成果展示' },
+  exploreEepHub: { en: 'Explore the EEP Hub', zh: '探索 EEP 學習中心' },
+  exploreEslHub: { en: 'Explore the ESL Hub', zh: '探索 ESL 學習中心' },
+  openContentLink: { en: 'Open link', zh: '開啟連結' },
+
   firebaseNotice: {
     en: 'Firebase is not connected. Add local `.env` values to enable Firestore and teacher login.',
     zh: 'Firebase 尚未連線。請加入本機 `.env` 設定，以啟用 Firestore 與教師登入。',
