@@ -11,6 +11,13 @@ node_modules
 dist
 dist-ssr
 .firebase
+screenshots/
+*-screenshots/
+*-screenshots.zip
+*review-board*.png
+*desktop-*.png
+*mobile-*.png
+*.zip
 *.local
 .env
 .env.*

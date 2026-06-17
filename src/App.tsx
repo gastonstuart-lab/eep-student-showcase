@@ -11,6 +11,11 @@ import {
   useParams,
 } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth'
+import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
+import { PremiumImageCard } from './components/public/PremiumImageCard'
+import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
+import { ScrollReveal } from './components/public/ScrollReveal'
+import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import {
   createContentItem,
   createProject,
@@ -131,6 +136,42 @@ const submissionDestinations = {
 } as const
 
 type SubmissionDestinationId = keyof typeof submissionDestinations
+
+const premiumAssets = {
+  heroes: {
+    home: '/images/ied-premium/heroes/ied-home-hero.webp',
+    about: '/images/ied-premium/heroes/ied-about-hero.webp',
+    eep: '/images/ied-premium/heroes/eep-hero.webp',
+    esl: '/images/ied-premium/heroes/esl-hero.webp',
+    science: '/images/ied-premium/heroes/science-hero.webp',
+    languageArts: '/images/ied-premium/heroes/language-arts-hero.webp',
+    performanceArts: '/images/ied-premium/heroes/performance-arts-hero.webp',
+    socialStudies: '/images/ied-premium/heroes/social-studies-hero.webp',
+    showcase: '/images/ied-premium/heroes/showcase-hero.webp',
+  },
+  mobile: {
+    home: '/images/ied-premium/mobile/ied-home-mobile.webp',
+    about: '/images/ied-premium/mobile/ied-about-mobile.webp',
+    eep: '/images/ied-premium/mobile/eep-mobile.webp',
+    esl: '/images/ied-premium/mobile/esl-mobile.webp',
+    science: '/images/ied-premium/mobile/science-mobile.webp',
+    languageArts: '/images/ied-premium/mobile/language-arts-mobile.webp',
+    performanceArts: '/images/ied-premium/mobile/performance-arts-mobile.webp',
+    socialStudies: '/images/ied-premium/mobile/social-studies-mobile.webp',
+    showcase: '/images/ied-premium/mobile/showcase-mobile.webp',
+  },
+  cards: {
+    home: '/images/ied-premium/cards/ied-home-card.webp',
+    about: '/images/ied-premium/cards/ied-about-card.webp',
+    eep: '/images/ied-premium/cards/eep-card.webp',
+    esl: '/images/ied-premium/cards/esl-card.webp',
+    science: '/images/ied-premium/cards/science-card.webp',
+    languageArts: '/images/ied-premium/cards/language-arts-card.webp',
+    performanceArts: '/images/ied-premium/cards/performance-arts-card.webp',
+    socialStudies: '/images/ied-premium/cards/social-studies-card.webp',
+    showcase: '/images/ied-premium/cards/showcase-card.webp',
+  },
+} as const
 
 const demoPreviewProjects: Project[] = [
   {
@@ -516,71 +557,56 @@ function HomePage() {
   const { contentItems, loading: contentLoading, error: contentError } = useAllPublishedContentItems()
   const iedContentItems = useMemo(() => contentItems.filter((item) => item.sectionId === 'ied'), [contentItems])
   const hasPublishedIedContent = !contentLoading && !contentError && iedContentItems.length > 0
-  const heroPhotoStyle = {
-    '--ied-hero-image': 'url("/images/ied-campus.png")',
-  } as CSSProperties
 
   return (
     <section className="hub-page ied-home">
-      <section className="ied-home-hero" aria-labelledby="ied-home-title" style={heroPhotoStyle}>
-        <div className="ied-home-hero-copy">
-          <p className="eyebrow">{t('iedHeroEyebrow')}</p>
-          <h1 id="ied-home-title">{t('iedHeroTitle')}</h1>
-          <p className="subtitle">{t('iedHeroEmphasis')}</p>
-          <p>{t('iedHeroBody')}</p>
-          <div className="hero-actions">
-            <Link className="primary-button blue" to="/eep">
-              Enter EEP &rarr;
-            </Link>
-            <Link className="secondary-button" to="/esl">
-              Enter ESL &rarr;
-            </Link>
-            {hasPublishedIedContent && (
-              <a className="tertiary-button hero-scroll-button" href="#ied-published-content">
-                {t('viewLatestIedUpdates')} ↓
-              </a>
-            )}
-          </div>
-        </div>
-        <div className="ied-home-hero-photo" aria-hidden="true"></div>
-      </section>
+      <PremiumHero
+        eyebrow={t('iedHeroEyebrow')}
+        title={t('iedHeroTitle')}
+        lead={t('iedHeroEmphasis')}
+        body={t('iedHeroBody')}
+        desktopImage={premiumAssets.heroes.home}
+        mobileImage={premiumAssets.mobile.home}
+        imageAlt="THUHS campus building and international learning visual"
+        theme="ied"
+        className="home-premium-hero"
+        imagePosition="72% center"
+        actions={[
+          { label: 'Enter EEP →', to: '/eep', variant: 'blue' },
+          { label: 'Enter ESL →', to: '/esl', variant: 'teal' },
+          ...(hasPublishedIedContent ? [{ label: `${t('viewLatestIedUpdates')} ↓`, to: '#ied-published-content', variant: 'outline' } as PremiumHeroAction] : []),
+        ]}
+      />
 
-      <div className="hub-route-grid programme-pathways reveal reveal-stagger">
-        <Link className="hub-route-card programme-card programme-eep" to="/eep">
-          <div className="programme-card-copy">
-            <span className="programme-kicker">{t('eepProgramme')}</span>
-            <h2>EEP Learning Hub</h2>
-            <p>{t('eepHomeDescription')}</p>
-            <div className="programme-badges" aria-label="EEP features">
-              <span>{t('eepFeatureBooksStories')}</span>
-              <span>{t('eepFeatureReadingVocab')}</span>
-              <span>{t('eepFeatureCreativeWork')}</span>
-              <span>{t('eepFeatureProjectsShowcases')}</span>
-            </div>
-          </div>
-          <div className="programme-illustration programme-illustration-eep" aria-hidden="true">
-            <img src="/images/eep-illustration.png" alt="" />
-          </div>
-          <span className="programme-card-action">{t('exploreEepHub')} &rarr;</span>
-        </Link>
-        <Link className="hub-route-card programme-card programme-esl" to="/esl">
-          <div className="programme-card-copy">
-            <span className="programme-kicker">{t('eslProgramme')}</span>
-            <h2>ESL Learning Hub</h2>
-            <p>{t('eslHomeDescription')}</p>
-            <div className="programme-badges" aria-label="ESL subjects">
-              <span>Science</span>
-              <span>Language Arts</span>
-              <span>Performance Arts</span>
-              <span>Social Studies</span>
-            </div>
-          </div>
-          <div className="programme-illustration programme-illustration-esl" aria-hidden="true">
-            <img src="/images/esl-illustration.png" alt="" />
-          </div>
-          <span className="programme-card-action">{t('exploreEslHub')} &rarr;</span>
-        </Link>
-      </div>
+      <ScrollReveal className="premium-pathway-grid" stagger>
+        <ProgrammePathwayCard
+          to="/eep"
+          title="EEP Learning Hub"
+          description={t('eepHomeDescription')}
+          features={[
+            t('eepFeatureBooksStories'),
+            t('eepFeatureReadingVocab'),
+            t('eepFeatureCreativeWork'),
+            t('eepFeatureProjectsShowcases'),
+          ]}
+          cta={`${t('exploreEepHub')} →`}
+          desktopImage={premiumAssets.cards.eep}
+          imageAlt="Books, workbooks, and story-based English enrichment materials"
+          theme="eep"
+          kicker={t('eepProgramme')}
+        />
+        <ProgrammePathwayCard
+          to="/esl"
+          title="ESL Learning Hub"
+          description={t('eslHomeDescription')}
+          features={['Science', 'Language Arts', 'Performance Arts', 'Social Studies']}
+          cta={`${t('exploreEslHub')} →`}
+          desktopImage={premiumAssets.cards.esl}
+          imageAlt="Globe and subject learning materials for ESL"
+          theme="esl"
+          kicker={t('eslProgramme')}
+        />
+      </ScrollReveal>
 
       {hasPublishedIedContent && (
         <section className="content-module ied-published-content reveal" id="ied-published-content" aria-labelledby="ied-published-heading">
@@ -631,31 +657,24 @@ function EepShowcasePage() {
   const featured = displayProjects.filter((project) => project.featured).slice(0, 4)
   const picks = displayProjects.filter((project) => project.studentPick).slice(0, 4)
   const latest = displayProjects.slice(0, 4)
-  const promoted = useMemo(() => {
-    const highlighted = displayProjects.filter((project) => project.featured || project.studentPick)
-
-    return (highlighted.length ? highlighted : displayProjects).slice(0, 6)
-  }, [displayProjects])
-
   return (
     <>
-      <section className="hero-section showcase-hero">
-        <div className="hero-copy">
-          <UiText id="heroEyebrow" as="p" className="eyebrow" />
-          <UiText id="heroTitle" as="h1" />
-          <UiText id="heroSubtitle" as="p" className="subtitle" />
-          <UiText id="heroSupport" as="p" className="supporting-line" />
-          <div className="hero-actions">
-            <Link className="primary-button blue" to="/eep/showcase/submit">
-              Submit to the EEP Showcase
-            </Link>
-            <Link className="secondary-button" to="/eep/showcase#projects">
-              {t('browseProjects')}
-            </Link>
-          </div>
-        </div>
-        <ProjectCarousel projects={promoted} />
-      </section>
+      <PremiumHero
+        eyebrow={t('heroEyebrow')}
+        title={t('heroTitle')}
+        lead={t('heroSubtitle')}
+        body={t('heroSupport')}
+        desktopImage={premiumAssets.heroes.showcase}
+        mobileImage={premiumAssets.mobile.showcase}
+        imageAlt="Digital student website showcase visual"
+        theme="showcase"
+        className="showcase-premium-hero"
+        imagePosition="76% center"
+        actions={[
+          { label: 'Submit to the EEP Showcase →', to: '/eep/showcase/submit', variant: 'blue' },
+          { label: `${t('browseProjects')} →`, to: '/eep/showcase#projects', variant: 'outline' },
+        ]}
+      />
       <div className="wave-divider" aria-hidden="true"></div>
 
       <section className="category-bar reveal" id="categories" aria-label={t('projectCategories')}>
@@ -790,7 +809,8 @@ function HubPageView({ sectionId }: { sectionId: string }) {
                 title: childConfig.sectionName,
                 kicker: 'Subject Hub',
                 body: childConfig.defaults.subtitle,
-                visual: getHubVisualClass(childConfig.sectionId),
+                image: getCardImage(childConfig.sectionId),
+                imageAlt: `${childConfig.sectionName} learning visual`,
                 primaryLabel: 'Enter Hub',
                 primaryUrl: childConfig.route,
                 tone: 'esl',
@@ -866,7 +886,8 @@ interface ProgrammeFeature {
   title: string
   kicker: string
   body: string
-  visual: string
+  image: string
+  imageAlt: string
   primaryLabel?: string
   primaryUrl?: string
   secondaryLabel?: string
@@ -875,32 +896,36 @@ interface ProgrammeFeature {
 }
 
 function ProgrammeFeatureCard({ card }: { card: ProgrammeFeature }) {
-  const cardContent = (
-    <>
-      <div className="programme-feature-copy">
-        <span className="programme-kicker">{card.kicker}</span>
-        <h2>{card.title}</h2>
-        <p>{card.body}</p>
-      </div>
-      <div className={`programme-feature-art visual-card ${card.visual}`} aria-hidden="true"></div>
-      <div className="programme-feature-actions">
-        {card.primaryUrl && card.primaryLabel ? (
-          <Link className={`programme-card-action programme-action-${card.tone}`} to={card.primaryUrl}>
-            {card.primaryLabel}
-          </Link>
-        ) : (
-          <span className={`programme-card-action programme-action-${card.tone} is-static`}>{card.primaryLabel ?? 'Coming soon'}</span>
-        )}
-        {card.secondaryUrl && card.secondaryLabel && (
-          <Link className="programme-card-action programme-action-secondary" to={card.secondaryUrl}>
-            {card.secondaryLabel}
-          </Link>
-        )}
-      </div>
-    </>
-  )
+  if (card.tone === 'science' || card.tone === 'language' || card.tone === 'performance' || card.tone === 'social') {
+    return (
+      <SubjectPathwayCard
+        to={card.primaryUrl ?? '#'}
+        title={card.title}
+        description={card.body}
+        image={card.image}
+        imageAlt={card.imageAlt}
+        cta={card.primaryLabel ?? 'Enter Hub'}
+        theme={card.tone}
+      />
+    )
+  }
 
-  return <article className={`programme-feature-card programme-feature-${card.tone}`}>{cardContent}</article>
+  const theme = card.tone === 'esl' ? 'teal' : 'blue'
+
+  return (
+    <PremiumImageCard
+      title={card.title}
+      kicker={card.kicker}
+      body={card.body}
+      image={card.image}
+      imageAlt={card.imageAlt}
+      actionLabel={card.primaryLabel ?? 'Coming soon'}
+      actionTo={card.primaryUrl}
+      secondaryLabel={card.secondaryLabel}
+      secondaryTo={card.secondaryUrl}
+      theme={theme}
+    />
+  )
 }
 
 function SubjectIntroStrip({
@@ -914,7 +939,7 @@ function SubjectIntroStrip({
 }) {
   return (
     <section
-      className={`subject-intro-strip reveal ${getHubVisualClass(sectionId)}`}
+      className={`subject-intro-strip reveal subject-strip-${sectionId}`}
       style={{ '--subject-accent': accent } as CSSProperties}
     >
       <div>
@@ -940,16 +965,17 @@ function EmptySubjectState({
   sectionName: string
   showAdminLink: boolean
 }) {
+  const copy = getSubjectEmptyCopy(sectionId, sectionName)
+
   return (
-    <section className={`empty-subject-state reveal ${getHubVisualClass(sectionId)}`}>
-      <div className="empty-subject-icon" aria-hidden="true"></div>
+    <section className={`empty-subject-state reveal subject-strip-${sectionId}`}>
+      <div className="empty-subject-icon" aria-hidden="true">
+        <span>{copy.badge}</span>
+      </div>
       <div>
-        <p className="eyebrow">Coming Into View</p>
-        <h2>{sectionName} resources will appear here</h2>
-        <p>
-          New {sectionName.toLowerCase()} learning resources, class updates, student work, and useful links will appear here as
-          they are published.
-        </p>
+        <p className="eyebrow">Published Updates</p>
+        <h2>{copy.title}</h2>
+        <p>{copy.body}</p>
         {showAdminLink && (
           <Link className="secondary-button" to={`/admin/hubs/${sectionId}`}>
             Manage this hub
@@ -1009,7 +1035,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Books & Stories',
         kicker: 'EEP Reading',
         body: 'Class reading, story worlds, book responses, recommendations, and shared reading moments.',
-        visual: 'visual-eep',
+        image: premiumAssets.cards.eep,
+        imageAlt: 'Books and story materials for EEP reading',
         primaryLabel: 'Explore Books & Stories',
         tone: 'eep',
       },
@@ -1017,7 +1044,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Reading & Vocabulary',
         kicker: 'Language Growth',
         body: 'Useful word work, reading routines, vocabulary practice, and language-building activities.',
-        visual: 'visual-language-arts',
+        image: premiumAssets.cards.languageArts,
+        imageAlt: 'Reading and vocabulary learning materials',
         primaryLabel: 'Explore Reading & Vocabulary',
         tone: 'eep',
       },
@@ -1025,7 +1053,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Creative Work',
         kicker: 'Student Voice',
         body: 'Creative writing, multimedia responses, posters, presentations, and student-made class work.',
-        visual: 'visual-performance-arts',
+        image: premiumAssets.cards.performanceArts,
+        imageAlt: 'Creative performance and expression materials',
         primaryLabel: 'Explore Creative Work',
         tone: 'eep',
       },
@@ -1033,7 +1062,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Projects & Showcases',
         kicker: 'Public Work',
         body: 'Student projects and the existing Student Website Showcase browse and submission flow.',
-        visual: 'visual-eep-projects',
+        image: premiumAssets.cards.showcase,
+        imageAlt: 'Digital student showcase publishing visual',
         primaryLabel: 'Browse Showcase',
         primaryUrl: '/eep/showcase',
         secondaryLabel: 'Submit Project',
@@ -1049,7 +1079,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Science',
         kicker: 'Subject Hub',
         body: 'Inquiry, experiments, vocabulary, explanations, and evidence-based student thinking.',
-        visual: 'visual-science',
+        image: premiumAssets.cards.science,
+        imageAlt: 'Science experiments and inquiry visual',
         primaryLabel: 'Enter Science',
         primaryUrl: '/esl/science',
         tone: 'science',
@@ -1058,7 +1089,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Language Arts',
         kicker: 'Subject Hub',
         body: 'Reading, writing, speaking, discussion, craft, reflection, and published responses.',
-        visual: 'visual-language-arts',
+        image: premiumAssets.cards.languageArts,
+        imageAlt: 'Language arts reading and writing visual',
         primaryLabel: 'Enter Language Arts',
         primaryUrl: '/esl/language-arts',
         tone: 'language',
@@ -1067,7 +1099,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Performance Arts',
         kicker: 'Subject Hub',
         body: 'Voice, movement, story, rehearsal, performance reflection, and public sharing.',
-        visual: 'visual-performance-arts',
+        image: premiumAssets.cards.performanceArts,
+        imageAlt: 'Performance arts rehearsal and storytelling visual',
         primaryLabel: 'Enter Performance Arts',
         primaryUrl: '/esl/performance-arts',
         tone: 'performance',
@@ -1076,7 +1109,8 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         title: 'Social Studies',
         kicker: 'Subject Hub',
         body: 'Culture, geography, history, discussion, perspective-taking, and civic learning.',
-        visual: 'visual-social-studies',
+        image: premiumAssets.cards.socialStudies,
+        imageAlt: 'Social studies geography and culture visual',
         primaryLabel: 'Enter Social Studies',
         primaryUrl: '/esl/social-studies',
         tone: 'social',
@@ -1124,6 +1158,39 @@ function getSubjectFocusBody(sectionId: string) {
   return bodies[sectionId] ?? 'Learning updates, resources, and student work will gather here as the hub grows.'
 }
 
+function getSubjectEmptyCopy(sectionId: string, sectionName: string) {
+  const copy: Record<string, { title: string; body: string; badge: string }> = {
+    'esl-science': {
+      title: 'Science updates are on the way',
+      body: 'New Science learning resources will appear here as they are published.',
+      badge: 'SCI',
+    },
+    'esl-language-arts': {
+      title: 'Language Arts updates are on the way',
+      body: 'New Language Arts learning resources will appear here as they are published.',
+      badge: 'LA',
+    },
+    'esl-performance-arts': {
+      title: 'Performance Arts updates are on the way',
+      body: 'New Performance Arts learning resources will appear here as they are published.',
+      badge: 'PA',
+    },
+    'esl-social-studies': {
+      title: 'Social Studies updates are on the way',
+      body: 'New Social Studies learning resources will appear here as they are published.',
+      badge: 'SS',
+    },
+  }
+
+  return (
+    copy[sectionId] ?? {
+      title: `${sectionName} updates are on the way`,
+      body: `New ${sectionName} learning resources will appear here as they are published.`,
+      badge: 'NEW',
+    }
+  )
+}
+
 function HubHero({
   hubPage,
   eyebrow,
@@ -1137,48 +1204,43 @@ function HubHero({
   error?: string
   visual?: string
 }) {
+  const heroAssets = getHeroAssets(visual)
+  const actions: PremiumHeroAction[] = []
+
+  if (hubPage.primaryButtonText && hubPage.primaryButtonUrl) {
+    actions.push({
+      label: heroButtonLabel(hubPage.primaryButtonText),
+      to: hubPage.primaryButtonUrl,
+      variant: visual === 'esl' || visual === 'esl-science' ? 'teal' : 'blue',
+    })
+  }
+
+  if (hubPage.secondaryButtonText && hubPage.secondaryButtonUrl) {
+    actions.push({
+      label: heroButtonLabel(hubPage.secondaryButtonText),
+      to: hubPage.secondaryButtonUrl,
+      variant: 'outline',
+    })
+  }
+
   return (
-    <section className={`performance-hero hub-hero${visual ? ` hub-hero-${visual}` : ''}`}>
-      <div className="performance-hero-copy">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1>{hubPage.title}</h1>
-        <p className="subtitle">{hubPage.subtitle}</p>
-        <p>{hubPage.intro}</p>
-        <p className="supporting-line">{hubPage.description}</p>
-        <div className="hero-actions">
-          {hubPage.primaryButtonText && hubPage.primaryButtonUrl && (
-            <Link className="primary-button blue" to={hubPage.primaryButtonUrl}>
-              {hubPage.primaryButtonText}
-            </Link>
-          )}
-          {hubPage.secondaryButtonText && hubPage.secondaryButtonUrl && (
-            <Link className="secondary-button" to={hubPage.secondaryButtonUrl}>
-              {hubPage.secondaryButtonText}
-            </Link>
-          )}
-        </div>
-        {loading && <p className="muted">Loading saved hub settings...</p>}
-        {error && <p className="form-message">{error}</p>}
-      </div>
-      {visual === 'eep' ? (
-        <div className="hub-hero-image hub-hero-image-background hub-hero-image-eep" aria-hidden="true" />
-      ) : visual === 'esl' ? (
-        <div className="hub-hero-image hub-hero-image-background hub-hero-image-esl" aria-hidden="true" />
-      ) : visual && visual.startsWith('esl-') ? (
-        <div
-          className={`hub-hero-image hub-hero-image-background hub-hero-subject visual-card ${getHubVisualClass(visual)}`}
-          aria-hidden="true"
-        />
-      ) : hubPage.heroImageUrl ? (
-        <img className="hub-hero-image" src={hubPage.heroImageUrl} alt="" />
-      ) : (
-        <div className="performance-stage" aria-hidden="true">
-          <span>Learn</span>
-          <span>Create</span>
-          <span>Share</span>
-        </div>
-      )}
-    </section>
+    <>
+      <PremiumHero
+        eyebrow={eyebrow}
+        title={hubPage.title}
+        lead={hubPage.subtitle}
+        body={`${hubPage.intro}${hubPage.description ? ` ${hubPage.description}` : ''}`}
+        desktopImage={heroAssets.desktop}
+        mobileImage={heroAssets.mobile}
+        imageAlt={heroAssets.alt}
+        theme={heroAssets.theme}
+        imagePosition={heroAssets.imagePosition}
+        darkOverlay={heroAssets.darkOverlay}
+        actions={actions}
+      />
+      {loading && <p className="muted premium-hero-status">Loading saved hub settings...</p>}
+      {error && <p className="form-message premium-hero-status">{error}</p>}
+    </>
   )
 }
 
@@ -1188,6 +1250,80 @@ function getHeroVisual(sectionId: string) {
   }
 
   return undefined
+}
+
+function heroButtonLabel(label: string) {
+  return label.includes('→') ? label : `${label} →`
+}
+
+function getHeroAssets(sectionId = 'ied') {
+  const assets: Record<string, { desktop: string; mobile: string; alt: string; theme: string; imagePosition: string; darkOverlay?: boolean }> = {
+    ied: {
+      desktop: premiumAssets.heroes.home,
+      mobile: premiumAssets.mobile.home,
+      alt: 'International Education Department learning showcase visual',
+      theme: 'ied',
+      imagePosition: '72% center',
+    },
+    eep: {
+      desktop: premiumAssets.heroes.eep,
+      mobile: premiumAssets.mobile.eep,
+      alt: 'EEP books, stories, language activities, and creative work',
+      theme: 'eep',
+      imagePosition: '76% center',
+    },
+    esl: {
+      desktop: premiumAssets.heroes.esl,
+      mobile: premiumAssets.mobile.esl,
+      alt: 'ESL subject learning across science, language arts, performance arts, and social studies',
+      theme: 'esl',
+      imagePosition: '76% center',
+    },
+    'esl-science': {
+      desktop: premiumAssets.heroes.science,
+      mobile: premiumAssets.mobile.science,
+      alt: 'Science inquiry, experiments, ecosystems, and evidence visual',
+      theme: 'science',
+      imagePosition: '76% center',
+    },
+    'esl-language-arts': {
+      desktop: premiumAssets.heroes.languageArts,
+      mobile: premiumAssets.mobile.languageArts,
+      alt: 'Language Arts reading, writing, speaking, stories, and discussion visual',
+      theme: 'language',
+      imagePosition: '76% center',
+    },
+    'esl-performance-arts': {
+      desktop: premiumAssets.heroes.performanceArts,
+      mobile: premiumAssets.mobile.performanceArts,
+      alt: 'Performance Arts rehearsal, voice, movement, storytelling, and reflection visual',
+      theme: 'performance',
+      imagePosition: '77% center',
+      darkOverlay: true,
+    },
+    'esl-social-studies': {
+      desktop: premiumAssets.heroes.socialStudies,
+      mobile: premiumAssets.mobile.socialStudies,
+      alt: 'Social Studies geography, history, culture, communities, and perspective visual',
+      theme: 'social',
+      imagePosition: '77% center',
+    },
+  }
+
+  return assets[sectionId] ?? assets.ied
+}
+
+function getCardImage(sectionId: string) {
+  const images: Record<string, string> = {
+    eep: premiumAssets.cards.eep,
+    esl: premiumAssets.cards.esl,
+    'esl-science': premiumAssets.cards.science,
+    'esl-language-arts': premiumAssets.cards.languageArts,
+    'esl-performance-arts': premiumAssets.cards.performanceArts,
+    'esl-social-studies': premiumAssets.cards.socialStudies,
+  }
+
+  return images[sectionId] ?? premiumAssets.cards.home
 }
 
 function ContentSection({
@@ -1219,20 +1355,6 @@ function ContentSection({
   )
 }
 
-function getHubVisualClass(sectionId: string) {
-  const visualClasses: Record<string, string> = {
-    ied: 'visual-ied',
-    eep: 'visual-eep',
-    esl: 'visual-esl',
-    'esl-science': 'visual-science',
-    'esl-language-arts': 'visual-language-arts',
-    'esl-performance-arts': 'visual-performance-arts',
-    'esl-social-studies': 'visual-social-studies',
-  }
-
-  return visualClasses[sectionId] ?? 'visual-ied'
-}
-
 function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
   const { t } = useLanguage()
   const targetUrl = item.linkUrl || item.mediaUrl
@@ -1240,7 +1362,7 @@ function ContentCard({ item, compact = false }: { item: ContentItem; compact?: b
 
   return (
     <article className={`${compact ? 'content-card compact' : 'content-card'}${targetUrl ? ' has-link' : ''}`}>
-      {item.imageUrl && !compact && <img src={item.imageUrl} alt="" />}
+      {item.imageUrl && !compact && <img src={item.imageUrl} alt={`${item.title} visual`} />}
       <div>
         <span className="badge">{contentTypeLabels[item.type]}</span>
         <h3>{item.title}</h3>
@@ -1292,65 +1414,12 @@ function confirmDelete(message: string) {
   return window.confirm(message)
 }
 
-function ProjectCarousel({ projects }: { projects: Project[] }) {
-  const { t } = useLanguage()
-  const projectKey = projects.map((project) => project.id).join('|')
-  const [carouselState, setCarouselState] = useState({ projectKey, index: 0 })
-  const activeIndex =
-    carouselState.projectKey === projectKey ? Math.min(carouselState.index, Math.max(projects.length - 1, 0)) : 0
-
-  useEffect(() => {
-    if (projects.length < 2) {
-      return
-    }
-
-    const timer = window.setInterval(() => {
-      setCarouselState((state) => ({
-        projectKey,
-        index: state.projectKey === projectKey ? (state.index + 1) % projects.length : 0,
-      }))
-    }, 4200)
-
-    return () => window.clearInterval(timer)
-  }, [projectKey, projects.length])
-
-  if (!projects.length) {
-    return null
-  }
-
-  const activeProject = projects[activeIndex]
-
-  return (
-    <section className="hero-carousel" aria-label={t('promotedWebsites')}>
-      <Link className="hero-carousel-main" to={`/projects/${activeProject.id}`}>
-        <img src={activeProject.imageUrl || fallbackImage(activeProject)} alt="" />
-        <div className="carousel-caption">
-          <span>{t(categoryTranslationKeys[activeProject.category])}</span>
-          <h2>{activeProject.title}</h2>
-          <p>{activeProject.groupName}</p>
-        </div>
-      </Link>
-      <div className="carousel-controls" aria-label={t('choosePromoted')}>
-        {projects.map((project, index) => (
-          <button
-            aria-label={t('showProject', { title: project.title })}
-            className={index === activeIndex ? 'active' : ''}
-            key={project.id}
-            type="button"
-            onClick={() => setCarouselState({ projectKey, index })}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function ProjectCard({ project }: { project: Project }) {
   const { t } = useLanguage()
 
   return (
     <article className="project-card reveal">
-      <img src={project.imageUrl || fallbackImage(project)} alt="" />
+      <img src={project.imageUrl || fallbackImage(project)} alt={`${project.title} preview`} />
       <div className="project-card-body">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
         <h2>{project.title}</h2>
@@ -1380,7 +1449,7 @@ function Spotlight({ titleKey, projects }: { titleKey: TranslationKey; projects:
       {projects.length ? (
         projects.map((project) => (
           <Link className="spotlight-item" key={project.id} to={`/projects/${project.id}`}>
-            <img src={project.imageUrl || fallbackImage(project)} alt="" />
+            <img src={project.imageUrl || fallbackImage(project)} alt={`${project.title} thumbnail`} />
             <span>
               <strong>{project.title}</strong>
               <small>{project.groupName}</small>
@@ -1412,7 +1481,7 @@ function ProjectDetailPage() {
 
   return (
     <section className="detail-page page-panel">
-      <img className="detail-image" src={project.imageUrl || fallbackImage(project)} alt="" />
+      <img className="detail-image" src={project.imageUrl || fallbackImage(project)} alt={`${project.title} project visual`} />
       <div className="detail-content">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
         <h1>{project.title}</h1>
@@ -1482,10 +1551,18 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
 
   return (
     <section className="form-page page-panel">
-      <PageHeading
+      <PremiumHero
         eyebrow={t('submitPageEyebrow')}
         title={submissionDestination.title}
-        body={submissionDestination.body}
+        lead={submissionDestination.body}
+        body="Use the guide below, prepare your Google Sites project, then send it for teacher review."
+        desktopImage={premiumAssets.heroes.showcase}
+        mobileImage={premiumAssets.mobile.showcase}
+        imageAlt="Student website submission and digital publishing visual"
+        theme="showcase"
+        className="submit-premium-hero"
+        imagePosition="76% center"
+        actions={[{ label: t('browseProjects'), to: '/eep/showcase#projects', variant: 'outline' }]}
       />
       <StudentGuideEmbed />
       <div className="submit-form-heading">
@@ -1540,7 +1617,6 @@ function StudentGuideEmbed() {
         {studentGuidePreziUrl ? (
           <iframe
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-            allowFullScreen
             src={studentGuidePreziUrl}
             title={t('preziTitle')}
           />
@@ -1560,32 +1636,22 @@ function AboutPage() {
 
   return (
     <section className="about-page">
-      <section className="about-hero">
-        <div className="about-hero-copy">
-          <UiText id="aboutEyebrow" as="p" className="eyebrow" />
-          <UiText id="aboutTitle" as="h1" />
-          <UiText id="aboutBody" as="p" />
-          <div className="about-links" aria-label={t('usefulLinks')}>
-            <a href="https://www.hn.thu.edu.tw/" target="_blank" rel="noreferrer">
-              {t('thuhsWebsite')}
-            </a>
-            <a
-              href="https://www.hn.thu.edu.tw/web/school/announcement.php?action=search&cid=11&department=10"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t('iedAnnouncements')}
-            </a>
-            <a href="https://eng.thuhs.synology.me/" target="_blank" rel="noreferrer">
-              {t('englishSite')}
-            </a>
-          </div>
-        </div>
-        <figure className="about-photo">
-          <img src="/images/ied-campus.png" alt={t('campusAlt')} />
-          <figcaption>{t('campusCaption')}</figcaption>
-        </figure>
-      </section>
+      <PremiumHero
+        eyebrow={t('aboutEyebrow')}
+        title={t('aboutTitle')}
+        lead={t('aboutBody')}
+        body="EEP and ESL create connected pathways for communication, confidence, public work, and international learning."
+        desktopImage={premiumAssets.heroes.about}
+        mobileImage={premiumAssets.mobile.about}
+        imageAlt={t('campusAlt')}
+        theme="ied"
+        className="about-premium-hero"
+        imagePosition="70% center"
+        actions={[
+          { label: t('thuhsWebsite'), to: 'https://www.hn.thu.edu.tw/', variant: 'blue' },
+          { label: t('exploreProjects'), to: '/eep/showcase#projects', variant: 'outline' },
+        ]}
+      />
 
       <section className="ied-stats reveal" aria-label={t('schoolAtGlance')}>
         <article>
