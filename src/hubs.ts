@@ -63,7 +63,7 @@ export const hubConfigs: HubConfig[] = [
       primaryButtonText: 'Browse Showcase',
       primaryButtonUrl: '/eep/showcase',
       secondaryButtonText: 'Submit Project',
-      secondaryButtonUrl: '/submit',
+      secondaryButtonUrl: '/eep/showcase/submit',
       featured: true,
     },
   },

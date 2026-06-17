@@ -73,6 +73,7 @@ const contentItemFromFirestore = (id: string, data: DocumentData): ContentItem =
   eventDate: data.eventDate ?? '',
   imageUrl: data.imageUrl ?? '',
   createdBy: data.createdBy ?? '',
+  sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : undefined,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
 })
@@ -158,10 +159,11 @@ export const watchContentItems = (
       const contentItems = snapshot.docs
         .map((contentDoc) => contentItemFromFirestore(contentDoc.id, contentDoc.data()))
         .sort((a, b) => {
+          const orderSort = (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER)
           const eventSort = (b.eventDate || '').localeCompare(a.eventDate || '')
           const createdSort = (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)
 
-          return a.type === 'event' || b.type === 'event' ? eventSort || createdSort : createdSort
+          return orderSort || (a.type === 'event' || b.type === 'event' ? eventSort || createdSort : createdSort)
         })
 
       onChange(contentItems)
@@ -181,7 +183,11 @@ export const watchAllPublishedContentItems = (
     (snapshot) => {
       const contentItems = snapshot.docs
         .map((contentDoc) => contentItemFromFirestore(contentDoc.id, contentDoc.data()))
-        .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
+        .sort(
+          (a, b) =>
+            (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER) ||
+            (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0),
+        )
 
       onChange(contentItems)
     },

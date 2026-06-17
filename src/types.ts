@@ -50,6 +50,7 @@ export interface ContentItem {
   eventDate: string
   imageUrl: string
   createdBy: string
+  sortOrder?: number
   createdAt?: Timestamp
   updatedAt?: Timestamp
 }

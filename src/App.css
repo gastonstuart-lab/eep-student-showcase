@@ -548,14 +548,108 @@
   grid-template-columns: minmax(22rem, 0.9fr) minmax(0, 1.1fr);
 }
 
+.content-admin-context,
+.submission-destination {
+  color: #426782;
+  background: #f8fcff;
+  border: 1px solid #d8ecfb;
+  border-radius: 0.85rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+}
+
+.content-admin-context span {
+  color: #607d95;
+  margin-left: 0.4rem;
+}
+
 .content-editor {
   position: sticky;
   top: 5.4rem;
 }
 
+.preview-panel {
+  position: static;
+}
+
+.content-manager-heading {
+  align-items: end;
+  gap: 1rem;
+}
+
+.content-manager-heading p {
+  color: #607d95;
+  margin: 0.2rem 0 0;
+}
+
+.content-manager-heading label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 11rem;
+  color: #426782;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.content-manager-heading select {
+  min-height: 2.45rem;
+  border: 1px solid #c7e2f5;
+  border-radius: 0.7rem;
+  padding: 0.45rem 0.65rem;
+  color: #17324d;
+  background: #fff;
+  font: inherit;
+}
+
 .content-admin-item {
   display: grid;
   gap: 0.75rem;
+}
+
+.content-item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.status-badge {
+  width: fit-content;
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.status-published {
+  color: #0a6c4a;
+  background: #e7f8ef;
+}
+
+.status-draft {
+  color: #775300;
+  background: #fff4ce;
+}
+
+.status-hidden {
+  color: #6a566a;
+  background: #f1edf4;
+}
+
+.empty-manager-state {
+  background: #f8fcff;
+  border: 1px dashed #b7d9ee;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.empty-manager-state h3 {
+  margin: 0 0 0.35rem;
+}
+
+.empty-manager-state p {
+  color: #607d95;
+  margin: 0;
 }
 
 @media (max-width: 1050px) {
@@ -982,6 +1076,19 @@ h2 .translation-line {
 .danger-button {
   color: #ffffff;
   background: #d64d38;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  filter: none;
+}
+
+.icon-button {
+  min-width: 4.2rem;
+  padding-inline: 0.7rem;
 }
 
 .hero-carousel {

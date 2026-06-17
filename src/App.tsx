@@ -97,6 +97,9 @@ const contentStatusLabels: Record<ContentStatus, string> = {
   hidden: 'Hidden',
 }
 
+const contentStatusFilters = ['all', 'draft', 'published', 'hidden'] as const
+type ContentStatusFilter = (typeof contentStatusFilters)[number]
+
 const studentGuidePreziUrl = 'https://prezi.com/view/nGLmHqRktUdpbzEUlJmK/embed'
 
 const categoryIcons: Record<ProjectCategory | 'All Projects', string> = {
@@ -117,6 +120,17 @@ const statLabelKeys: Record<string, TranslationKey> = {
   hidden: 'statHidden',
   featured: 'statFeatured',
 }
+
+const submissionDestinations = {
+  'eep-showcase': {
+    name: 'EEP Student Website Showcase',
+    title: 'Submit to the EEP Showcase',
+    body: 'Send your Google Sites project to the teacher review queue for the EEP Student Website Showcase.',
+    success: 'Project submitted to the EEP Student Website Showcase. It is awaiting teacher review.',
+  },
+} as const
+
+type SubmissionDestinationId = keyof typeof submissionDestinations
 
 const demoPreviewProjects: Project[] = [
   {
@@ -347,13 +361,14 @@ function Shell() {
           <Route path="/ied" element={<Navigate to="/" replace />} />
           <Route path="/eep" element={<HubPageView sectionId="eep" />} />
           <Route path="/eep/showcase" element={<EepShowcasePage />} />
+          <Route path="/eep/showcase/submit" element={<SubmitPage destination="eep-showcase" />} />
           <Route path="/esl" element={<HubPageView sectionId="esl" />} />
           <Route path="/esl/science" element={<HubPageView sectionId="esl-science" />} />
           <Route path="/esl/language-arts" element={<HubPageView sectionId="esl-language-arts" />} />
           <Route path="/esl/performance-arts" element={<HubPageView sectionId="esl-performance-arts" />} />
           <Route path="/esl/social-studies" element={<HubPageView sectionId="esl-social-studies" />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
-          <Route path="/submit" element={<SubmitPage />} />
+          <Route path="/submit" element={<SubmitPage destination="eep-showcase" />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -584,8 +599,8 @@ function EepShowcasePage() {
           <UiText id="heroSubtitle" as="p" className="subtitle" />
           <UiText id="heroSupport" as="p" className="supporting-line" />
           <div className="hero-actions">
-            <Link className="primary-button blue" to="/submit">
-              {t('submitYourProject')}
+            <Link className="primary-button blue" to="/eep/showcase/submit">
+              Submit to the EEP Showcase
             </Link>
             <Link className="secondary-button" to="/eep/showcase#projects">
               {t('browseProjects')}
@@ -633,8 +648,8 @@ function EepShowcasePage() {
               <h2>{t('noApprovedTitle')}</h2>
               <p>{t('noApprovedBody')}</p>
               <div className="hero-actions">
-                <Link className="primary-button blue" to="/submit">
-                  {t('submitAProject')}
+                <Link className="primary-button blue" to="/eep/showcase/submit">
+                  Submit to the EEP Showcase
                 </Link>
                 <Link className="secondary-button" to="/login">
                   {t('teacherLogin')}
@@ -1054,8 +1069,9 @@ function ProjectDetailPage() {
   )
 }
 
-function SubmitPage() {
+function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
   const { t } = useLanguage()
+  const submissionDestination = submissionDestinations[destination]
   const [project, setProject] = useState<ProjectInput>(emptyProject)
   const [permission, setPermission] = useState(false)
   const [message, setMessage] = useState('')
@@ -1080,7 +1096,7 @@ function SubmitPage() {
       })
       setProject(emptyProject)
       setPermission(false)
-      setMessage(t('submittedMessage'))
+      setMessage(submissionDestination.success)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('submissionFailed'))
     } finally {
@@ -1092,14 +1108,17 @@ function SubmitPage() {
     <section className="form-page">
       <PageHeading
         eyebrow={t('submitPageEyebrow')}
-        title={t('submitPageTitle')}
-        body={t('submitPageBody')}
+        title={submissionDestination.title}
+        body={submissionDestination.body}
       />
       <StudentGuideEmbed />
       <div className="submit-form-heading">
         <UiText id="submitFormEyebrow" as="p" className="eyebrow" />
         <UiText id="submitFormTitle" as="h2" />
         <UiText id="submitFormBody" as="p" />
+        <p className="submission-destination">
+          <strong>Submitting to:</strong> {submissionDestination.name}
+        </p>
       </div>
       <ProjectForm
         project={project}
@@ -1488,12 +1507,17 @@ function HubAdminEditor({
   const [hubDraft, setHubDraft] = useState<HubPageInput>(() => hubDraftFromPage(hubPage))
   const [editingId, setEditingId] = useState<string | null>(null)
   const [contentDraft, setContentDraft] = useState<ContentItemInput>(() => emptyContentDraftFor(config, userEmail))
+  const [statusFilter, setStatusFilter] = useState<ContentStatusFilter>('all')
+  const [previewItem, setPreviewItem] = useState<ContentItem | null>(null)
   const [message, setMessage] = useState('')
   const editingItem = contentItems.find((item) => item.id === editingId)
+  const visibleContentItems =
+    statusFilter === 'all' ? contentItems : contentItems.filter((item) => item.status === statusFilter)
 
   const resetContentDraft = () => {
     setEditingId(null)
     setContentDraft(emptyContentDraftFor(config, userEmail))
+    setPreviewItem(null)
     setMessage('')
   }
 
@@ -1514,7 +1538,9 @@ function HubAdminEditor({
       eventDate: item.eventDate,
       imageUrl: item.imageUrl,
       createdBy: item.createdBy || userEmail,
+      sortOrder: item.sortOrder,
     })
+    setPreviewItem(null)
     setMessage('')
   }
 
@@ -1544,6 +1570,7 @@ function HubAdminEditor({
       sectionId: config.sectionId,
       sectionName: config.sectionName,
       createdBy: contentDraft.createdBy || userEmail,
+      sortOrder: contentDraft.sortOrder ?? contentItems.length + 1,
     }
 
     try {
@@ -1562,6 +1589,64 @@ function HubAdminEditor({
 
   const setItemStatus = async (item: ContentItem, status: ContentStatus) => {
     await updateContentItem(item.id, { status })
+    setMessage(`"${item.title}" moved to ${contentStatusLabels[status]}.`)
+  }
+
+  const duplicateItem = async (item: ContentItem) => {
+    await createContentItem({
+      title: `${item.title} Copy`,
+      summary: item.summary,
+      body: item.body,
+      type: item.type,
+      department: config.department,
+      sectionId: config.sectionId,
+      sectionName: config.sectionName,
+      status: 'draft',
+      featured: false,
+      mediaUrl: item.mediaUrl,
+      linkUrl: item.linkUrl,
+      eventDate: item.eventDate,
+      imageUrl: item.imageUrl,
+      createdBy: userEmail,
+      sortOrder: contentItems.length + 1,
+    })
+    setMessage(`"${item.title}" duplicated as a draft.`)
+  }
+
+  const deleteItem = async (item: ContentItem) => {
+    if (!confirmDelete(`Delete "${item.title}"? This cannot be undone.`)) {
+      return
+    }
+
+    await deleteContentItem(item.id)
+    if (previewItem?.id === item.id) {
+      setPreviewItem(null)
+    }
+    if (editingId === item.id) {
+      resetContentDraft()
+    }
+    setMessage(`"${item.title}" deleted.`)
+  }
+
+  const moveItem = async (item: ContentItem, direction: -1 | 1) => {
+    const orderedItems = contentItems.map((contentItem, index) => ({
+      ...contentItem,
+      sortOrder: contentItem.sortOrder ?? index + 1,
+    }))
+    const currentIndex = orderedItems.findIndex((contentItem) => contentItem.id === item.id)
+    const swapIndex = currentIndex + direction
+
+    if (currentIndex < 0 || swapIndex < 0 || swapIndex >= orderedItems.length) {
+      return
+    }
+
+    const current = orderedItems[currentIndex]
+    const swap = orderedItems[swapIndex]
+    await Promise.all([
+      updateContentItem(current.id, { sortOrder: swap.sortOrder }),
+      updateContentItem(swap.id, { sortOrder: current.sortOrder }),
+    ])
+    setMessage(`"${item.title}" display order updated.`)
   }
 
   return (
@@ -1569,19 +1654,22 @@ function HubAdminEditor({
       <PageHeading
         eyebrow="Teacher dashboard"
         title={`Manage ${config.sectionName}`}
-        body="Edit public hub settings and manage content items for this section."
+        body={`Create, preview, publish, hide, and order content for ${config.sectionName}.`}
       />
       <div className="admin-actions">
         <Link className="secondary-button" to="/admin/hubs">
           All Hubs
         </Link>
         <Link className="secondary-button" to={config.route}>
-          View Public Hub
+          View public page
         </Link>
         <button className="primary-button blue" type="button" onClick={resetContentDraft}>
-          New Content Item
+          Add content
         </button>
       </div>
+      <p className="content-admin-context">
+        Managing hub: <strong>{config.sectionName}</strong> <span>{config.route}</span>
+      </p>
       {message && <p className="form-message">{message}</p>}
       {loading && <PageMessage title="Loading content" body="Fetching content items..." />}
       {error && <PageMessage title="Could not load content" body={error} />}
@@ -1607,43 +1695,99 @@ function HubAdminEditor({
               {editingItem ? 'Save Content' : 'Create Content'}
             </button>
           </form>
+
+          {previewItem && (
+            <section className="content-editor preview-panel" aria-label="Content preview">
+              <div className="modal-header">
+                <h2>Preview</h2>
+                <button className="small-button" type="button" onClick={() => setPreviewItem(null)}>
+                  Close
+                </button>
+              </div>
+              <ContentCard item={previewItem} />
+            </section>
+          )}
         </div>
 
         <div className="content-admin-list">
-          <div className="section-heading">
-            <h2>Content Items</h2>
+          <div className="section-heading content-manager-heading">
+            <div>
+              <h2>Content Items</h2>
+              <p>{contentItems.length} total items for {config.sectionName}</p>
+            </div>
+            <label>
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContentStatusFilter)}>
+                {contentStatusFilters.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'all' ? 'All' : contentStatusLabels[status]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
-          {!contentItems.length && !loading ? (
-            <p className="muted">No content items yet. Create one to begin.</p>
+          {!visibleContentItems.length && !loading ? (
+            <div className="empty-manager-state">
+              <h3>{contentItems.length ? 'No items match this filter.' : 'No content items yet.'}</h3>
+              <p>
+                {contentItems.length
+                  ? 'Choose another status filter to see more content.'
+                  : 'Use Add content to create a draft, then publish it when it is ready.'}
+              </p>
+            </div>
           ) : (
-            contentItems.map((item) => (
+            visibleContentItems.map((item) => (
               <article className="admin-item content-admin-item" key={item.id}>
                 <div>
-                  <span className="badge">{contentTypeLabels[item.type]}</span>
+                  <div className="content-item-badges">
+                    <span className="badge">{contentTypeLabels[item.type]}</span>
+                    <span className={`status-badge status-${item.status}`}>{contentStatusLabels[item.status]}</span>
+                  </div>
                   <h2>{item.title}</h2>
                   <p className="meta">
-                    {contentStatusLabels[item.status]} {item.eventDate ? `/ ${formatEventDate(item.eventDate)}` : ''}
+                    {config.sectionName} {item.eventDate ? `/ ${formatEventDate(item.eventDate)}` : ''}
                   </p>
                   <p>{item.summary}</p>
                 </div>
                 <div className="admin-item-actions">
+                  <button
+                    className="secondary-button icon-button"
+                    disabled={contentItems[0]?.id === item.id}
+                    type="button"
+                    onClick={() => void moveItem(item, -1)}
+                    title="Move up"
+                  >
+                    Up
+                  </button>
+                  <button
+                    className="secondary-button icon-button"
+                    disabled={contentItems[contentItems.length - 1]?.id === item.id}
+                    type="button"
+                    onClick={() => void moveItem(item, 1)}
+                    title="Move down"
+                  >
+                    Down
+                  </button>
                   <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
                     Edit
                   </button>
-                  <button className="secondary-button" type="button" onClick={() => void setItemStatus(item, 'published')}>
-                    Publish
+                  <button className="secondary-button" type="button" onClick={() => setPreviewItem(item)}>
+                    Preview
                   </button>
-                  <button className="secondary-button" type="button" onClick={() => void setItemStatus(item, 'hidden')}>
-                    Hide
+                  <button className="secondary-button" type="button" onClick={() => void duplicateItem(item)}>
+                    Duplicate
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => void setItemStatus(item, item.status === 'published' ? 'hidden' : 'published')}
+                  >
+                    {item.status === 'published' ? 'Unpublish' : 'Publish'}
                   </button>
                   <button
                     className="danger-button"
                     type="button"
-                    onClick={() => {
-                      if (confirmDelete(`Delete "${item.title}"? This cannot be undone.`)) {
-                        void deleteContentItem(item.id)
-                      }
-                    }}
+                    onClick={() => void deleteItem(item)}
                   >
                     Delete
                   </button>
