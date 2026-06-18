@@ -20,10 +20,10 @@ const baseDraft: ContentItemInput = {
   eventDate: '2026-06-18',
   imageUrl: 'https://example.com/image.jpg',
   displayStyle: 'standard',
-  contentWidth: 'normal',
+  contentWidth: 'medium',
   imagePlacement: 'top',
   textAlignment: 'left',
-  accentStyle: 'none',
+  accentStyle: 'neutral',
   badgeText: 'New',
   ctaStyle: 'link',
   createdBy: 'teacher@example.com',
@@ -41,7 +41,7 @@ function renderCard(overrides: Partial<ContentItemInput> = {}, compact = false) 
 
 describe('ContentCard', () => {
   it('applies the display-style classes for the public layouts', () => {
-    const layouts: Array<ContentItemInput['displayStyle']> = ['standard', 'featured', 'compact', 'banner', 'media']
+    const layouts: Array<ContentItemInput['displayStyle']> = ['standard', 'featured', 'compact', 'banner', 'media', 'photoStory', 'quickLink', 'eventCard', 'quote', 'minimal']
 
     layouts.forEach((displayStyle) => {
       const { container, unmount } = renderCard({ displayStyle })

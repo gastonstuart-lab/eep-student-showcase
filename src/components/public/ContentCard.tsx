@@ -36,6 +36,10 @@ function formatContentDate(item: ContentItem) {
 }
 
 function getThemeClass(accentStyle: ContentItem['accentStyle']) {
+  if (accentStyle === 'ied') {
+    return 'theme-ied'
+  }
+
   if (accentStyle === 'eep') {
     return 'theme-eep'
   }
@@ -48,6 +52,18 @@ function getThemeClass(accentStyle: ContentItem['accentStyle']) {
     return 'theme-warm'
   }
 
+  if (accentStyle === 'performance') {
+    return 'theme-performance'
+  }
+
+  if (accentStyle === 'science') {
+    return 'theme-science'
+  }
+
+  if (accentStyle === 'social') {
+    return 'theme-social'
+  }
+
   if (accentStyle === 'dark') {
     return 'theme-dark'
   }
@@ -57,32 +73,47 @@ function getThemeClass(accentStyle: ContentItem['accentStyle']) {
 
 export function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
   const { t } = useLanguage()
-  const targetUrl = item.ctaStyle === 'hidden' ? '' : item.linkUrl || item.mediaUrl
-  const showCta = Boolean(targetUrl)
+  const primaryUrl = item.actionUrl || item.linkUrl || item.mediaUrl
+  const primaryLabel = item.actionLabel || t('openContentLink')
+  const primaryStyle = item.actionStyle ?? item.ctaStyle
+  const secondaryUrl = item.secondaryActionUrl ?? ''
+  const secondaryLabel = item.secondaryActionLabel || 'Learn more'
+  const secondaryStyle = item.secondaryActionStyle ?? 'secondary'
+  const showPrimaryCta = primaryStyle !== 'hidden' && Boolean(primaryUrl)
+  const showSecondaryCta = secondaryStyle !== 'hidden' && Boolean(secondaryUrl)
+  const showCta = showPrimaryCta || showSecondaryCta
   const displayStyle = compact || item.displayStyle === 'compact' ? 'compact' : item.displayStyle
-  const showImage = Boolean(item.imageUrl) && item.imagePlacement !== 'hidden'
-  const showBody = displayStyle !== 'compact' && displayStyle !== 'banner'
+  const effectiveImagePlacement = item.hideImage ? 'hidden' : item.imagePlacement
+  const showImage = Boolean(item.imageUrl) && effectiveImagePlacement !== 'hidden'
+  const showBody = displayStyle !== 'compact' && displayStyle !== 'banner' && displayStyle !== 'quickLink'
   const badgeText = item.badgeText?.trim().slice(0, 24)
-  const ctaClassName =
-    item.ctaStyle === 'primary'
+  const primaryCtaClassName =
+    primaryStyle === 'primary'
       ? 'primary-button blue content-card-cta'
-      : item.ctaStyle === 'secondary'
+      : primaryStyle === 'secondary'
         ? 'secondary-button content-card-cta'
         : 'small-link content-card-cta'
-  const imageStyle = item.imagePlacement === 'background' && showImage
+  const secondaryCtaClassName =
+    secondaryStyle === 'primary'
+      ? 'primary-button blue content-card-cta'
+      : secondaryStyle === 'secondary'
+        ? 'secondary-button content-card-cta'
+        : 'small-link content-card-cta'
+  const imageStyle = (effectiveImagePlacement === 'background' || item.backgroundStyle === 'image' || item.backgroundStyle === 'darkOverlay') && showImage
     ? ({ backgroundImage: `url(${item.imageUrl})` } as CSSProperties)
     : undefined
+  const imageAlt = item.imageAlt || `${item.title} visual`
 
   return (
     <article
-      className={`content-card ${getThemeClass(item.accentStyle)} style-${displayStyle} width-${item.contentWidth} align-${item.textAlignment} image-${item.imagePlacement}${showImage ? ' has-image' : ''}${showCta ? ' has-link' : ''}${badgeText ? ' has-badge' : ''}`}
+      className={`content-card ${getThemeClass(item.accentStyle)} style-${displayStyle} width-${item.contentWidth} align-${item.textAlignment} image-${effectiveImagePlacement} shape-${item.cardShape ?? 'standard'} density-${item.contentDensity ?? 'comfortable'} ratio-${item.imageRatio ?? 'landscape'} badge-${item.badgeStyle ?? 'subtle'} background-${item.backgroundStyle ?? 'plain'}${showImage ? ' has-image' : ''}${showCta ? ' has-link' : ''}${badgeText ? ' has-badge' : ''}`}
     >
-      {item.imagePlacement === 'background' && showImage && (
+      {(effectiveImagePlacement === 'background' || item.backgroundStyle === 'image' || item.backgroundStyle === 'darkOverlay') && showImage && (
         <div className="content-card-background" aria-hidden="true" style={imageStyle} />
       )}
 
-      {showImage && item.imagePlacement !== 'background' && item.imagePlacement !== 'right' && (
-        <img className="content-card-image" src={item.imageUrl} alt={`${item.title} visual`} loading="lazy" />
+      {showImage && effectiveImagePlacement !== 'background' && effectiveImagePlacement !== 'right' && (
+        <img className="content-card-image" src={item.imageUrl} alt={imageAlt} loading="lazy" />
       )}
 
       <div className="content-card-body">
@@ -95,14 +126,23 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
         <p className="content-card-summary">{item.summary}</p>
         {showBody && item.body && <p className="muted">{item.body}</p>}
         {showCta && (
-          <a className={ctaClassName} href={targetUrl} target="_blank" rel="noreferrer">
-            {item.ctaStyle === 'primary' || item.ctaStyle === 'secondary' ? t('openContentLink') : t('openContentLink')}
-          </a>
+          <div className="content-card-actions">
+            {showPrimaryCta && (
+              <a className={primaryCtaClassName} href={primaryUrl} target={item.actionNewTab === false ? undefined : '_blank'} rel={item.actionNewTab === false ? undefined : 'noreferrer'}>
+                {primaryLabel}
+              </a>
+            )}
+            {showSecondaryCta && (
+              <a className={secondaryCtaClassName} href={secondaryUrl} target={item.secondaryActionNewTab === false ? undefined : '_blank'} rel={item.secondaryActionNewTab === false ? undefined : 'noreferrer'}>
+                {secondaryLabel}
+              </a>
+            )}
+          </div>
         )}
       </div>
 
-      {showImage && item.imagePlacement === 'right' && (
-        <img className="content-card-image" src={item.imageUrl} alt={`${item.title} visual`} loading="lazy" />
+      {showImage && effectiveImagePlacement === 'right' && (
+        <img className="content-card-image" src={item.imageUrl} alt={imageAlt} loading="lazy" />
       )}
     </article>
   )

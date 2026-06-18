@@ -1,14 +1,20 @@
 import type { Timestamp } from 'firebase/firestore'
 
 export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
-export type ContentStatus = 'draft' | 'published' | 'hidden'
+export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'hidden'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
-export type ContentDisplayStyle = 'standard' | 'featured' | 'compact' | 'banner' | 'media'
-export type ContentWidth = 'normal' | 'wide' | 'full'
-export type ContentImagePlacement = 'top' | 'left' | 'right' | 'background' | 'hidden'
+export type ContentDisplayStyle = 'standard' | 'featured' | 'compact' | 'banner' | 'media' | 'photoStory' | 'quickLink' | 'eventCard' | 'quote' | 'minimal'
+export type ContentWidth = 'small' | 'medium' | 'wide' | 'full'
+export type ContentLayoutColumns = 'auto' | 'one' | 'two' | 'three'
+export type ContentImagePlacement = 'top' | 'left' | 'right' | 'background' | 'fullBleed' | 'hidden'
 export type ContentTextAlignment = 'left' | 'center'
-export type ContentAccentStyle = 'none' | 'eep' | 'esl' | 'warm' | 'dark'
+export type ContentAccentStyle = 'neutral' | 'ied' | 'eep' | 'esl' | 'warm' | 'performance' | 'science' | 'social' | 'dark'
 export type ContentCtaStyle = 'link' | 'primary' | 'secondary' | 'hidden'
+export type ContentCardShape = 'soft' | 'standard' | 'square' | 'minimal'
+export type ContentDensity = 'compact' | 'comfortable' | 'spacious'
+export type ContentImageRatio = 'landscape' | 'square' | 'portrait' | 'banner'
+export type ContentBadgeStyle = 'subtle' | 'solid' | 'outline' | 'none'
+export type ContentBackgroundStyle = 'plain' | 'tint' | 'gradient' | 'image' | 'darkOverlay'
 export type Department = 'IED' | 'EEP' | 'ESL'
 export type AdminRole = 'superAdmin' | 'admin' | 'editor'
 
@@ -74,6 +80,26 @@ export interface ContentItem {
   accentStyle: ContentAccentStyle
   badgeText?: string
   ctaStyle: ContentCtaStyle
+  layoutColumns?: ContentLayoutColumns
+  cardShape?: ContentCardShape
+  contentDensity?: ContentDensity
+  imageRatio?: ContentImageRatio
+  badgeStyle?: ContentBadgeStyle
+  backgroundStyle?: ContentBackgroundStyle
+  publishDate?: string
+  expiryDate?: string
+  actionLabel?: string
+  actionUrl?: string
+  actionStyle?: ContentCtaStyle
+  actionNewTab?: boolean
+  secondaryActionLabel?: string
+  secondaryActionUrl?: string
+  secondaryActionStyle?: ContentCtaStyle
+  secondaryActionNewTab?: boolean
+  imageAlt?: string
+  thumbnailUrl?: string
+  hideImage?: boolean
+  pinned?: boolean
   createdBy: string
   sortOrder?: number
   createdAt?: Timestamp

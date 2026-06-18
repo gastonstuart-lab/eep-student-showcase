@@ -175,11 +175,31 @@ service cloud.firestore {
         'imageUrl',
         'displayStyle',
         'contentWidth',
+        'layoutColumns',
         'imagePlacement',
         'textAlignment',
         'accentStyle',
         'badgeText',
         'ctaStyle',
+        'cardShape',
+        'contentDensity',
+        'imageRatio',
+        'badgeStyle',
+        'backgroundStyle',
+        'publishDate',
+        'expiryDate',
+        'actionLabel',
+        'actionUrl',
+        'actionStyle',
+        'actionNewTab',
+        'secondaryActionLabel',
+        'secondaryActionUrl',
+        'secondaryActionStyle',
+        'secondaryActionNewTab',
+        'imageAlt',
+        'thumbnailUrl',
+        'hideImage',
+        'pinned',
         'createdBy',
         'sortOrder',
         'createdAt',
@@ -199,20 +219,30 @@ service cloud.firestore {
       && request.resource.data.department in ['IED', 'EEP', 'ESL']
       && isShortString(request.resource.data.sectionId, 80)
       && isShortString(request.resource.data.sectionName, 120)
-      && request.resource.data.status in ['draft', 'published', 'hidden']
+      && request.resource.data.status in ['draft', 'scheduled', 'published', 'hidden']
       && request.resource.data.featured is bool
       && isOptionalUrl(request.resource.data.mediaUrl)
       && isOptionalUrl(request.resource.data.linkUrl)
       && isOptionalDateString(request.resource.data.eventDate)
       && isOptionalUrl(request.resource.data.imageUrl)
-      && request.resource.data.displayStyle in ['standard', 'featured', 'compact', 'banner', 'media']
-      && request.resource.data.contentWidth in ['normal', 'wide', 'full']
-      && request.resource.data.imagePlacement in ['top', 'left', 'right', 'background', 'hidden']
-      && request.resource.data.textAlignment in ['left', 'center']
-      && request.resource.data.accentStyle in ['none', 'eep', 'esl', 'warm', 'dark']
+      && request.resource.data.get('displayStyle', 'standard') in ['standard', 'featured', 'compact', 'banner', 'media', 'photoStory', 'quickLink', 'eventCard', 'quote', 'minimal']
+      && request.resource.data.get('contentWidth', 'medium') in ['normal', 'small', 'medium', 'wide', 'full']
+      && request.resource.data.get('layoutColumns', 'auto') in ['auto', 'one', 'two', 'three']
+      && request.resource.data.get('imagePlacement', 'top') in ['top', 'left', 'right', 'background', 'fullBleed', 'hidden']
+      && request.resource.data.get('textAlignment', 'left') in ['left', 'center']
+      && request.resource.data.get('accentStyle', 'neutral') in ['none', 'neutral', 'ied', 'eep', 'esl', 'warm', 'performance', 'science', 'social', 'dark']
       && (!request.resource.data.keys().hasAny(['badgeText']) || isOptionalPlainText(request.resource.data.badgeText, 24))
-      && request.resource.data.ctaStyle in ['link', 'primary', 'secondary', 'hidden']
-      && (request.resource.data.ctaStyle == 'hidden' || hasContentUrl())
+      && request.resource.data.get('ctaStyle', 'hidden') in ['link', 'primary', 'secondary', 'hidden']
+      && request.resource.data.get('cardShape', 'standard') in ['soft', 'standard', 'square', 'minimal']
+      && request.resource.data.get('contentDensity', 'comfortable') in ['compact', 'comfortable', 'spacious']
+      && request.resource.data.get('imageRatio', 'landscape') in ['landscape', 'square', 'portrait', 'banner']
+      && request.resource.data.get('badgeStyle', 'subtle') in ['subtle', 'solid', 'outline', 'none']
+      && request.resource.data.get('backgroundStyle', 'plain') in ['plain', 'tint', 'gradient', 'image', 'darkOverlay']
+      && request.resource.data.get('actionStyle', 'hidden') in ['link', 'primary', 'secondary', 'hidden']
+      && request.resource.data.get('secondaryActionStyle', 'hidden') in ['link', 'primary', 'secondary', 'hidden']
+      && request.resource.data.get('hideImage', false) is bool
+      && request.resource.data.get('pinned', false) is bool
+      && (request.resource.data.get('ctaStyle', 'hidden') == 'hidden' || hasContentUrl())
       && (!request.resource.data.keys().hasAny(['sortOrder']) || request.resource.data.sortOrder is number);
     }
 

@@ -18,15 +18,12 @@ import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
 import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
-import { ContentCard } from './components/public/ContentCard'
+import { HubContentLibrary } from './components/studio/HubContentLibrary'
+import { ContentLayout } from './components/public/ContentLayout'
 import {
-  createContentItem,
   createProject,
-  deleteContentItem,
   deleteProject,
-  saveHubPage,
   seedProjects,
-  updateContentItem,
   updateProject,
   watchAdminUsers,
   watchAuditLogs,
@@ -49,33 +46,16 @@ import {
   updateStaffAccess,
 } from './staffFunctions'
 import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
-import {
-  contentAccentStyleLabels,
-  contentAppearanceDefaults,
-  contentCtaStyleLabels,
-  contentDisplayStyleLabels,
-  contentImagePlacementLabels,
-  contentItemPreviewFromInput,
-  contentTextAlignmentLabels,
-  contentWidthLabels,
-  sanitizeContentItemInput,
-  validateContentAppearance,
-} from './utils/contentAppearance'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
   categories,
-  contentTypes,
   type AdminRole,
   type AdminUser,
   type AdminUserInput,
   type AuditLogEntry,
   type ContentItem,
-  type ContentItemInput,
-  type ContentStatus,
-  type ContentType,
   type HubPage as HubPageData,
-  type HubPageInput,
   type Project,
   type ProjectCategory,
   type ProjectInput,
@@ -97,54 +77,6 @@ const emptyProject: ProjectInput = {
   featured: false,
   studentPick: false,
 }
-
-const performanceArtsSection = {
-  department: 'ESL' as const,
-  sectionId: 'esl-performance-arts',
-  sectionName: 'Performance Arts',
-}
-
-const emptyContentItem: ContentItemInput = {
-  title: '',
-  summary: '',
-  body: '',
-  type: 'announcement',
-  department: performanceArtsSection.department,
-  sectionId: performanceArtsSection.sectionId,
-  sectionName: performanceArtsSection.sectionName,
-  status: 'draft',
-  featured: false,
-  mediaUrl: '',
-  linkUrl: '',
-  eventDate: '',
-  imageUrl: '',
-  displayStyle: contentAppearanceDefaults.displayStyle,
-  contentWidth: contentAppearanceDefaults.contentWidth,
-  imagePlacement: contentAppearanceDefaults.imagePlacement,
-  textAlignment: contentAppearanceDefaults.textAlignment,
-  accentStyle: contentAppearanceDefaults.accentStyle,
-  badgeText: '',
-  ctaStyle: contentAppearanceDefaults.ctaStyle,
-  createdBy: '',
-}
-
-const contentTypeLabels: Record<ContentType, string> = {
-  announcement: 'Announcement',
-  event: 'Event',
-  video: 'Video / Performance',
-  resource: 'Resource',
-  studentWork: 'Student Work',
-  link: 'Webpage / Link',
-}
-
-const contentStatusLabels: Record<ContentStatus, string> = {
-  draft: 'Draft',
-  published: 'Published',
-  hidden: 'Hidden',
-}
-
-const contentStatusFilters = ['all', 'draft', 'published', 'hidden'] as const
-type ContentStatusFilter = (typeof contentStatusFilters)[number]
 
 const studentGuidePreziUrl = 'https://prezi.com/view/nGLmHqRktUdpbzEUlJmK/embed'
 
@@ -907,11 +839,7 @@ function HomePage() {
               <p>{t('latestFromIedSupport')}</p>
             </div>
           </div>
-          <div className="content-list ied-published-grid">
-            {iedContentItems.map((item) => (
-              <ContentCard item={item} key={item.id} />
-            ))}
-          </div>
+          <ContentLayout className="ied-published-grid" items={iedContentItems} />
         </section>
       )}
     </section>
@@ -1637,28 +1565,13 @@ function ContentSection({
       <div className="section-heading">
         <h2>{title}</h2>
       </div>
-      <div className={compact ? 'content-list compact' : 'content-list'}>
-        {items.map((item) => (
-          <ContentCard compact={compact} item={item} key={item.id} />
-        ))}
-      </div>
+      <ContentLayout compact={compact} items={items} />
     </section>
   )
 }
 
 function confirmDelete(message: string) {
   return window.confirm(message)
-}
-
-function formatEventDate(value: string) {
-  if (!value) {
-    return ''
-  }
-
-  const date = new Date(`${value}T00:00:00`)
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
 export function ProjectCard({ project }: { project: Project }) {
@@ -2883,35 +2796,6 @@ function HubAdminPage() {
   )
 }
 
-function hubDraftFromPage(hubPage: HubPageData): HubPageInput {
-  return {
-    sectionId: hubPage.sectionId,
-    title: hubPage.title,
-    subtitle: hubPage.subtitle,
-    intro: hubPage.intro,
-    description: hubPage.description,
-    heroImageUrl: hubPage.heroImageUrl,
-    accent: hubPage.accent,
-    parentSectionId: hubPage.parentSectionId,
-    childSectionIds: hubPage.childSectionIds,
-    primaryButtonText: hubPage.primaryButtonText,
-    primaryButtonUrl: hubPage.primaryButtonUrl,
-    secondaryButtonText: hubPage.secondaryButtonText,
-    secondaryButtonUrl: hubPage.secondaryButtonUrl,
-    featured: hubPage.featured,
-  }
-}
-
-function emptyContentDraftFor(config: (typeof hubConfigs)[number], userEmail: string): ContentItemInput {
-  return {
-    ...emptyContentItem,
-    department: config.department,
-    sectionId: config.sectionId,
-    sectionName: config.sectionName,
-    createdBy: userEmail,
-  }
-}
-
 function HubAdminEditor({
   config,
   contentItems,
@@ -2927,575 +2811,15 @@ function HubAdminEditor({
   loading: boolean
   userEmail: string
 }) {
-  const [hubDraft, setHubDraft] = useState<HubPageInput>(() => hubDraftFromPage(hubPage))
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [contentDraft, setContentDraft] = useState<ContentItemInput>(() => emptyContentDraftFor(config, userEmail))
-  const [statusFilter, setStatusFilter] = useState<ContentStatusFilter>('all')
-  const [previewItem, setPreviewItem] = useState<ContentItem | null>(null)
-  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop')
-  const [message, setMessage] = useState('')
-  const editingItem = contentItems.find((item) => item.id === editingId)
-  const visibleContentItems =
-    statusFilter === 'all' ? contentItems : contentItems.filter((item) => item.status === statusFilter)
-
-  const resetContentDraft = () => {
-    setEditingId(null)
-    setContentDraft(emptyContentDraftFor(config, userEmail))
-    setPreviewItem(null)
-    setMessage('')
-  }
-
-  const startEdit = (item: ContentItem) => {
-    setEditingId(item.id)
-    setContentDraft({
-      title: item.title,
-      summary: item.summary,
-      body: item.body,
-      type: item.type,
-      department: item.department,
-      sectionId: item.sectionId,
-      sectionName: item.sectionName,
-      status: item.status,
-      featured: item.featured,
-      mediaUrl: item.mediaUrl,
-      linkUrl: item.linkUrl,
-      eventDate: item.eventDate,
-      imageUrl: item.imageUrl,
-      displayStyle: item.displayStyle,
-      contentWidth: item.contentWidth,
-      imagePlacement: item.imagePlacement,
-      textAlignment: item.textAlignment,
-      accentStyle: item.accentStyle,
-      badgeText: item.badgeText ?? '',
-      ctaStyle: item.ctaStyle,
-      createdBy: item.createdBy || userEmail,
-      sortOrder: item.sortOrder,
-    })
-    setPreviewItem(null)
-    setMessage('')
-  }
-
-  const saveHub = async (event: FormEvent) => {
-    event.preventDefault()
-    setMessage('')
-
-    try {
-      await saveHubPage(config.sectionId, {
-        ...hubDraft,
-        sectionId: config.sectionId,
-        childSectionIds: config.children,
-      })
-      setMessage('Hub page settings saved.')
-    } catch (saveError) {
-      setMessage(saveError instanceof Error ? saveError.message : 'Could not save hub page settings.')
-    }
-  }
-
-  const saveContent = async (event: FormEvent) => {
-    event.preventDefault()
-    setMessage('')
-
-    const validationErrors = validateContentAppearance(contentDraft)
-
-    if (validationErrors.length > 0) {
-      setMessage(validationErrors[0])
-      return
-    }
-
-    const sanitizedDraft = sanitizeContentItemInput(contentDraft)
-    const payload = {
-      ...sanitizedDraft,
-      department: config.department,
-      sectionId: config.sectionId,
-      sectionName: config.sectionName,
-      createdBy: sanitizedDraft.createdBy || userEmail,
-      sortOrder: sanitizedDraft.sortOrder ?? contentItems.length + 1,
-      ctaStyle: sanitizedDraft.linkUrl || sanitizedDraft.mediaUrl ? sanitizedDraft.ctaStyle : 'hidden',
-    }
-
-    try {
-      if (editingId) {
-        await updateContentItem(editingId, payload)
-        setMessage('Content item updated.')
-      } else {
-        await createContentItem(payload)
-        resetContentDraft()
-        setMessage('Content item created.')
-      }
-    } catch (saveError) {
-      setMessage(saveError instanceof Error ? saveError.message : 'Could not save content item.')
-    }
-  }
-
-  const setItemStatus = async (item: ContentItem, status: ContentStatus) => {
-    await updateContentItem(item.id, { status })
-    setMessage(`"${item.title}" moved to ${contentStatusLabels[status]}.`)
-  }
-
-  const duplicateItem = async (item: ContentItem) => {
-    await createContentItem({
-      title: `${item.title} Copy`,
-      summary: item.summary,
-      body: item.body,
-      type: item.type,
-      department: config.department,
-      sectionId: config.sectionId,
-      sectionName: config.sectionName,
-      status: 'draft',
-      featured: false,
-      mediaUrl: item.mediaUrl,
-      linkUrl: item.linkUrl,
-      eventDate: item.eventDate,
-      imageUrl: item.imageUrl,
-      displayStyle: item.displayStyle,
-      contentWidth: item.contentWidth,
-      imagePlacement: item.imagePlacement,
-      textAlignment: item.textAlignment,
-      accentStyle: item.accentStyle,
-      badgeText: item.badgeText,
-      ctaStyle: item.ctaStyle,
-      createdBy: userEmail,
-      sortOrder: contentItems.length + 1,
-    })
-    setMessage(`"${item.title}" duplicated as a draft.`)
-  }
-
-  const deleteItem = async (item: ContentItem) => {
-    if (!confirmDelete(`Delete "${item.title}"? This cannot be undone.`)) {
-      return
-    }
-
-    await deleteContentItem(item.id)
-    if (previewItem?.id === item.id) {
-      setPreviewItem(null)
-    }
-    if (editingId === item.id) {
-      resetContentDraft()
-    }
-    setMessage(`"${item.title}" deleted.`)
-  }
-
-  const moveItem = async (item: ContentItem, direction: -1 | 1) => {
-    const orderedItems = contentItems.map((contentItem, index) => ({
-      ...contentItem,
-      sortOrder: contentItem.sortOrder ?? index + 1,
-    }))
-    const currentIndex = orderedItems.findIndex((contentItem) => contentItem.id === item.id)
-    const swapIndex = currentIndex + direction
-
-    if (currentIndex < 0 || swapIndex < 0 || swapIndex >= orderedItems.length) {
-      return
-    }
-
-    const current = orderedItems[currentIndex]
-    const swap = orderedItems[swapIndex]
-    await Promise.all([
-      updateContentItem(current.id, { sortOrder: swap.sortOrder }),
-      updateContentItem(swap.id, { sortOrder: current.sortOrder }),
-    ])
-    setMessage(`"${item.title}" display order updated.`)
-  }
-
   return (
-    <section className="admin-page performance-admin">
-      <PageHeading
-        eyebrow="Teacher dashboard"
-        title={`Manage ${config.sectionName}`}
-        body={`Create, preview, publish, hide, and order content for ${config.sectionName}.`}
-      />
-      <div className="admin-actions">
-        <Link className="secondary-button" to="/admin/hubs">
-          All Hubs
-        </Link>
-        <Link className="secondary-button" to={config.route}>
-          View public page
-        </Link>
-        <button className="primary-button blue" type="button" onClick={resetContentDraft}>
-          Add content
-        </button>
-      </div>
-      <p className="content-admin-context">
-        Managing hub: <strong>{config.sectionName}</strong> <span>{config.route}</span>
-      </p>
-      {message && <p className="form-message">{message}</p>}
-      {loading && <PageMessage title="Loading content" body="Fetching content items..." />}
-      {error && <PageMessage title="Could not load content" body={error} />}
-
-      <div className="content-admin-grid">
-        <div className="content-admin-list">
-          <form className="content-editor" onSubmit={saveHub}>
-            <div className="modal-header">
-              <h2>Hub Page Settings</h2>
-            </div>
-            <HubSettingsForm draft={hubDraft} onChange={setHubDraft} />
-            <button className="primary-button" type="submit">
-              Save Hub Settings
-            </button>
-          </form>
-
-          <form className="content-editor" onSubmit={saveContent}>
-            <div className="modal-header">
-              <h2>{editingItem ? 'Edit Content Item' : 'Create Content Item'}</h2>
-            </div>
-            <ContentItemForm draft={contentDraft} onChange={setContentDraft} />
-            <section className="content-preview-section" aria-label="Preview">
-              <div className="modal-header">
-                <h3>Preview</h3>
-                <div className="preview-toggle" role="group" aria-label="Preview device size">
-                  <button
-                    className={`small-button${previewViewport === 'desktop' ? ' is-active' : ''}`}
-                    type="button"
-                    onClick={() => setPreviewViewport('desktop')}
-                  >
-                    Desktop
-                  </button>
-                  <button
-                    className={`small-button${previewViewport === 'mobile' ? ' is-active' : ''}`}
-                    type="button"
-                    onClick={() => setPreviewViewport('mobile')}
-                  >
-                    Mobile
-                  </button>
-                </div>
-              </div>
-              <div className={`content-preview-frame content-preview-frame-${previewViewport}`}>
-                <ContentCard item={contentItemPreviewFromInput(contentDraft)} />
-              </div>
-            </section>
-            <button className="primary-button" type="submit">
-              {editingItem ? 'Save Content' : 'Create Content'}
-            </button>
-          </form>
-
-          {previewItem && (
-            <section className="content-editor preview-panel" aria-label="Content preview">
-              <div className="modal-header">
-                <h2>Preview</h2>
-                <button className="small-button" type="button" onClick={() => setPreviewItem(null)}>
-                  Close
-                </button>
-              </div>
-              <ContentCard item={previewItem} />
-            </section>
-          )}
-        </div>
-
-        <div className="content-admin-list">
-          <div className="section-heading content-manager-heading">
-            <div>
-              <h2>Content Items</h2>
-              <p>{contentItems.length} total items for {config.sectionName}</p>
-            </div>
-            <label>
-              Status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContentStatusFilter)}>
-                {contentStatusFilters.map((status) => (
-                  <option key={status} value={status}>
-                    {status === 'all' ? 'All' : contentStatusLabels[status]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {!visibleContentItems.length && !loading ? (
-            <div className="empty-manager-state">
-              <h3>{contentItems.length ? 'No items match this filter.' : 'No content items yet.'}</h3>
-              <p>
-                {contentItems.length
-                  ? 'Choose another status filter to see more content.'
-                  : 'Use Add content to create a draft, then publish it when it is ready.'}
-              </p>
-            </div>
-          ) : (
-            visibleContentItems.map((item) => (
-              <article className="admin-item content-admin-item" key={item.id}>
-                <div>
-                  <div className="content-item-badges">
-                    <span className="badge">{contentTypeLabels[item.type]}</span>
-                    <span className={`status-badge status-${item.status}`}>{contentStatusLabels[item.status]}</span>
-                  </div>
-                  <h2>{item.title}</h2>
-                  <p className="meta">
-                    {config.sectionName} {item.eventDate ? `/ ${formatEventDate(item.eventDate)}` : ''}
-                  </p>
-                  <p>{item.summary}</p>
-                </div>
-                <div className="admin-item-actions">
-                  <button
-                    className="secondary-button icon-button"
-                    disabled={contentItems[0]?.id === item.id}
-                    type="button"
-                    onClick={() => void moveItem(item, -1)}
-                    title="Move up"
-                  >
-                    Up
-                  </button>
-                  <button
-                    className="secondary-button icon-button"
-                    disabled={contentItems[contentItems.length - 1]?.id === item.id}
-                    type="button"
-                    onClick={() => void moveItem(item, 1)}
-                    title="Move down"
-                  >
-                    Down
-                  </button>
-                  <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
-                    Edit
-                  </button>
-                  <button className="secondary-button" type="button" onClick={() => setPreviewItem(item)}>
-                    Preview
-                  </button>
-                  <button className="secondary-button" type="button" onClick={() => void duplicateItem(item)}>
-                    Duplicate
-                  </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => void setItemStatus(item, item.status === 'published' ? 'hidden' : 'published')}
-                  >
-                    {item.status === 'published' ? 'Unpublish' : 'Publish'}
-                  </button>
-                  <button
-                    className="danger-button"
-                    type="button"
-                    onClick={() => void deleteItem(item)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function HubSettingsForm({
-  draft,
-  onChange,
-}: {
-  draft: HubPageInput
-  onChange: (draft: HubPageInput) => void
-}) {
-  const update = (field: keyof HubPageInput, value: string | boolean) => {
-    onChange({ ...draft, [field]: value })
-  }
-
-  return (
-    <div className="form-grid">
-      <label>
-        Title
-        <input value={draft.title} onChange={(event) => update('title', event.target.value)} required />
-      </label>
-      <label>
-        Subtitle
-        <input value={draft.subtitle} onChange={(event) => update('subtitle', event.target.value)} />
-      </label>
-      <label className="span-2">
-        Intro
-        <input value={draft.intro} onChange={(event) => update('intro', event.target.value)} />
-      </label>
-      <label className="span-2">
-        Description
-        <textarea value={draft.description} onChange={(event) => update('description', event.target.value)} />
-      </label>
-      <label>
-        Hero image URL
-        <input value={draft.heroImageUrl} onChange={(event) => update('heroImageUrl', event.target.value)} type="url" />
-      </label>
-      <label>
-        Accent color
-        <input value={draft.accent} onChange={(event) => update('accent', event.target.value)} />
-      </label>
-      <label>
-        Primary button text
-        <input value={draft.primaryButtonText} onChange={(event) => update('primaryButtonText', event.target.value)} />
-      </label>
-      <label>
-        Primary button URL
-        <input value={draft.primaryButtonUrl} onChange={(event) => update('primaryButtonUrl', event.target.value)} />
-      </label>
-      <label>
-        Secondary button text
-        <input value={draft.secondaryButtonText} onChange={(event) => update('secondaryButtonText', event.target.value)} />
-      </label>
-      <label>
-        Secondary button URL
-        <input value={draft.secondaryButtonUrl} onChange={(event) => update('secondaryButtonUrl', event.target.value)} />
-      </label>
-      <label className="checkbox-row span-2">
-        <input checked={draft.featured} onChange={(event) => update('featured', event.target.checked)} type="checkbox" />
-        <span>Feature this hub in admin lists</span>
-      </label>
-    </div>
-  )
-}
-
-function ContentItemForm({
-  draft,
-  onChange,
-}: {
-  draft: ContentItemInput
-  onChange: (draft: ContentItemInput) => void
-}) {
-  const update = (field: keyof ContentItemInput, value: string | boolean) => {
-    onChange({ ...draft, [field]: value })
-  }
-
-  const hasImage = Boolean(draft.imageUrl.trim())
-  const hasLink = Boolean(draft.linkUrl.trim() || draft.mediaUrl.trim())
-  const appearanceDisabled = !hasImage
-  const ctaDisabled = !hasLink
-
-  return (
-    <>
-      <div className="form-grid">
-        <label>
-          Title
-          <input value={draft.title} onChange={(event) => update('title', event.target.value)} required />
-        </label>
-        <label>
-          Type
-          <select value={draft.type} onChange={(event) => update('type', event.target.value as ContentType)} required>
-            {contentTypes.map((type) => (
-              <option key={type} value={type}>
-                {contentTypeLabels[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Status
-          <select value={draft.status} onChange={(event) => update('status', event.target.value as ContentStatus)} required>
-            {Object.entries(contentStatusLabels).map(([status, label]) => (
-              <option key={status} value={status}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Event date
-          <input value={draft.eventDate} onChange={(event) => update('eventDate', event.target.value)} type="date" />
-        </label>
-        <label className="span-2">
-          Summary
-          <input value={draft.summary} onChange={(event) => update('summary', event.target.value)} required />
-        </label>
-        <label className="span-2">
-          Body
-          <textarea value={draft.body} onChange={(event) => update('body', event.target.value)} />
-        </label>
-        <label>
-          YouTube or Google Drive link
-          <input value={draft.mediaUrl} onChange={(event) => update('mediaUrl', event.target.value)} type="url" />
-        </label>
-        <label>
-          Webpage/resource link
-          <input value={draft.linkUrl} onChange={(event) => update('linkUrl', event.target.value)} type="url" />
-        </label>
-        <label className="span-2">
-          Image URL
-          <input value={draft.imageUrl} onChange={(event) => update('imageUrl', event.target.value)} type="url" />
-        </label>
-        <label className="checkbox-row span-2">
-          <input checked={draft.featured} onChange={(event) => update('featured', event.target.checked)} type="checkbox" />
-          <span>Feature this item on the public hub</span>
-        </label>
-      </div>
-
-      <section className="display-layout-section" aria-labelledby="display-layout-heading">
-        <div className="section-heading">
-          <div>
-            <h3 id="display-layout-heading">Display &amp; Layout</h3>
-            <p>Choose a simple public presentation for this item.</p>
-          </div>
-        </div>
-        <div className="form-grid">
-          <label>
-            Display style
-            <select value={draft.displayStyle} onChange={(event) => update('displayStyle', event.target.value as ContentItemInput['displayStyle'])}>
-              {Object.entries(contentDisplayStyleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Content width
-            <select value={draft.contentWidth} onChange={(event) => update('contentWidth', event.target.value as ContentItemInput['contentWidth'])}>
-              {Object.entries(contentWidthLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Text alignment
-            <select value={draft.textAlignment} onChange={(event) => update('textAlignment', event.target.value as ContentItemInput['textAlignment'])}>
-              {Object.entries(contentTextAlignmentLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Visual emphasis
-            <select value={draft.accentStyle} onChange={(event) => update('accentStyle', event.target.value as ContentItemInput['accentStyle'])}>
-              {Object.entries(contentAccentStyleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="span-2">
-            Badge text
-            <input
-              value={draft.badgeText ?? ''}
-              maxLength={24}
-              onChange={(event) => update('badgeText', event.target.value)}
-              placeholder="Optional short label"
-            />
-          </label>
-          <label>
-            Image placement
-            <select
-              disabled={appearanceDisabled}
-              value={appearanceDisabled ? 'hidden' : draft.imagePlacement}
-              onChange={(event) => update('imagePlacement', event.target.value as ContentItemInput['imagePlacement'])}
-            >
-              {Object.entries(contentImagePlacementLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            {!hasImage && <span className="field-help">Add an image to choose placement.</span>}
-          </label>
-          <label>
-            CTA presentation
-            <select
-              disabled={ctaDisabled}
-              value={ctaDisabled ? 'hidden' : draft.ctaStyle}
-              onChange={(event) => update('ctaStyle', event.target.value as ContentItemInput['ctaStyle'])}
-            >
-              {Object.entries(contentCtaStyleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            {!hasLink && <span className="field-help">Add a link or media URL to show a CTA.</span>}
-          </label>
-        </div>
-      </section>
-    </>
+    <HubContentLibrary
+      config={config}
+      contentItems={contentItems}
+      error={error}
+      hubPage={hubPage}
+      loading={loading}
+      userEmail={userEmail}
+    />
   )
 }
 

@@ -15,11 +15,17 @@ describe('contentValidation', () => {
       validateContentAppearance({
         displayStyle: 'media',
         contentWidth: 'wide',
+        layoutColumns: 'two',
         imagePlacement: 'right',
         textAlignment: 'center',
         accentStyle: 'esl',
         badgeText: 'Event',
         ctaStyle: 'secondary',
+        cardShape: 'soft',
+        contentDensity: 'compact',
+        imageRatio: 'banner',
+        badgeStyle: 'outline',
+        backgroundStyle: 'gradient',
       }),
     ).toEqual([])
 
