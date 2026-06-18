@@ -6,7 +6,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 
 let testEnv: RulesTestEnvironment
 
@@ -25,6 +25,21 @@ const disabledEditorAuth = {
   uid: 'disabled-editor',
   email: 'disabled.editor@example.com',
   email_verified: true,
+}
+const recordSuperAdminAuth = {
+  uid: 'record-super-admin',
+  email: 'record.super@example.com',
+  email_verified: true,
+}
+const wrongBootstrapEmailAuth = {
+  uid: 'wrong-bootstrap',
+  email: 'not-gastonstuart@googlemail.com',
+  email_verified: true,
+}
+const unverifiedBootstrapAuth = {
+  uid: 'unverified-bootstrap',
+  email: 'gastonstuart@googlemail.com',
+  email_verified: false,
 }
 
 const pendingProject = {
@@ -83,6 +98,15 @@ async function seedAdminUsers() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
+    await setDoc(doc(db, 'adminUsers', recordSuperAdminAuth.uid), {
+      email: recordSuperAdminAuth.email,
+      displayName: 'Record Super Admin',
+      role: 'superAdmin',
+      active: true,
+      allowedSectionIds: ['*'],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
   })
 }
 
@@ -133,11 +157,29 @@ describe('Firestore security rules', () => {
     await assertFails(getDoc(doc(db, 'contentItems', 'draft')))
   })
 
-  it('allows public pending project creation and rejects approved creation or updates', async () => {
+  it('allows public pending project creation and rejects approved creation, updates, and deletes', async () => {
     const db = testEnv.unauthenticatedContext().firestore()
     await assertSucceeds(setDoc(doc(db, 'projects', 'pending-public'), pendingProject))
     await assertFails(setDoc(doc(db, 'projects', 'approved-public'), { ...pendingProject, status: 'approved' }))
     await assertFails(updateDoc(doc(db, 'projects', 'pending-public'), { status: 'approved' }))
+    await assertFails(deleteDoc(doc(db, 'projects', 'pending-public')))
+  })
+
+  it('rejects invalid public pending submissions', async () => {
+    const db = testEnv.unauthenticatedContext().firestore()
+
+    await assertFails(setDoc(doc(db, 'projects', 'bad-site'), {
+      ...pendingProject,
+      googleSitesUrl: 'https://example.com/not-google-sites',
+    }))
+    await assertFails(setDoc(doc(db, 'projects', 'bad-image'), {
+      ...pendingProject,
+      imageUrl: 'http://example.com/image.jpg',
+    }))
+    await assertFails(setDoc(doc(db, 'projects', 'bad-featured'), {
+      ...pendingProject,
+      featured: true,
+    }))
   })
 
   it('allows verified bootstrap super admin to manage protected data', async () => {
@@ -164,6 +206,50 @@ describe('Firestore security rules', () => {
       eventDate: '',
       imageUrl: '',
       createdBy: bootstrapAuth.email,
+    }))
+  })
+
+  it('requires the bootstrap super admin to use the exact verified owner email', async () => {
+    const wrongEmailDb = testEnv.authenticatedContext(wrongBootstrapEmailAuth.uid, wrongBootstrapEmailAuth).firestore()
+    const unverifiedDb = testEnv.authenticatedContext(unverifiedBootstrapAuth.uid, unverifiedBootstrapAuth).firestore()
+
+    await assertFails(setDoc(doc(wrongEmailDb, 'adminUsers', 'blocked-wrong-email'), {
+      email: 'blocked@example.com',
+      displayName: 'Blocked',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['eep'],
+    }))
+    await assertFails(setDoc(doc(unverifiedDb, 'adminUsers', 'blocked-unverified'), {
+      email: 'blocked@example.com',
+      displayName: 'Blocked',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['eep'],
+    }))
+  })
+
+  it('allows active adminUsers super admins to manage protected data', async () => {
+    await seedAdminUsers()
+    const db = testEnv.authenticatedContext(recordSuperAdminAuth.uid, recordSuperAdminAuth).firestore()
+
+    await assertSucceeds(setDoc(doc(db, 'adminUsers', 'managed-by-record-super'), {
+      email: 'managed@example.com',
+      displayName: 'Managed',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['eep'],
+    }))
+    await assertSucceeds(setDoc(doc(db, 'hubPages', 'esl-social-studies'), {
+      department: 'ESL',
+      sectionId: 'esl-social-studies',
+      sectionName: 'Social Studies',
+      title: 'Social Studies',
+      subtitle: 'Published settings',
+      body: 'Visible hub copy',
+      accent: '#b45f24',
+      heroImageUrl: '',
+      updatedAt: serverTimestamp(),
     }))
   })
 
