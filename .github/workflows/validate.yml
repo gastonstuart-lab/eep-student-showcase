@@ -74,8 +74,11 @@ jobs:
       - name: Start Firebase emulators
         run: |
           npx firebase emulators:start --only auth,firestore,functions > firebase-emulators.log 2>&1 &
-          for i in {1..60}; do
-            if curl --silent --fail http://127.0.0.1:4400/emulators >/dev/null; then
+          for i in {1..90}; do
+            if bash -c '</dev/tcp/127.0.0.1/9099' 2>/dev/null \
+              && bash -c '</dev/tcp/127.0.0.1/8080' 2>/dev/null \
+              && bash -c '</dev/tcp/127.0.0.1/5001' 2>/dev/null; then
+              sleep 3
               exit 0
             fi
             sleep 2
@@ -86,6 +89,9 @@ jobs:
       - name: Seed temporary local owner
         env:
           LOCAL_OWNER_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          GCLOUD_PROJECT: eep-student-showcase
         run: npm --prefix functions run seed:owner:local
 
       - name: Authenticated admin and studio browser checks
