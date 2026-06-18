@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   EmailAuthProvider,
   onAuthStateChanged,
@@ -7,7 +7,6 @@ import {
   reload,
   signInWithEmailAndPassword,
   signOut,
-  updatePassword,
   type User,
 } from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
@@ -83,7 +82,7 @@ export function mapAuthError(error: unknown): string {
     return 'Too many attempts were made. Please wait a while before trying again.'
   }
 
-  if (code === 'auth/network-request-failed' || message.toLowerCase().includes('network')) {
+  if (code === 'auth/network-request-failed' || code === 'functions/unavailable' || message.toLowerCase().includes('network')) {
     return 'The network connection is unavailable. Check your connection and try again.'
   }
 
@@ -91,7 +90,15 @@ export function mapAuthError(error: unknown): string {
     return 'This staff account has been disabled. Ask an IED Hub administrator for help.'
   }
 
-  if (message.includes('Firebase Auth is not configured')) {
+  if (code === 'functions/failed-precondition') {
+    return 'For security, sign out and sign in again before changing the password.'
+  }
+
+  if (code === 'functions/permission-denied') {
+    return 'This account is not authorised to complete that staff action.'
+  }
+
+  if (message.includes('Firebase Auth is not configured') || message.includes('Firebase Functions are not configured')) {
     return 'Firebase is not connected. Ask the site administrator to check the app configuration.'
   }
 
@@ -108,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [adminRecordState, setAdminRecordState] = useState<{ uid: string; record: AdminUser | null } | null>(null)
   const [adminError, setAdminError] = useState('')
   const [authVersion, setAuthVersion] = useState(0)
+  const ownerBootstrapUid = useRef('')
 
   useEffect(() => {
     if (!auth) {
@@ -124,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) {
+      ownerBootstrapUid.current = ''
       return undefined
     }
 
@@ -140,6 +149,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return unsubscribe
   }, [authVersion, user])
+
+  useEffect(() => {
+    const isProtectedOwner = user?.email?.toLowerCase() === bootstrapSuperAdminEmail
+
+    if (!user || !isProtectedOwner || !functions || ownerBootstrapUid.current === user.uid) {
+      return
+    }
+
+    ownerBootstrapUid.current = user.uid
+    const ensureOwner = httpsCallable(functions, 'ensureProtectedOwnerRecord')
+
+    void ensureOwner()
+      .then(() => {
+        setAdminRecordState(null)
+        setAdminError('')
+        setAuthVersion((version) => version + 1)
+      })
+      .catch(() => {
+        ownerBootstrapUid.current = ''
+        setAdminError('Protected owner access is active, but the persistent owner record could not be prepared.')
+      })
+  }, [user])
 
   const userUid = user?.uid
   const userEmail = user?.email ?? null
@@ -173,11 +204,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const observedAdminUid = adminRecordState?.uid ?? ''
   const adminRecord = observedAdminUid === userUid ? adminRecordState?.record ?? null : null
   const isAdminRecordLoading = Boolean(
-      user &&
-      isFirebaseConfigured &&
-      !bootstrapAdmin &&
-      observedAdminUid !== userUid &&
-      !adminError,
+    user &&
+    isFirebaseConfigured &&
+    !bootstrapAdmin &&
+    observedAdminUid !== userUid &&
+    !adminError,
   )
 
   const effectiveAdmin = useMemo<EffectiveAdmin | null>(() => {
@@ -256,15 +287,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error('No signed-in staff account was found.')
         }
 
-        await reauthenticateWithCredential(currentUser, EmailAuthProvider.credential(currentUser.email, currentPassword))
-        await updatePassword(currentUser, newPassword)
-
-        if (functions) {
-          const completeRequiredPasswordChange = httpsCallable(functions, 'completeRequiredPasswordChange')
-          await completeRequiredPasswordChange()
+        if (!functions) {
+          throw new Error('Firebase Functions are not configured.')
         }
 
+        await reauthenticateWithCredential(currentUser, EmailAuthProvider.credential(currentUser.email, currentPassword))
         await currentUser.getIdToken(true)
+        const changeOwnPassword = httpsCallable(functions, 'changeOwnPassword')
+        await changeOwnPassword({ newPassword })
+        await signOut(auth)
+        setUser(null)
         setAdminRecordState(null)
         setAuthVersion((version) => version + 1)
       },
