@@ -97,13 +97,13 @@ service cloud.firestore {
     }
 
     match /projects/{projectId} {
-      allow read: if resource.data.status == 'approved' || isAdmin();
-      allow create: if isValidProjectCreate() || isAdmin();
+      allow read: if resource.data.status == 'approved' || canManageProjects();
+      allow create: if isValidProjectCreate() || canManageProjects();
       allow update, delete: if canManageProjects();
     }
 
     match /contentItems/{contentItemId} {
-      allow read: if resource.data.status == 'published' || isAdmin();
+      allow read: if resource.data.status == 'published' || canManageSection(resource.data.sectionId);
       allow create: if canManageSection(request.resource.data.sectionId);
       allow update: if canManageSection(resource.data.sectionId) && canManageSection(request.resource.data.sectionId);
       allow delete: if canManageSection(resource.data.sectionId);
