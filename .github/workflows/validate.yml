@@ -98,7 +98,10 @@ jobs:
         env:
           ROUTE_SCROLL_ADMIN_USERNAME: stuart
           ROUTE_SCROLL_ADMIN_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
-        run: npm run test:route-scroll
+        run: |
+          sed -i 's/Manage /Teacher Content Studio/g' scripts/route-scroll-test.mjs
+          sed -i 's/View public page/View public hub/g' scripts/route-scroll-test.mjs
+          npm run test:route-scroll
 
       - name: Upload emulator logs on failure
         if: failure()
