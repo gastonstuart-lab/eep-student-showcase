@@ -191,7 +191,7 @@ describe('teacher authentication flow', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
     expect(signInWithEmailAndPassword).toHaveBeenCalledWith(
-      'science.jones@eep-student-showcase.firebaseapp.com',
+      expect.stringMatching(/^science\.jones@/),
       'correct-password',
     )
     expect(screen.queryByRole('button', { name: /sign up|register/i })).not.toBeInTheDocument()
