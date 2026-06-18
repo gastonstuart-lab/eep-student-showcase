@@ -295,7 +295,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await currentUser.getIdToken(true)
         const changeOwnPassword = httpsCallable(functions, 'changeOwnPassword')
         await changeOwnPassword({ newPassword })
-        await signOut(auth)
+        if (auth) {
+          await signOut(auth)
+        }
         setUser(null)
         setAdminRecordState(null)
         setAuthVersion((version) => version + 1)

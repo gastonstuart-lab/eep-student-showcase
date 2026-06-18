@@ -36,7 +36,7 @@ import { categoryTranslationKeys, statusTranslationKeys, type TranslationKey } f
 import { useAllPublishedContentItems, useContentItems } from './useContentItems'
 import { useHubPage, useHubPages } from './useHubPages'
 import { useProjects } from './useProjects'
-import { archiveStaffUser, createStaffUser, disableStaffUser, enableStaffUser, resetStaffPassword, updateStaffAccess } from './staffFunctions'
+import { archiveStaffUser, createStaffUser, disableStaffUser, enableStaffUser, ensureProtectedOwnerRecord, resetStaffPassword, updateStaffAccess } from './staffFunctions'
 import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
@@ -2078,7 +2078,7 @@ function PasswordChangePage() {
 
     try {
       await changePassword(currentPassword, newPassword)
-      navigate('/admin', { replace: true })
+      navigate('/login', { replace: true })
     } catch (changeError) {
       setError(mapAuthError(changeError))
     } finally {
@@ -2416,6 +2416,11 @@ function AdminUsersPage() {
   }
 
   const resetPassword = async (item: AdminUser) => {
+    if (item.protectedOwner) {
+      setMessage(`The protected owner ${protectedOwnerUsername} cannot be reset by staff management.`)
+      return
+    }
+
     const nextTemporaryPassword = window.prompt(`Enter a new temporary password for ${item.username}. It will not be stored.`)
 
     if (!nextTemporaryPassword) {
@@ -2446,6 +2451,15 @@ function AdminUsersPage() {
     setMessage(`Archived ${item.username}.`)
   }
 
+  const bootstrapProtectedOwner = async () => {
+    try {
+      await ensureProtectedOwnerRecord()
+      setMessage(`Protected owner record for ${protectedOwnerUsername} is ready.`)
+    } catch (bootstrapError) {
+      setMessage(bootstrapError instanceof Error ? bootstrapError.message : 'Could not bootstrap the protected owner record.')
+    }
+  }
+
   return (
     <section className="admin-page">
       <PageHeading
@@ -2458,7 +2472,10 @@ function AdminUsersPage() {
       </p>
       {adminUser?.source === 'bootstrap' && (
         <p className="module-note quiet">
-          You are using the protected bootstrap owner path. After Functions are configured, create the persisted <strong>stuart</strong> staff record before adding other staff.
+          You are using the protected bootstrap owner path. Functions can repair the persisted <strong>stuart</strong> staff record automatically.
+          <button className="small-button" type="button" onClick={() => void bootstrapProtectedOwner()}>
+            Repair owner record
+          </button>
         </p>
       )}
       {message && <p className="form-message" aria-live="polite">{message}</p>}
@@ -2524,7 +2541,7 @@ function AdminUsersPage() {
                   <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
                     Edit
                   </button>
-                  <button className="secondary-button" type="button" onClick={() => void resetPassword(item)}>
+                  <button className="secondary-button" type="button" disabled={item.protectedOwner} onClick={() => void resetPassword(item)}>
                     Reset password
                   </button>
                   <button className="secondary-button" type="button" disabled={item.active} onClick={() => void activateAdmin(item)}>
@@ -2629,11 +2646,11 @@ function AdminUserForm({
         </select>
       </label>
       <label className="checkbox-row">
-        <input checked={draft.active} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
+        <input checked={draft.active} disabled={draft.protectedOwner} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
         <span>Account is active</span>
       </label>
       <label className="checkbox-row">
-        <input checked={draft.mustChangePassword} onChange={(event) => update('mustChangePassword', event.target.checked)} type="checkbox" />
+        <input checked={draft.mustChangePassword} disabled={draft.protectedOwner} onChange={(event) => update('mustChangePassword', event.target.checked)} type="checkbox" />
         <span>Require password change at next login</span>
       </label>
       {!editing && (

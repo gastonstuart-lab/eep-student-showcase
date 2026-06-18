@@ -36,3 +36,7 @@ export const enableStaffUser = (uid: string) => httpsCallable(requireFunctions()
 export const disableStaffUser = (uid: string) => httpsCallable(requireFunctions(), 'disableStaffUser')({ uid })
 
 export const archiveStaffUser = (uid: string) => httpsCallable(requireFunctions(), 'archiveStaffUser')({ uid })
+
+export const ensureProtectedOwnerRecord = () => httpsCallable(requireFunctions(), 'ensureProtectedOwnerRecord')()
+
+export const changeOwnPassword = (newPassword: string) => httpsCallable(requireFunctions(), 'changeOwnPassword')({ newPassword })

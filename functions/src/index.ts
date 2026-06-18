@@ -16,7 +16,6 @@ import {
   buildStaffDocument,
   fullPermissions,
   normalizePermissions,
-  normalizeUsername,
   protectedOwnerEmail,
   protectedOwnerNeedsRepair,
   protectedOwnerUsername,
@@ -26,7 +25,6 @@ import {
   type AdminRole,
   type StaffActor,
   type StaffPayload,
-  type StaffPermissions,
   type StaffTarget,
 } from './staffSecurity.js'
 

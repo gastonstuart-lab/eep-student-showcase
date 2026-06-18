@@ -1,5 +1,6 @@
 export const protectedOwnerEmail = 'gastonstuart@googlemail.com'
 export const protectedOwnerUsername = 'stuart'
+export const defaultStaffAuthDomain = 'staff.eep-student-showcase.local'
 
 const reservedUsernames = new Set(['admin', 'administrator', 'root', 'system', 'support', 'firebase'])
 
@@ -24,8 +25,7 @@ export function validateStaffUsername(username: string) {
 export function getStaffAuthDomain() {
   return (
     import.meta.env.VITE_STAFF_AUTH_DOMAIN ||
-    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
-    'staff.eep-student-showcase.local'
+    defaultStaffAuthDomain
   )
     .replace(/^https?:\/\//, '')
     .trim()

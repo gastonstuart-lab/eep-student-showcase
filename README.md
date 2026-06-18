@@ -91,7 +91,7 @@ Staff sign in at `/login` with:
 - `Username`
 - `Password`
 
-The browser normalizes the username and signs in to Firebase Auth with a hidden internal email. For example, `science.jones` becomes `science.jones@VITE_STAFF_AUTH_DOMAIN`. The migration username `stuart` maps to the protected owner Auth email `gastonstuart@googlemail.com`.
+The browser normalizes the username and signs in to Firebase Auth with a hidden internal email. The frontend and Functions backend both use the stable default internal domain `staff.eep-student-showcase.local`; for example, `science.jones` becomes `science.jones@staff.eep-student-showcase.local`. If `VITE_STAFF_AUTH_DOMAIN` is overridden for the browser, the Functions environment variable `STAFF_AUTH_DOMAIN` must be set to the exact same hostname. Do not use `GCLOUD_PROJECT` or the Firebase Auth domain as the staff email domain. The migration username `stuart` maps to the protected owner Auth email `gastonstuart@googlemail.com`.
 
 Staff access records live in `adminUsers/{uid}` and include:
 
@@ -125,7 +125,7 @@ username: stuart
 Auth email: gastonstuart@googlemail.com
 ```
 
-The protected owner bootstrap path does not depend on email verification. The protected owner cannot be disabled, archived, or demoted by ordinary staff management flows. Only the protected owner may create or change another super administrator.
+The protected owner bootstrap path does not depend on email verification. After Stuart signs in, the `ensureProtectedOwnerRecord` callable creates or repairs `adminUsers/{uid}` and `staffUsernames/stuart` using the existing Firebase Auth UID; it never creates a second Auth user. The protected owner cannot be disabled, archived, demoted, made inactive, stripped of full permissions, stripped of `['*']` section access, reset through staff management, or changed to a non-owner username, even by the protected owner account itself. Only safe profile changes such as display name and contact email are accepted.
 
 ### Staff Workflow
 
@@ -133,8 +133,8 @@ The protected owner bootstrap path does not depend on email verification. The pr
 2. They create a staff account with username, display name, optional contact email, role, sections, permissions, and a temporary password.
 3. The browser calls the `createStaffUser` Cloud Function. The function validates the caller, reserves the username transactionally, creates the Firebase Auth user with the Admin SDK, creates the staff record, sets `mustChangePassword: true`, and writes an audit entry. The temporary password is never stored.
 4. The administrator shares the one-time temporary password out of band.
-5. The staff member signs in by username and must change the temporary password before any admin page opens.
-6. Administrator password resets use `resetStaffPassword`, set a new temporary password, revoke refresh tokens, set `mustChangePassword: true`, and write an audit entry.
+5. The staff member signs in by username and must change the temporary password before any admin page opens. The browser reauthenticates the current session, then calls `changeOwnPassword`; the server verifies recent authentication, updates the Firebase Auth password with the Admin SDK, clears `mustChangePassword` only after the password update succeeds, revokes refresh tokens, writes an audit entry, and tells the client to sign out and sign back in.
+6. Administrator password resets use `resetStaffPassword`, set a new temporary password, revoke refresh tokens, set `mustChangePassword: true`, and write an audit entry. The protected owner cannot be reset through this management flow.
 7. Disabling staff uses `disableStaffUser`, disables Firebase Auth, revokes refresh tokens, marks the staff record inactive, and preserves authored content and audit history.
 8. Archiving is preferred over permanent deletion. The current implementation archives/disables access rather than deleting Auth and audit history.
 
@@ -144,12 +144,13 @@ There is no public email password reset on `/login`; staff are told to contact a
 
 - React hides and gates staff UI based on the active staff record and explicit permissions.
 - Cloud Functions re-check caller permissions server-side before creating, updating, resetting, disabling, enabling, or archiving staff.
+- No standalone callable can clear `mustChangePassword`; only `changeOwnPassword` can clear it after a successful Admin SDK password update.
 - Firestore rules allow public reads only for approved/published content, allow public pending project submissions only through the validated schema, deny client writes to `adminUsers`, `staffUsernames`, and `auditLogs`, and enforce section/action permissions for private content.
 - A random Firebase Auth user without an active valid staff record has no private access.
 
 ### Authentication Blocking
 
-The repository includes a prepared `blockUnprovisionedStaffSignup` blocking function. It rejects user creation when the internal username was not reserved by the staff provisioning function.
+The repository includes a prepared `blockUnprovisionedStaffSignup` blocking function. It rejects every client-side Auth account creation attempt; a `staffUsernames/{username}` reservation document alone never authorises signup. Administrator provisioning uses the trusted `createStaffUser` callable and Firebase Admin SDK `createUser` from a secure backend. Firebase's Admin SDK user-management API is designed for elevated server-side account management, while blocking functions run in the client authentication flow before a client token is returned.
 
 Important operational caveat: Firebase Authentication blocking functions require upgrading Firebase Authentication to Identity Platform and registering/deploying the blocking function in Firebase/Google Cloud. This may require Blaze billing. Do not enable billing or deploy the blocking function without explicit approval.
 
@@ -158,7 +159,7 @@ Until Identity Platform blocking is enabled, arbitrary Firebase Auth account cre
 ### Migration
 
 - Stuart can sign in as `stuart`; internally this uses `gastonstuart@googlemail.com`.
-- After Functions are configured, create the persisted protected owner staff record for `stuart`.
+- After Functions are configured, `ensureProtectedOwnerRecord` automatically creates or repairs the persisted protected owner staff record for `stuart` using Stuart's existing Auth UID. `/admin/users` also provides a one-time repair action for the protected bootstrap path.
 - Keep `teacher@eep.com` disabled or unprivileged unless explicitly needed. Do not auto-grant it broad rights.
 
 ## Firestore Collections
