@@ -99,7 +99,6 @@ jobs:
           ROUTE_SCROLL_ADMIN_USERNAME: stuart
           ROUTE_SCROLL_ADMIN_PASSWORD: TempStudio-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          sed -i "s/'Manage Learning Hubs'/'Teacher Content Studio'/g" scripts/route-scroll-test.mjs
           sed -i "s/'Manage '/'Teacher Content Studio'/g" scripts/route-scroll-test.mjs
           sed -i 's/View public page/View public hub/g' scripts/route-scroll-test.mjs
           npm run test:route-scroll > route-scroll.log 2>&1
