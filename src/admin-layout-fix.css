@@ -7,3 +7,15 @@
   position: static;
   top: auto;
 }
+
+/*
+ * Published IED content is rendered asynchronously after Firestore finishes
+ * loading. The route-level reveal observer may already have completed by then,
+ * leaving this late-mounted section in the hidden reveal state. Keep published
+ * homepage content visible while preserving reveal animations elsewhere.
+ */
+.ied-published-content.reveal {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
