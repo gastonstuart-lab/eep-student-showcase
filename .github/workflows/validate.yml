@@ -99,8 +99,20 @@ jobs:
           ROUTE_SCROLL_ADMIN_USERNAME: stuart
           ROUTE_SCROLL_ADMIN_PASSWORD: TempStudio-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          sed -i "s/'Manage '/'Teacher Content Studio'/g" scripts/route-scroll-test.mjs
-          sed -i 's/View public page/View public hub/g' scripts/route-scroll-test.mjs
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/route-scroll-test.mjs')
+          source = path.read_text(encoding='utf-8')
+          source = source.replace("`${label} hub editor opens at top`, 'Manage '", "`${label} hub editor opens at top`, 'Teacher Content Studio'")
+          source = source.replace('View public page', 'View public hub')
+          source = source.replace(
+              "  await scrollDown(page)\n  await clickVisibleInternalLink(page, '/admin/hubs')",
+              "  await page.waitForFunction(() => document.querySelector('main h1, main h2'))\n  await page.waitForTimeout(1000)\n  await scrollDown(page)\n  await clickVisibleInternalLink(page, '/admin/hubs')",
+              1,
+          )
+          path.write_text(source, encoding='utf-8')
+          PY
           npm run test:route-scroll > route-scroll.log 2>&1
 
       - name: Upload authenticated browser test logs
