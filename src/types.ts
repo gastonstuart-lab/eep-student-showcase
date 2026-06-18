@@ -4,6 +4,7 @@ export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
 export type ContentStatus = 'draft' | 'published' | 'hidden'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
 export type Department = 'IED' | 'EEP' | 'ESL'
+export type AdminRole = 'superAdmin' | 'editor'
 
 export type ProjectCategory =
   | 'Local Businesses'
@@ -77,6 +78,19 @@ export interface HubPage {
 }
 
 export type HubPageInput = Omit<HubPage, 'id' | 'updatedAt'>
+
+export interface AdminUser {
+  id: string
+  email: string
+  displayName: string
+  role: AdminRole
+  active: boolean
+  allowedSectionIds: string[]
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
+}
+
+export type AdminUserInput = Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'>
 
 export const categories: ProjectCategory[] = [
   'Local Businesses',

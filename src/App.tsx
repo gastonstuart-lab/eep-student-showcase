@@ -10,7 +10,7 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom'
-import { AuthProvider, useAuth } from './auth'
+import { AuthProvider, bootstrapSuperAdminEmail, useAuth } from './auth'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
@@ -19,12 +19,16 @@ import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import {
   createContentItem,
   createProject,
+  deleteAdminUser,
   deleteContentItem,
   deleteProject,
+  saveAdminUser,
   saveHubPage,
   seedProjects,
+  updateAdminUser,
   updateContentItem,
   updateProject,
+  watchAdminUsers,
 } from './data'
 import { isFirebaseConfigured } from './firebase'
 import { hubConfigById, hubConfigs } from './hubs'
@@ -36,6 +40,9 @@ import { useProjects } from './useProjects'
 import {
   categories,
   contentTypes,
+  type AdminRole,
+  type AdminUser,
+  type AdminUserInput,
   type ContentItem,
   type ContentItemInput,
   type ContentStatus,
@@ -349,7 +356,7 @@ function App() {
 }
 
 function Shell() {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth()
   const { mode, t, text } = useLanguage()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -427,9 +434,16 @@ function Shell() {
           <LanguageToggle />
           {user ? (
             <>
-              <Link className="small-button" to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                {chromeText('navAdmin')}
-              </Link>
+              {isAdmin && (
+                <Link className="small-button" to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                  {chromeText('navAdmin')}
+                </Link>
+              )}
+              {isSuperAdmin && (
+                <Link className="small-button" to="/admin/users" onClick={() => setMobileMenuOpen(false)}>
+                  Access
+                </Link>
+              )}
               <button
                 className="small-button"
                 type="button"
@@ -479,7 +493,7 @@ function Shell() {
           <Route
             path="/admin/pending"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute sectionId="eep">
                 <PendingPage />
               </ProtectedRoute>
             }
@@ -487,7 +501,7 @@ function Shell() {
           <Route
             path="/admin/approved"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute sectionId="eep">
                 <ApprovedPage />
               </ProtectedRoute>
             }
@@ -505,6 +519,14 @@ function Shell() {
             element={
               <ProtectedRoute>
                 <HubAdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute requireSuperAdmin>
+                <AdminUsersPage />
               </ProtectedRoute>
             }
           />
@@ -554,15 +576,45 @@ function FirebaseNotice() {
   )
 }
 
-function ProtectedRoute({ children }: { children: ReactElement }) {
-  const { user, loading } = useAuth()
+function ProtectedRoute({
+  children,
+  requireSuperAdmin = false,
+  sectionId,
+}: {
+  children: ReactElement
+  requireSuperAdmin?: boolean
+  sectionId?: string
+}) {
+  const { user, loading, adminLoading, isAdmin, isSuperAdmin, canManageSection } = useAuth()
   const { t } = useLanguage()
 
-  if (loading) {
+  if (loading || adminLoading) {
     return <PageMessage title={t('checkingSessionTitle')} body={t('checkingSessionBody')} />
   }
 
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!isAdmin || (requireSuperAdmin && !isSuperAdmin) || (sectionId && !canManageSection(sectionId))) {
+    return <AccessDenied />
+  }
+
+  return children
+}
+
+export function AccessDenied() {
+  return (
+    <section className="admin-page">
+      <PageMessage
+        title="Access denied"
+        body="Your account is signed in, but it is not authorised to manage this area. Ask a super administrator to grant access."
+      />
+      <Link className="secondary-button" to="/">
+        Return to public hub
+      </Link>
+    </section>
+  )
 }
 
 function HomePage() {
@@ -778,7 +830,7 @@ function HubPageView({ sectionId }: { sectionId: string }) {
   const { user } = useAuth()
   const { hubPage, loading, error } = useHubPage(sectionId)
   const { contentItems, loading: contentLoading, error: contentError } = useContentItems(sectionId, 'published')
-  const { projects } = useProjects('approved')
+  const { projects } = useProjects('approved', sectionId === 'eep')
 
   if (!config || !hubPage) {
     return <PageMessage title="Hub not found" body="This learning hub is not available." />
@@ -1813,7 +1865,8 @@ function FirebaseMissingPanel() {
 }
 
 function AdminDashboard() {
-  const { projects, loading, error } = useProjects()
+  const { canManageProjects, isSuperAdmin } = useAuth()
+  const { projects, loading, error } = useProjects(undefined, canManageProjects)
   const { t } = useLanguage()
   const [seedMessage, setSeedMessage] = useState('')
 
@@ -1853,9 +1906,16 @@ function AdminDashboard() {
         <Link className="secondary-button" to="/admin/hubs">
           Hub Pages
         </Link>
-        <button className="secondary-button" type="button" onClick={() => void runSeed()}>
-          {t('seedSampleData')}
-        </button>
+        {isSuperAdmin && (
+          <Link className="secondary-button" to="/admin/users">
+            Manage Access
+          </Link>
+        )}
+        {canManageProjects && (
+          <button className="secondary-button" type="button" onClick={() => void runSeed()}>
+            {t('seedSampleData')}
+          </button>
+        )}
       </div>
       {seedMessage && <p className="form-message">{seedMessage}</p>}
       {loading && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
@@ -1874,6 +1934,8 @@ function AdminDashboard() {
 
 function HubAdminListPage() {
   const { hubPages, loading, error } = useHubPages()
+  const { canManageSection } = useAuth()
+  const manageableConfigs = hubConfigs.filter((config) => canManageSection(config.sectionId))
 
   return (
     <section className="admin-page">
@@ -1885,7 +1947,7 @@ function HubAdminListPage() {
       {loading && <PageMessage title="Loading hubs" body="Fetching saved hub settings..." />}
       {error && <PageMessage title="Could not load hubs" body={error} />}
       <div className="hub-admin-list">
-        {hubConfigs.map((config) => {
+        {manageableConfigs.map((config) => {
           const hubPage = hubPages.find((item) => item.sectionId === config.sectionId)
 
           return (
@@ -1901,14 +1963,290 @@ function HubAdminListPage() {
   )
 }
 
+const adminRoleLabels: Record<AdminRole, string> = {
+  superAdmin: 'Super administrator',
+  editor: 'Editor',
+}
+
+const emptyAdminUser: AdminUserInput = {
+  email: '',
+  displayName: '',
+  role: 'editor',
+  active: true,
+  allowedSectionIds: [],
+}
+
+function AdminUsersPage() {
+  const { user, adminUser } = useAuth()
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [editingId, setEditingId] = useState('')
+  const [draftUid, setDraftUid] = useState('')
+  const [draft, setDraft] = useState<AdminUserInput>(emptyAdminUser)
+  const editingUser = adminUsers.find((item) => item.id === editingId)
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      return undefined
+    }
+
+    return watchAdminUsers(
+      (nextAdminUsers) => {
+        setAdminUsers(nextAdminUsers)
+        setLoading(false)
+      },
+      (watchError) => {
+        setError(watchError.message)
+        setLoading(false)
+      },
+    )
+  }, [])
+
+  const startCreate = () => {
+    setEditingId('')
+    setDraftUid('')
+    setDraft(emptyAdminUser)
+    setMessage('')
+  }
+
+  const startEdit = (item: AdminUser) => {
+    setEditingId(item.id)
+    setDraftUid(item.id)
+    setDraft({
+      email: item.email,
+      displayName: item.displayName,
+      role: item.role,
+      active: item.active,
+      allowedSectionIds: item.allowedSectionIds,
+    })
+    setMessage('')
+  }
+
+  const saveAdmin = async (event: FormEvent) => {
+    event.preventDefault()
+    setMessage('')
+    const uid = draftUid.trim()
+
+    if (!uid) {
+      setMessage('Firebase UID is required.')
+      return
+    }
+
+    if (!draft.email.trim()) {
+      setMessage('Email is required.')
+      return
+    }
+
+    try {
+      if (editingId) {
+        await updateAdminUser(editingId, draft)
+        setMessage(`Updated access for ${draft.email}.`)
+      } else {
+        await saveAdminUser(uid, draft)
+        setMessage(`Created access for ${draft.email}.`)
+        startCreate()
+      }
+    } catch (saveError) {
+      setMessage(saveError instanceof Error ? saveError.message : 'Could not save administrator access.')
+    }
+  }
+
+  const deactivateAdmin = async (item: AdminUser) => {
+    if (item.id === user?.uid && adminUser?.source === 'bootstrap') {
+      setMessage(`The bootstrap owner ${bootstrapSuperAdminEmail} cannot remove their own final super-admin access here.`)
+      return
+    }
+
+    await updateAdminUser(item.id, { active: false })
+    setMessage(`Deactivated ${item.email}.`)
+  }
+
+  const removeAdmin = async (item: AdminUser) => {
+    if (!confirmDelete(`Remove access for ${item.email}?`)) {
+      return
+    }
+
+    if (item.id === user?.uid && adminUser?.source === 'bootstrap') {
+      setMessage(`The bootstrap owner ${bootstrapSuperAdminEmail} cannot remove their own final super-admin access here.`)
+      return
+    }
+
+    await deleteAdminUser(item.id)
+    setMessage(`Removed access for ${item.email}.`)
+  }
+
+  return (
+    <section className="admin-page">
+      <PageHeading
+        eyebrow="Super administrator"
+        title="Manage administrator access"
+        body="Add editors after they already have a Firebase Authentication account. Use the Firebase UID as the document ID."
+      />
+      <p className="content-admin-context">
+        Bootstrap owner: <strong>{bootstrapSuperAdminEmail}</strong>. This account must use a verified email address.
+      </p>
+      {message && <p className="form-message" aria-live="polite">{message}</p>}
+      {loading && <PageMessage title="Loading administrators" body="Fetching administrator records..." />}
+      {error && <PageMessage title="Could not load administrators" body={error} />}
+
+      <div className="content-admin-grid">
+        <form className="content-editor" onSubmit={saveAdmin}>
+          <div className="modal-header">
+            <h2>{editingUser ? `Edit ${editingUser.email}` : 'Add administrator or editor'}</h2>
+            {editingUser && (
+              <button className="small-button" type="button" onClick={startCreate}>
+                New
+              </button>
+            )}
+          </div>
+          <AdminUserForm draft={draft} uid={draftUid} editing={Boolean(editingId)} onDraftChange={setDraft} onUidChange={setDraftUid} />
+          <button className="primary-button" type="submit">
+            {editingUser ? 'Save access' : 'Create access'}
+          </button>
+        </form>
+
+        <div className="content-admin-list">
+          {adminUsers.length ? (
+            adminUsers.map((item) => (
+              <article className="admin-item content-admin-item" key={item.id}>
+                <div>
+                  <div className="content-item-badges">
+                    <span className={`status-badge ${item.active ? 'status-published' : 'status-hidden'}`}>
+                      {item.active ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="badge">{adminRoleLabels[item.role]}</span>
+                  </div>
+                  <h2>{item.displayName || item.email}</h2>
+                  <p className="meta">{item.email}</p>
+                  <p className="meta">UID: {item.id}</p>
+                  <p>
+                    Sections:{' '}
+                    {item.role === 'superAdmin'
+                      ? 'All sections'
+                      : item.allowedSectionIds.length
+                        ? item.allowedSectionIds.join(', ')
+                        : 'None'}
+                  </p>
+                </div>
+                <div className="admin-item-actions">
+                  <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
+                    Edit
+                  </button>
+                  <button className="secondary-button" type="button" disabled={!item.active} onClick={() => void deactivateAdmin(item)}>
+                    Deactivate
+                  </button>
+                  <button className="danger-button" type="button" onClick={() => void removeAdmin(item)}>
+                    Remove
+                  </button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="empty-manager-state">
+              <h3>No administrator records yet.</h3>
+              <p>The verified bootstrap owner can still manage the application.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function AdminUserForm({
+  draft,
+  uid,
+  editing,
+  onDraftChange,
+  onUidChange,
+}: {
+  draft: AdminUserInput
+  uid: string
+  editing: boolean
+  onDraftChange: (draft: AdminUserInput) => void
+  onUidChange: (uid: string) => void
+}) {
+  const update = (field: keyof AdminUserInput, value: string | boolean | string[]) => {
+    onDraftChange({ ...draft, [field]: value })
+  }
+
+  const toggleSection = (sectionId: string) => {
+    update(
+      'allowedSectionIds',
+      draft.allowedSectionIds.includes(sectionId)
+        ? draft.allowedSectionIds.filter((item) => item !== sectionId)
+        : [...draft.allowedSectionIds, sectionId],
+    )
+  }
+
+  return (
+    <div className="form-grid">
+      <label className="span-2">
+        Firebase UID
+        <input value={uid} onChange={(event) => onUidChange(event.target.value)} disabled={editing} required />
+      </label>
+      <label>
+        Email
+        <input value={draft.email} onChange={(event) => update('email', event.target.value)} required type="email" />
+      </label>
+      <label>
+        Display name
+        <input value={draft.displayName} onChange={(event) => update('displayName', event.target.value)} />
+      </label>
+      <label>
+        Role
+        <select value={draft.role} onChange={(event) => update('role', event.target.value as AdminRole)}>
+          {Object.entries(adminRoleLabels).map(([role, label]) => (
+            <option key={role} value={role}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="checkbox-row">
+        <input checked={draft.active} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
+        <span>Account is active</span>
+      </label>
+      {draft.role === 'editor' && (
+        <fieldset className="span-2 section-checkboxes">
+          <legend>Allowed sections</legend>
+          {hubConfigs.map((config) => (
+            <label className="checkbox-row" key={config.sectionId}>
+              <input
+                checked={draft.allowedSectionIds.includes(config.sectionId)}
+                onChange={() => toggleSection(config.sectionId)}
+                type="checkbox"
+              />
+              <span>
+                {config.sectionName} <small>({config.sectionId})</small>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+    </div>
+  )
+}
+
 function HubAdminPage() {
   const { sectionId = 'ied' } = useParams()
   const config = hubConfigById[sectionId]
-  const { user } = useAuth()
+  const { user, canManageSection } = useAuth()
+  const canManageHub = Boolean(config && canManageSection(config.sectionId))
   const { hubPage } = useHubPage(sectionId)
-  const { contentItems, loading, error } = useContentItems(sectionId)
+  const { contentItems, loading, error } = useContentItems(sectionId, undefined, canManageHub)
 
-  if (!config || !hubPage) {
+  if (!config) {
+    return <PageMessage title="Hub not found" body="This hub section is not available." />
+  }
+
+  if (!canManageHub) {
+    return <AccessDenied />
+  }
+
+  if (!hubPage) {
     return <PageMessage title="Hub not found" body="This hub section is not available." />
   }
 

@@ -4,17 +4,21 @@ import { watchAllPublishedContentItems, watchContentItems } from './data'
 import { isFirebaseConfigured } from './firebase'
 import type { ContentItem, ContentStatus } from './types'
 
-export function useContentItems(sectionId: string, status?: ContentStatus) {
+export function useContentItems(sectionId: string, status?: ContentStatus, enabled = true) {
   const [contentItems, setContentItems] = useState<ContentItem[]>([])
-  const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [loading, setLoading] = useState(isFirebaseConfigured && enabled)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !enabled) {
+      setContentItems([])
+      setLoading(false)
+      setError('')
       return undefined
     }
 
     setLoading(true)
+    setError('')
     const unsubscribe = watchContentItems(
       sectionId,
       (nextContentItems) => {
@@ -29,7 +33,7 @@ export function useContentItems(sectionId: string, status?: ContentStatus) {
     )
 
     return unsubscribe
-  }, [sectionId, status])
+  }, [enabled, sectionId, status])
 
   return { contentItems, loading, error }
 }

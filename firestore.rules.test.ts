@@ -1,0 +1,236 @@
+import { readFileSync } from 'node:fs'
+import { afterAll, afterEach, beforeAll, describe, it } from 'vitest'
+import {
+  assertFails,
+  assertSucceeds,
+  initializeTestEnvironment,
+  type RulesTestEnvironment,
+} from '@firebase/rules-unit-testing'
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+
+let testEnv: RulesTestEnvironment
+
+const projectId = 'eep-student-showcase-rules-test'
+const bootstrapAuth = {
+  uid: 'bootstrap-owner',
+  email: 'gastonstuart@googlemail.com',
+  email_verified: true,
+}
+const editorAuth = {
+  uid: 'science-editor',
+  email: 'science.editor@example.com',
+  email_verified: true,
+}
+const disabledEditorAuth = {
+  uid: 'disabled-editor',
+  email: 'disabled.editor@example.com',
+  email_verified: true,
+}
+
+const pendingProject = {
+  title: 'Student Google Site',
+  groupName: 'Team One',
+  className: 'EEP 8A',
+  members: 'A, B',
+  category: 'Creative Projects',
+  description: 'A student-built public website for review.',
+  audience: 'Classmates',
+  impact: 'Shares student learning with a real audience.',
+  googleSitesUrl: 'https://sites.google.com/view/student-site',
+  imageUrl: '',
+  status: 'pending',
+  featured: false,
+  studentPick: false,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+}
+
+beforeAll(async () => {
+  testEnv = await initializeTestEnvironment({
+    projectId,
+    firestore: {
+      rules: readFileSync('firestore.rules', 'utf8'),
+    },
+  })
+})
+
+afterEach(async () => {
+  await testEnv.clearFirestore()
+})
+
+afterAll(async () => {
+  await testEnv.cleanup()
+})
+
+async function seedAdminUsers() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore()
+    await setDoc(doc(db, 'adminUsers', editorAuth.uid), {
+      email: editorAuth.email,
+      displayName: 'Science Editor',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['esl-science'],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    await setDoc(doc(db, 'adminUsers', disabledEditorAuth.uid), {
+      email: disabledEditorAuth.email,
+      displayName: 'Disabled Editor',
+      role: 'editor',
+      active: false,
+      allowedSectionIds: ['esl-science'],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  })
+}
+
+describe('Firestore security rules', () => {
+  it('allows unauthenticated users to read approved projects and published content only', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore()
+      await setDoc(doc(db, 'projects', 'approved'), { ...pendingProject, status: 'approved' })
+      await setDoc(doc(db, 'projects', 'pending'), pendingProject)
+      await setDoc(doc(db, 'contentItems', 'published'), {
+        title: 'Published',
+        summary: 'Visible',
+        body: '',
+        type: 'announcement',
+        department: 'ESL',
+        sectionId: 'esl-science',
+        sectionName: 'Science',
+        status: 'published',
+        featured: false,
+        mediaUrl: '',
+        linkUrl: '',
+        eventDate: '',
+        imageUrl: '',
+        createdBy: '',
+      })
+      await setDoc(doc(db, 'contentItems', 'draft'), {
+        title: 'Draft',
+        summary: 'Private',
+        body: '',
+        type: 'announcement',
+        department: 'ESL',
+        sectionId: 'esl-science',
+        sectionName: 'Science',
+        status: 'draft',
+        featured: false,
+        mediaUrl: '',
+        linkUrl: '',
+        eventDate: '',
+        imageUrl: '',
+        createdBy: '',
+      })
+    })
+
+    const db = testEnv.unauthenticatedContext().firestore()
+    await assertSucceeds(getDoc(doc(db, 'projects', 'approved')))
+    await assertFails(getDoc(doc(db, 'projects', 'pending')))
+    await assertSucceeds(getDoc(doc(db, 'contentItems', 'published')))
+    await assertFails(getDoc(doc(db, 'contentItems', 'draft')))
+  })
+
+  it('allows public pending project creation and rejects approved creation or updates', async () => {
+    const db = testEnv.unauthenticatedContext().firestore()
+    await assertSucceeds(setDoc(doc(db, 'projects', 'pending-public'), pendingProject))
+    await assertFails(setDoc(doc(db, 'projects', 'approved-public'), { ...pendingProject, status: 'approved' }))
+    await assertFails(updateDoc(doc(db, 'projects', 'pending-public'), { status: 'approved' }))
+  })
+
+  it('allows verified bootstrap super admin to manage protected data', async () => {
+    const db = testEnv.authenticatedContext(bootstrapAuth.uid, bootstrapAuth).firestore()
+    await assertSucceeds(setDoc(doc(db, 'adminUsers', 'new-admin'), {
+      email: 'new@example.com',
+      displayName: 'New Admin',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['eep'],
+    }))
+    await assertSucceeds(setDoc(doc(db, 'contentItems', 'science'), {
+      title: 'Science',
+      summary: 'Admin write',
+      body: '',
+      type: 'announcement',
+      department: 'ESL',
+      sectionId: 'esl-science',
+      sectionName: 'Science',
+      status: 'draft',
+      featured: false,
+      mediaUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      imageUrl: '',
+      createdBy: bootstrapAuth.email,
+    }))
+  })
+
+  it('allows editor access to allowed sections and rejects disallowed sections and admin management', async () => {
+    await seedAdminUsers()
+    const db = testEnv.authenticatedContext(editorAuth.uid, editorAuth).firestore()
+
+    await assertSucceeds(setDoc(doc(db, 'contentItems', 'allowed'), {
+      title: 'Allowed',
+      summary: 'Allowed',
+      body: '',
+      type: 'announcement',
+      department: 'ESL',
+      sectionId: 'esl-science',
+      sectionName: 'Science',
+      status: 'draft',
+      featured: false,
+      mediaUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      imageUrl: '',
+      createdBy: editorAuth.email,
+    }))
+    await assertFails(setDoc(doc(db, 'contentItems', 'blocked'), {
+      title: 'Blocked',
+      summary: 'Blocked',
+      body: '',
+      type: 'announcement',
+      department: 'ESL',
+      sectionId: 'esl-social-studies',
+      sectionName: 'Social Studies',
+      status: 'draft',
+      featured: false,
+      mediaUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      imageUrl: '',
+      createdBy: editorAuth.email,
+    }))
+    await assertFails(setDoc(doc(db, 'adminUsers', 'escalation'), {
+      email: 'escalation@example.com',
+      displayName: 'Escalation',
+      role: 'superAdmin',
+      active: true,
+      allowedSectionIds: ['*'],
+    }))
+  })
+
+  it('rejects disabled administrator writes', async () => {
+    await seedAdminUsers()
+    const db = testEnv.authenticatedContext(disabledEditorAuth.uid, disabledEditorAuth).firestore()
+
+    await assertFails(setDoc(doc(db, 'contentItems', 'disabled'), {
+      title: 'Disabled',
+      summary: 'Disabled',
+      body: '',
+      type: 'announcement',
+      department: 'ESL',
+      sectionId: 'esl-science',
+      sectionName: 'Science',
+      status: 'draft',
+      featured: false,
+      mediaUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      imageUrl: '',
+      createdBy: disabledEditorAuth.email,
+    }))
+  })
+})

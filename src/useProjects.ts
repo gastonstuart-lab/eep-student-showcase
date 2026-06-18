@@ -4,17 +4,21 @@ import { isFirebaseConfigured } from './firebase'
 import { watchProjects } from './data'
 import type { Project, ProjectStatus } from './types'
 
-export function useProjects(status?: ProjectStatus) {
+export function useProjects(status?: ProjectStatus, enabled = true) {
   const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [loading, setLoading] = useState(isFirebaseConfigured && enabled)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !enabled) {
+      setProjects([])
+      setLoading(false)
+      setError('')
       return undefined
     }
 
     setLoading(true)
+    setError('')
     const unsubscribe = watchProjects(
       (nextProjects) => {
         setProjects(nextProjects)
@@ -28,7 +32,7 @@ export function useProjects(status?: ProjectStatus) {
     )
 
     return unsubscribe
-  }, [status])
+  }, [enabled, status])
 
   return { projects, loading, error }
 }

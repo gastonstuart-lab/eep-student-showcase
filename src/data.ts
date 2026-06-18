@@ -19,6 +19,8 @@ import type {
   ContentItem,
   ContentItemInput,
   ContentStatus,
+  AdminUser,
+  AdminUserInput,
   HubPage,
   HubPageInput,
   Project,
@@ -29,6 +31,7 @@ import type {
 const projectsPath = 'projects'
 const contentItemsPath = 'contentItems'
 const hubPagesPath = 'hubPages'
+const adminUsersPath = 'adminUsers'
 
 const requireDb = () => {
   if (!db) {
@@ -94,6 +97,17 @@ const hubPageFromFirestore = (id: string, data: DocumentData): HubPage => ({
   secondaryButtonText: data.secondaryButtonText ?? '',
   secondaryButtonUrl: data.secondaryButtonUrl ?? '',
   featured: Boolean(data.featured),
+  updatedAt: data.updatedAt,
+})
+
+const adminUserFromFirestore = (id: string, data: DocumentData): AdminUser => ({
+  id,
+  email: data.email ?? '',
+  displayName: data.displayName ?? '',
+  role: data.role === 'superAdmin' ? 'superAdmin' : 'editor',
+  active: Boolean(data.active),
+  allowedSectionIds: Array.isArray(data.allowedSectionIds) ? data.allowedSectionIds : [],
+  createdAt: data.createdAt,
   updatedAt: data.updatedAt,
 })
 
@@ -244,6 +258,49 @@ export const saveHubPage = (sectionId: string, hubPage: HubPageInput) =>
     },
     { merge: true },
   )
+
+export const watchAdminUser = (
+  uid: string,
+  onChange: (adminUser: AdminUser | null) => void,
+  onError: (error: Error) => void,
+) =>
+  onSnapshot(
+    doc(requireDb(), adminUsersPath, uid),
+    (snapshot) => onChange(snapshot.exists() ? adminUserFromFirestore(snapshot.id, snapshot.data()) : null),
+    onError,
+  )
+
+export const watchAdminUsers = (onChange: (adminUsers: AdminUser[]) => void, onError: (error: Error) => void) =>
+  onSnapshot(
+    collection(requireDb(), adminUsersPath),
+    (snapshot) => {
+      const adminUsers = snapshot.docs
+        .map((adminDoc) => adminUserFromFirestore(adminDoc.id, adminDoc.data()))
+        .sort((a, b) => a.email.localeCompare(b.email))
+
+      onChange(adminUsers)
+    },
+    onError,
+  )
+
+export const saveAdminUser = (uid: string, adminUser: AdminUserInput) =>
+  setDoc(
+    doc(requireDb(), adminUsersPath, uid),
+    {
+      ...adminUser,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+
+export const updateAdminUser = (uid: string, adminUser: Partial<AdminUserInput>) =>
+  updateDoc(doc(requireDb(), adminUsersPath, uid), {
+    ...adminUser,
+    updatedAt: serverTimestamp(),
+  })
+
+export const deleteAdminUser = (uid: string) => deleteDoc(doc(requireDb(), adminUsersPath, uid))
 
 export const seedProjects = async () => {
   const firestore = requireDb()

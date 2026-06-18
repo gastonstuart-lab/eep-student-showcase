@@ -4116,6 +4116,20 @@ html {
   margin-top: 0.2rem;
 }
 
+.section-checkboxes {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  border: 1px solid #b7d9ee;
+  border-radius: 0.7rem;
+}
+
+.section-checkboxes legend {
+  padding: 0 0.35rem;
+  color: #264b68;
+  font-weight: 900;
+}
+
 .login-page {
   display: grid;
   min-height: 60vh;

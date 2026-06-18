@@ -3,7 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && (
+          isBootstrapSuperAdmin()
+          || (
+            exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid))
+            && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.active == true
+          )
+        );
+    }
+
+    function isBootstrapSuperAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'gastonstuart@googlemail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function adminRecord() {
+      return get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isBootstrapSuperAdmin()
+        || (
+          isAdmin()
+          && adminRecord().role == 'superAdmin'
+        );
+    }
+
+    function canManageSection(sectionId) {
+      return isSuperAdmin()
+        || (
+          isAdmin()
+          && adminRecord().role == 'editor'
+          && sectionId in adminRecord().allowedSectionIds
+        );
+    }
+
+    function canManageProjects() {
+      return isSuperAdmin() || canManageSection('eep');
     }
 
     function isShortString(value, maxLength) {
@@ -60,17 +99,24 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if resource.data.status == 'approved' || isAdmin();
       allow create: if isValidProjectCreate() || isAdmin();
-      allow update, delete: if isAdmin();
+      allow update, delete: if canManageProjects();
     }
 
     match /contentItems/{contentItemId} {
       allow read: if resource.data.status == 'published' || isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow create: if canManageSection(request.resource.data.sectionId);
+      allow update: if canManageSection(resource.data.sectionId) && canManageSection(request.resource.data.sectionId);
+      allow delete: if canManageSection(resource.data.sectionId);
     }
 
     match /hubPages/{hubPageId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if canManageSection(hubPageId);
+    }
+
+    match /adminUsers/{adminUid} {
+      allow get: if request.auth != null && request.auth.uid == adminUid;
+      allow list, create, update, delete: if isSuperAdmin();
     }
   }
 }
