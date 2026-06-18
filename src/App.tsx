@@ -37,6 +37,7 @@ import { categoryTranslationKeys, statusTranslationKeys, type TranslationKey } f
 import { useAllPublishedContentItems, useContentItems } from './useContentItems'
 import { useHubPage, useHubPages } from './useHubPages'
 import { useProjects } from './useProjects'
+import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
   categories,
   contentTypes,
@@ -1597,6 +1598,7 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
   const submissionDestination = submissionDestinations[destination]
   const [project, setProject] = useState<ProjectInput>(emptyProject)
   const [permission, setPermission] = useState(false)
+  const [website, setWebsite] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -1604,8 +1606,33 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
     event.preventDefault()
     setMessage('')
 
-    if (!permission) {
-      setMessage(t('permissionMessage'))
+    if (saving) {
+      return
+    }
+
+    if (website.trim()) {
+      setMessage('Submission could not be accepted.')
+      return
+    }
+
+    const validationErrors = validateProjectSubmission(project, permission)
+    if (validationErrors.length) {
+      setMessage(validationErrors.join(' '))
+      return
+    }
+
+    const now = Date.now()
+    const lastSubmissionAt = Number(window.localStorage.getItem('eep-last-submission-at') ?? 0)
+    const fingerprint = projectSubmissionFingerprint(project)
+    const lastFingerprint = window.localStorage.getItem('eep-last-submission-fingerprint')
+
+    if (lastFingerprint === fingerprint && now - lastSubmissionAt < 10 * 60 * 1000) {
+      setMessage('This project was already submitted recently. Please wait before submitting it again.')
+      return
+    }
+
+    if (now - lastSubmissionAt < 15 * 1000) {
+      setMessage('Please wait a few seconds before sending another submission.')
       return
     }
 
@@ -1617,11 +1644,19 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
         featured: false,
         studentPick: false,
       })
+      window.localStorage.setItem('eep-last-submission-at', String(Date.now()))
+      window.localStorage.setItem('eep-last-submission-fingerprint', fingerprint)
       setProject(emptyProject)
       setPermission(false)
       setMessage(submissionDestination.success)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('submissionFailed'))
+      setMessage(
+        navigator.onLine
+          ? error instanceof Error
+            ? error.message
+            : t('submissionFailed')
+          : 'You appear to be offline. Your form data has been kept; please try again when the connection returns.',
+      )
     } finally {
       setSaving(false)
     }
@@ -1652,14 +1687,20 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
         </p>
       </div>
       <ProjectForm
+        disabled={saving}
         project={project}
         onChange={setProject}
         onSubmit={submit}
         submitLabel={saving ? t('submitting') : t('submitProject')}
       >
+        <label className="honeypot-field" aria-hidden="true">
+          Website
+          <input value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+        </label>
         <label className="checkbox-row">
           <input
             checked={permission}
+            disabled={saving}
             onChange={(event) => setPermission(event.target.checked)}
             required
             type="checkbox"
@@ -1667,7 +1708,7 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
           <span>{t('permissionCheckbox')}</span>
         </label>
       </ProjectForm>
-      {message && <p className="form-message">{message}</p>}
+      {message && <p className="form-message" aria-live="polite">{message}</p>}
     </section>
   )
 }
@@ -2967,12 +3008,14 @@ function ProjectForm({
   onChange,
   onSubmit,
   submitLabel,
+  disabled = false,
   children,
 }: {
   project: ProjectInput
   onChange: (project: ProjectInput) => void
   onSubmit: (event: FormEvent) => void
   submitLabel: string
+  disabled?: boolean
   children?: ReactNode
 }) {
   const { t } = useLanguage()
@@ -2985,24 +3028,25 @@ function ProjectForm({
       <div className="form-grid">
         <label>
           {t('groupName')}
-          <input value={project.groupName} onChange={(event) => update('groupName', event.target.value)} required />
+          <input disabled={disabled} maxLength={projectFieldLimits.groupName} value={project.groupName} onChange={(event) => update('groupName', event.target.value)} required />
         </label>
         <label>
           {t('className')}
-          <input value={project.className} onChange={(event) => update('className', event.target.value)} required />
+          <input disabled={disabled} maxLength={projectFieldLimits.className} value={project.className} onChange={(event) => update('className', event.target.value)} required />
         </label>
         <label>
           {t('members')}
-          <input value={project.members} onChange={(event) => update('members', event.target.value)} required />
+          <input disabled={disabled} maxLength={projectFieldLimits.members} value={project.members} onChange={(event) => update('members', event.target.value)} required />
         </label>
         <label>
           {t('projectTitle')}
-          <input value={project.title} onChange={(event) => update('title', event.target.value)} required />
+          <input disabled={disabled} maxLength={projectFieldLimits.title} value={project.title} onChange={(event) => update('title', event.target.value)} required />
         </label>
         <label>
           {t('category')}
           <select
             value={project.category}
+            disabled={disabled}
             onChange={(event) => update('category', event.target.value as ProjectCategory)}
             required
           >
@@ -3016,8 +3060,10 @@ function ProjectForm({
         <label>
           {t('googleSitesUrl')}
           <input
+            disabled={disabled}
             value={project.googleSitesUrl}
             onChange={(event) => update('googleSitesUrl', event.target.value)}
+            pattern="https://sites\.google\.com/.*"
             required
             type="url"
           />
@@ -3025,27 +3071,29 @@ function ProjectForm({
         <label className="span-2">
           {t('imageUrl')}
           <input
+            disabled={disabled}
             value={project.imageUrl}
             onChange={(event) => update('imageUrl', event.target.value)}
             placeholder={t('imagePlaceholder')}
+            pattern="https://.*"
             type="url"
           />
         </label>
         <label className="span-2">
           {t('description')}
-          <textarea value={project.description} onChange={(event) => update('description', event.target.value)} required />
+          <textarea disabled={disabled} maxLength={projectFieldLimits.description} value={project.description} onChange={(event) => update('description', event.target.value)} required />
         </label>
         <label className="span-2">
           {t('audience')}
-          <textarea value={project.audience} onChange={(event) => update('audience', event.target.value)} required />
+          <textarea disabled={disabled} maxLength={projectFieldLimits.audience} value={project.audience} onChange={(event) => update('audience', event.target.value)} required />
         </label>
         <label className="span-2">
           {t('impactStatement')}
-          <textarea value={project.impact} onChange={(event) => update('impact', event.target.value)} required />
+          <textarea disabled={disabled} maxLength={projectFieldLimits.impact} value={project.impact} onChange={(event) => update('impact', event.target.value)} required />
         </label>
       </div>
       {children}
-      <button className="primary-button" type="submit">
+      <button className="primary-button" disabled={disabled} type="submit">
         {submitLabel}
       </button>
     </form>
