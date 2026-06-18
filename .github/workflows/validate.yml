@@ -88,7 +88,7 @@ jobs:
 
       - name: Seed temporary local owner
         env:
-          LOCAL_OWNER_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
+          LOCAL_OWNER_PASSWORD: TempStudio-${{ github.run_id }}-${{ github.run_attempt }}
           FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
           GCLOUD_PROJECT: eep-student-showcase
@@ -97,11 +97,19 @@ jobs:
       - name: Authenticated admin and studio browser checks
         env:
           ROUTE_SCROLL_ADMIN_USERNAME: stuart
-          ROUTE_SCROLL_ADMIN_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
+          ROUTE_SCROLL_ADMIN_PASSWORD: TempStudio-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           sed -i 's/Manage /Teacher Content Studio/g' scripts/route-scroll-test.mjs
           sed -i 's/View public page/View public hub/g' scripts/route-scroll-test.mjs
-          npm run test:route-scroll
+          npm run test:route-scroll > route-scroll.log 2>&1
+
+      - name: Upload authenticated browser test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authenticated-studio-browser-logs
+          path: route-scroll.log
+          if-no-files-found: ignore
 
       - name: Upload emulator logs on failure
         if: failure()
