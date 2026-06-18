@@ -71,6 +71,17 @@ export const translations = {
   },
   checkingSessionTitle: { en: 'Checking teacher session', zh: '正在確認教師登入狀態' },
   checkingSessionBody: { en: 'Loading secure admin tools...', zh: '正在載入安全的管理工具...' },
+  accessDeniedTitle: { en: 'Access denied', zh: '無法進入此管理區' },
+  accessDeniedBody: {
+    en: 'Your account is signed in, but it is not authorised to manage this area. Ask a super administrator to grant access.',
+    zh: '你的帳號已登入，但尚未被授權管理此區域。請聯絡超級管理員開通權限。',
+  },
+  returnToPublicHub: { en: 'Return to public hub', zh: '返回公開學習專區' },
+  notFoundTitle: { en: 'Page not found', zh: '找不到頁面' },
+  notFoundBody: {
+    en: 'This page may have moved, or the link may be incorrect. Use the public hub or showcase links to keep browsing.',
+    zh: '此頁面可能已移動，或連結不正確。請使用公開學習專區或作品展示連結繼續瀏覽。',
+  },
 
   heroEyebrow: { en: 'Student websites with real audiences', zh: '學生網站，真實觀眾' },
   heroTitle: { en: 'EEP Student Website Showcase', zh: 'EEP 學生網站作品展示' },

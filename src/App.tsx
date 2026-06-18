@@ -11,6 +11,7 @@ import {
   useParams,
 } from 'react-router-dom'
 import { AuthProvider, bootstrapSuperAdminEmail, useAuth } from './auth'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
@@ -133,6 +134,24 @@ const statLabelKeys: Record<string, TranslationKey> = {
   hidden: 'statHidden',
   featured: 'statFeatured',
 }
+
+const defaultPageDescription =
+  'Explore student learning, creative projects, ESL subject hubs, and the EEP Student Website Showcase from the International Education Department at THUHS.'
+
+const routeMeta = [
+  { pattern: /^\/$/, title: 'IED Learning Hub | THUHS', description: defaultPageDescription },
+  { pattern: /^\/eep\/?$/, title: 'EEP Learning Hub | THUHS', description: 'Explore EEP stories, language activities, creative work, and student website projects.' },
+  { pattern: /^\/eep\/showcase\/?$/, title: 'EEP Student Website Showcase | THUHS', description: 'Browse approved student-built Google Sites projects from the EEP Student Website Showcase.' },
+  { pattern: /^\/eep\/showcase\/submit\/?$|^\/submit\/?$/, title: 'Submit an EEP Project | THUHS', description: 'Submit a Google Sites student project to the EEP teacher review queue.' },
+  { pattern: /^\/esl\/?$/, title: 'ESL Learning Hub | THUHS', description: 'Explore ESL subject hubs, resources, updates, and student learning.' },
+  { pattern: /^\/esl\/science\/?$/, title: 'Science Hub | THUHS', description: 'Explore ESL science learning updates, resources, and student work.' },
+  { pattern: /^\/esl\/language-arts\/?$/, title: 'Language Arts Hub | THUHS', description: 'Explore ESL language arts reading, writing, discussion, and student work.' },
+  { pattern: /^\/esl\/performance-arts\/?$/, title: 'Performance Arts Hub | THUHS', description: 'Explore ESL performance arts events, videos, resources, and student work.' },
+  { pattern: /^\/esl\/social-studies\/?$/, title: 'Social Studies Hub | THUHS', description: 'Explore ESL social studies learning, resources, and student work.' },
+  { pattern: /^\/about\/?$/, title: 'About IED | THUHS', description: 'Learn about international education learning, communication, and student publishing at THUHS.' },
+  { pattern: /^\/login\/?$/, title: 'Teacher Login | IED Learning Hub', description: 'Teacher sign-in for reviewing student submissions and managing hub content.' },
+  { pattern: /^\/admin/, title: 'Teacher Dashboard | IED Learning Hub', description: 'Secure teacher tools for managing approved content, projects, and hub pages.' },
+] as const
 
 const submissionDestinations = {
   'eep-showcase': {
@@ -348,9 +367,11 @@ function App() {
   return (
     <BrowserRouter>
       <LanguageProvider>
-        <AuthProvider>
-          <Shell />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <Shell />
+          </AuthProvider>
+        </ErrorBoundary>
       </LanguageProvider>
     </BrowserRouter>
   )
@@ -406,8 +427,47 @@ function Shell() {
     return () => window.cancelAnimationFrame(frame)
   }, [location.hash, location.pathname])
 
+  useEffect(() => {
+    const meta = routeMeta.find((item) => item.pattern.test(location.pathname)) ?? {
+      title: 'Page Not Found | IED Learning Hub',
+      description: 'The requested IED Learning Hub page could not be found.',
+    }
+    const canonical = `${window.location.origin}${location.pathname}`
+
+    document.title = meta.title
+    updateMeta('description', meta.description)
+    updateMeta('og:title', meta.title, 'property')
+    updateMeta('og:description', meta.description, 'property')
+    updateMeta('og:image', `${window.location.origin}${premiumAssets.cards.home}`, 'property')
+    updateMeta('og:type', 'website', 'property')
+    updateMeta('robots', 'index, follow')
+    updateCanonical(canonical)
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.querySelector<HTMLElement>('main')?.focus()
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return undefined
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [mobileMenuOpen])
+
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <header className="topbar">
         <Link className="brand" to="/">
           <img className="brand-logo" src="/school-logo.svg" alt="" />
@@ -466,7 +526,7 @@ function Shell() {
 
       {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
 
-      <main className="page-transition" key={location.pathname}>
+      <main className="page-transition" id="main-content" key={location.pathname} tabIndex={-1}>
         {location.pathname !== '/' && <BackNavigation />}
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -539,11 +599,35 @@ function Shell() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>
   )
+}
+
+function updateMeta(name: string, content: string, attribute: 'name' | 'property' = 'name') {
+  let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${name}"]`)
+
+  if (!element) {
+    element = document.createElement('meta')
+    element.setAttribute(attribute, name)
+    document.head.append(element)
+  }
+
+  element.content = content
+}
+
+function updateCanonical(href: string) {
+  let element = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+
+  if (!element) {
+    element = document.createElement('link')
+    element.rel = 'canonical'
+    document.head.append(element)
+  }
+
+  element.href = href
 }
 
 function BackNavigation() {
@@ -605,15 +689,35 @@ function ProtectedRoute({
 }
 
 export function AccessDenied() {
+  const { t } = useLanguage()
+
   return (
     <section className="admin-page">
       <PageMessage
-        title="Access denied"
-        body="Your account is signed in, but it is not authorised to manage this area. Ask a super administrator to grant access."
+        title={t('accessDeniedTitle')}
+        body={t('accessDeniedBody')}
       />
       <Link className="secondary-button" to="/">
-        Return to public hub
+        {t('returnToPublicHub')}
       </Link>
+    </section>
+  )
+}
+
+function NotFoundPage() {
+  const { t } = useLanguage()
+
+  return (
+    <section className="missing-page">
+      <PageMessage title={t('notFoundTitle')} body={t('notFoundBody')} />
+      <div className="hero-actions">
+        <Link className="primary-button blue" to="/">
+          {t('returnToPublicHub')}
+        </Link>
+        <Link className="secondary-button" to="/eep/showcase">
+          {t('browseProjects')}
+        </Link>
+      </div>
     </section>
   )
 }

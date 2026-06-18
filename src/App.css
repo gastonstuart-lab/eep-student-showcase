@@ -1531,6 +1531,27 @@ html {
     linear-gradient(180deg, #f7fcff 0%, #eef8ff 44%, #ffffff 100%);
 }
 
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 0.75rem;
+  z-index: 100;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.65rem;
+  color: #ffffff;
+  background: #0b63ce;
+  font-weight: 900;
+  text-decoration: none;
+  transform: translateY(-180%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid rgba(249, 200, 74, 0.82);
+  outline-offset: 3px;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -2618,6 +2639,28 @@ h2 .translation-line {
 .page-heading p:last-child {
   color: #4a6982;
   font-size: 1.08rem;
+}
+
+.missing-page,
+.error-boundary-page {
+  display: grid;
+  min-height: 58vh;
+  place-items: center;
+}
+
+.error-boundary-panel {
+  width: min(42rem, 100%);
+}
+
+.error-boundary-panel pre {
+  overflow: auto;
+  max-height: 12rem;
+  padding: 0.75rem;
+  border: 1px solid #d8ecfb;
+  border-radius: 0.55rem;
+  color: #17324d;
+  background: #f6fbff;
+  white-space: pre-wrap;
 }
 
 .about-hero {
