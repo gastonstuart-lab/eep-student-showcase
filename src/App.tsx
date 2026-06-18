@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactElement, type ReactNode } from 'react'
+import { useLayoutEffect } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -379,6 +380,78 @@ function App() {
   )
 }
 
+function decodeHashId(hash: string) {
+  try {
+    return decodeURIComponent(hash.slice(1))
+  } catch {
+    return hash.slice(1)
+  }
+}
+
+function focusMainContent() {
+  document.querySelector<HTMLElement>('main')?.focus({ preventScroll: true })
+}
+
+function scrollElementIntoRouteView(target: HTMLElement) {
+  const documentStyles = window.getComputedStyle(document.documentElement)
+  const targetStyles = window.getComputedStyle(target)
+  const scrollPaddingTop = Number.parseFloat(documentStyles.scrollPaddingTop) || 0
+  const scrollMarginTop = Number.parseFloat(targetStyles.scrollMarginTop) || 0
+  const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop - scrollMarginTop)
+
+  window.scrollTo({ top, left: 0, behavior: 'auto' })
+}
+
+function useRouteScrollRestoration() {
+  const location = useLocation()
+
+  useLayoutEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration
+    window.history.scrollRestoration = 'manual'
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const keepScrollPosition = (scrollToDestination: () => void) => {
+      scrollToDestination()
+      focusMainContent()
+
+      const frame = window.requestAnimationFrame(scrollToDestination)
+      const settleTimer = window.setTimeout(scrollToDestination, 50)
+      const finalTimer = window.setTimeout(scrollToDestination, 150)
+      const lateTimer = window.setTimeout(scrollToDestination, 350)
+      const loadedTimer = window.setTimeout(scrollToDestination, 700)
+
+      return () => {
+        window.cancelAnimationFrame(frame)
+        window.clearTimeout(settleTimer)
+        window.clearTimeout(finalTimer)
+        window.clearTimeout(lateTimer)
+        window.clearTimeout(loadedTimer)
+      }
+    }
+
+    if (location.hash) {
+      const targetId = decodeHashId(location.hash)
+
+      return keepScrollPosition(() => {
+        const target = document.getElementById(targetId)
+
+        if (target) {
+          scrollElementIntoRouteView(target)
+        } else {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+        }
+      })
+    }
+
+    return keepScrollPosition(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }))
+  }, [location.hash, location.pathname, location.search])
+}
+
 function Shell() {
   const { user, logout, isAdmin, isSuperAdmin } = useAuth()
   const { mode, t, text } = useLanguage()
@@ -389,6 +462,8 @@ function Shell() {
 
     return mode === 'zh-Hant' ? entry.zh : entry.en
   }
+
+  useRouteScrollRestoration()
 
   useEffect(() => {
     const revealItems = Array.from(document.querySelectorAll<HTMLElement>('.reveal'))
@@ -417,19 +492,6 @@ function Shell() {
   }, [location.pathname])
 
   useEffect(() => {
-    if (!location.hash) {
-      return
-    }
-
-    const id = decodeURIComponent(location.hash.slice(1))
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ block: 'start' })
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [location.hash, location.pathname])
-
-  useEffect(() => {
     const meta = routeMeta.find((item) => item.pattern.test(location.pathname)) ?? {
       title: 'Page Not Found | IED Learning Hub',
       description: 'The requested IED Learning Hub page could not be found.',
@@ -444,10 +506,6 @@ function Shell() {
     updateMeta('og:type', 'website', 'property')
     updateMeta('robots', 'index, follow')
     updateCanonical(canonical)
-  }, [location.pathname])
-
-  useEffect(() => {
-    document.querySelector<HTMLElement>('main')?.focus()
   }, [location.pathname])
 
   useEffect(() => {
@@ -1835,7 +1893,7 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
           Website
           <input value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
         </label>
-        <label className="checkbox-row">
+        <label className="checkbox-row" id="submission-permission">
           <input
             checked={permission}
             disabled={saving}
