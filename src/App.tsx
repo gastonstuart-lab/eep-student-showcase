@@ -37,7 +37,16 @@ import { categoryTranslationKeys, statusTranslationKeys, type TranslationKey } f
 import { useAllPublishedContentItems, useContentItems } from './useContentItems'
 import { useHubPage, useHubPages } from './useHubPages'
 import { useProjects } from './useProjects'
-import { archiveStaffUser, createStaffUser, disableStaffUser, enableStaffUser, ensureProtectedOwnerRecord, resetStaffPassword, updateStaffAccess } from './staffFunctions'
+import {
+  archiveStaffUser,
+  createStaffUser,
+  disableStaffUser,
+  enableStaffUser,
+  ensureProtectedOwnerRecord,
+  getStaffBackendHealth,
+  resetStaffPassword,
+  updateStaffAccess,
+} from './staffFunctions'
 import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
@@ -2355,6 +2364,7 @@ function AdminUsersPage() {
   const [loading, setLoading] = useState(isFirebaseConfigured)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [isBackendReady, setIsBackendReady] = useState(isFirebaseConfigured)
   const [editingId, setEditingId] = useState('')
   const [temporaryPassword, setTemporaryPassword] = useState('')
   const [createdCredential, setCreatedCredential] = useState<{ username: string; temporaryPassword: string } | null>(null)
@@ -2376,6 +2386,37 @@ function AdminUsersPage() {
         setLoading(false)
       },
     )
+  }, [])
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      return
+    }
+
+    let cancelled = false
+
+    const checkBackend = async () => {
+      try {
+        await getStaffBackendHealth()
+
+        if (!cancelled) {
+          setIsBackendReady(true)
+        }
+      } catch (healthError) {
+        if (!cancelled) {
+          setIsBackendReady(false)
+          setMessage(healthError instanceof Error
+            ? healthError.message
+            : 'Staff management backend is unavailable. Start the Functions emulator and try again.')
+        }
+      }
+    }
+
+    void checkBackend()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const startCreate = () => {
@@ -2444,9 +2485,11 @@ function AdminUsersPage() {
     try {
       if (editingId) {
         await updateStaffAccess(editingId, payload)
+        setIsBackendReady(true)
         setMessage(`Updated staff access for ${normalizedUsername}.`)
       } else {
         await createStaffUser({ ...payload, temporaryPassword })
+        setIsBackendReady(true)
         setCreatedCredential({ username: normalizedUsername, temporaryPassword })
         setMessage(`Created staff account for ${normalizedUsername}. Share the temporary password securely.`)
         setEditingId('')
@@ -2454,6 +2497,7 @@ function AdminUsersPage() {
         setTemporaryPassword('')
       }
     } catch (saveError) {
+      setIsBackendReady(false)
       setMessage(saveError instanceof Error ? saveError.message : 'Could not save staff access.')
     }
   }
@@ -2558,13 +2602,19 @@ function AdminUsersPage() {
           <AdminUserForm
             draft={draft}
             editing={Boolean(editingId)}
+            disabled={!isBackendReady}
             temporaryPassword={temporaryPassword}
             onDraftChange={setDraft}
             onTemporaryPasswordChange={setTemporaryPassword}
           />
-          <button className="primary-button" type="submit">
+          <button className="primary-button" disabled={!isBackendReady} type="submit">
             {editingUser ? 'Save access' : 'Create access'}
           </button>
+          {!isBackendReady && (
+            <p className="module-note quiet">
+              Staff-management actions are disabled because the backend is unavailable. Start the Functions emulator and refresh this page.
+            </p>
+          )}
         </form>
 
         <div className="content-admin-list">
@@ -2599,23 +2649,23 @@ function AdminUsersPage() {
                   <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
                     Edit
                   </button>
-                  <button className="secondary-button" type="button" disabled={item.protectedOwner} onClick={() => void resetPassword(item)}>
+                  <button className="secondary-button" type="button" disabled={!isBackendReady || item.protectedOwner} onClick={() => void resetPassword(item)}>
                     Reset password
                   </button>
-                  <button className="secondary-button" type="button" disabled={item.active} onClick={() => void activateAdmin(item)}>
+                  <button className="secondary-button" type="button" disabled={!isBackendReady || item.active} onClick={() => void activateAdmin(item)}>
                     Enable
                   </button>
-                  <button className="secondary-button" type="button" disabled={!item.active || item.protectedOwner} onClick={() => void deactivateAdmin(item)}>
+                  <button className="secondary-button" type="button" disabled={!isBackendReady || !item.active || item.protectedOwner} onClick={() => void deactivateAdmin(item)}>
                     Disable
                   </button>
-                  <button className="danger-button" type="button" disabled={item.protectedOwner} onClick={() => void removeAdmin(item)}>
+                  <button className="danger-button" type="button" disabled={!isBackendReady || item.protectedOwner} onClick={() => void removeAdmin(item)}>
                     Archive
                   </button>
                 </div>
               </article>
             ))
           ) : (
-            <div className="empty-manager-state">
+            !loading && !error && <div className="empty-manager-state">
               <h3>No administrator records yet.</h3>
               <p>The protected bootstrap owner can still manage the application during migration.</p>
             </div>
@@ -2629,12 +2679,14 @@ function AdminUsersPage() {
 function AdminUserForm({
   draft,
   editing,
+  disabled,
   temporaryPassword,
   onDraftChange,
   onTemporaryPasswordChange,
 }: {
   draft: AdminUserInput
   editing: boolean
+  disabled: boolean
   temporaryPassword: string
   onDraftChange: (draft: AdminUserInput) => void
   onTemporaryPasswordChange: (password: string) => void
@@ -2668,17 +2720,17 @@ function AdminUserForm({
         <input
           value={draft.username}
           onChange={(event) => update('username', normalizeStaffUsername(event.target.value))}
-          disabled={editing || draft.protectedOwner}
+          disabled={disabled || editing || draft.protectedOwner}
           required
         />
       </label>
       <label>
         Display name
-        <input value={draft.displayName} onChange={(event) => update('displayName', event.target.value)} required />
+        <input disabled={disabled} value={draft.displayName} onChange={(event) => update('displayName', event.target.value)} required />
       </label>
       <label>
         Contact email
-        <input value={draft.contactEmail} onChange={(event) => update('contactEmail', event.target.value)} type="email" />
+        <input disabled={disabled} value={draft.contactEmail} onChange={(event) => update('contactEmail', event.target.value)} type="email" />
       </label>
       <label>
         Role
@@ -2694,7 +2746,7 @@ function AdminUserForm({
               allowedSectionIds: role === 'superAdmin' ? ['*'] : draft.allowedSectionIds.filter((item) => item !== '*'),
             })
           }}
-          disabled={draft.protectedOwner}
+          disabled={disabled || draft.protectedOwner}
         >
           {Object.entries(adminRoleLabels).map(([role, label]) => (
             <option key={role} value={role}>
@@ -2704,11 +2756,11 @@ function AdminUserForm({
         </select>
       </label>
       <label className="checkbox-row">
-        <input checked={draft.active} disabled={draft.protectedOwner} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
+        <input checked={draft.active} disabled={disabled || draft.protectedOwner} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
         <span>Account is active</span>
       </label>
       <label className="checkbox-row">
-        <input checked={draft.mustChangePassword} disabled={draft.protectedOwner} onChange={(event) => update('mustChangePassword', event.target.checked)} type="checkbox" />
+        <input checked={draft.mustChangePassword} disabled={disabled || draft.protectedOwner} onChange={(event) => update('mustChangePassword', event.target.checked)} type="checkbox" />
         <span>Require password change at next login</span>
       </label>
       {!editing && (
@@ -2718,6 +2770,7 @@ function AdminUserForm({
             autoComplete="new-password"
             value={temporaryPassword}
             onChange={(event) => onTemporaryPasswordChange(event.target.value)}
+            disabled={disabled}
             required
             type="password"
           />
@@ -2730,6 +2783,7 @@ function AdminUserForm({
             <label className="checkbox-row" key={config.sectionId}>
               <input
                 checked={draft.allowedSectionIds.includes(config.sectionId)}
+                disabled={disabled}
                 onChange={() => toggleSection(config.sectionId)}
                 type="checkbox"
               />
@@ -2746,7 +2800,7 @@ function AdminUserForm({
           <label className="checkbox-row" key={permission}>
             <input
               checked={rolePermissions[permission]}
-              disabled={draft.role === 'superAdmin'}
+              disabled={disabled || draft.role === 'superAdmin'}
               onChange={() => togglePermission(permission)}
               type="checkbox"
             />

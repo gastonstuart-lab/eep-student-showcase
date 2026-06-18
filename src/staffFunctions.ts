@@ -40,3 +40,5 @@ export const archiveStaffUser = (uid: string) => httpsCallable(requireFunctions(
 export const ensureProtectedOwnerRecord = () => httpsCallable(requireFunctions(), 'ensureProtectedOwnerRecord')()
 
 export const changeOwnPassword = (newPassword: string) => httpsCallable(requireFunctions(), 'changeOwnPassword')({ newPassword })
+
+export const getStaffBackendHealth = () => httpsCallable(requireFunctions(), 'staffBackendHealth')()

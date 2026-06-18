@@ -1,8 +1,8 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
-import { getAuth, type Auth } from 'firebase/auth'
-import { getFirestore, type Firestore } from 'firebase/firestore'
-import { getFunctions, type Functions } from 'firebase/functions'
+import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth'
+import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore'
+import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,6 +19,13 @@ export const isFirebaseConfigured = Boolean(
     firebaseConfig.projectId &&
     firebaseConfig.appId,
 )
+
+export const useFirebaseEmulators = import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true'
+
+const emulatorHost = String(import.meta.env.VITE_FIREBASE_EMULATOR_HOST || '127.0.0.1')
+const authEmulatorPort = Number(import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT || 9099)
+const firestoreEmulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || 8080)
+const functionsEmulatorPort = Number(import.meta.env.VITE_FUNCTIONS_EMULATOR_PORT || 5001)
 
 let app: FirebaseApp | null = null
 let auth: Auth | null = null
@@ -39,6 +46,12 @@ if (isFirebaseConfigured) {
   auth = getAuth(app)
   db = getFirestore(app)
   functions = getFunctions(app)
+
+  if (useFirebaseEmulators) {
+    connectAuthEmulator(auth, `http://${emulatorHost}:${authEmulatorPort}`, { disableWarnings: true })
+    connectFirestoreEmulator(db, emulatorHost, firestoreEmulatorPort)
+    connectFunctionsEmulator(functions, emulatorHost, functionsEmulatorPort)
+  }
 }
 
 export { app, auth, db, functions }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { HttpsError } from 'firebase-functions/v2/https'
-import { normalizeUsername, staffAuthEmail, validateUsername } from './index.js'
+import { internalStaffAuthDomain, normalizeUsername, staffAuthEmail, validateUsername } from './index.js'
 
 describe('staff access helpers', () => {
   it('normalizes usernames case-insensitively', () => {
@@ -9,6 +9,11 @@ describe('staff access helpers', () => {
 
   it('derives the protected owner identity from the migration username', () => {
     expect(staffAuthEmail('stuart')).toBe('gastonstuart@googlemail.com')
+  })
+
+  it('keeps frontend and backend staff-domain mapping aligned', () => {
+    expect(internalStaffAuthDomain).toBe('staff.eep-student-showcase.local')
+    expect(staffAuthEmail('science.jones')).toBe('science.jones@staff.eep-student-showcase.local')
   })
 
   it('rejects invalid or reserved usernames', () => {

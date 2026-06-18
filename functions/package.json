@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:owner:local": "node ./scripts/seedLocalOwner.mjs",
+    "smoke:local": "node ./scripts/localStaffFlowSmoke.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

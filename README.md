@@ -26,6 +26,42 @@ npm.cmd install
 npm.cmd run dev
 ```
 
+To run the closed staff-access system locally without touching production, start local emulators and opt in from `.env`:
+
+```env
+VITE_USE_FIREBASE_EMULATORS=true
+VITE_FIREBASE_EMULATOR_HOST=127.0.0.1
+VITE_FIREBASE_AUTH_EMULATOR_PORT=9099
+VITE_FIRESTORE_EMULATOR_PORT=8080
+VITE_FUNCTIONS_EMULATOR_PORT=5001
+```
+
+Start emulators in one terminal:
+
+```bash
+npm.cmd run emulators:start
+```
+
+Seed the protected local owner in another terminal (emulator-only):
+
+```bash
+npm.cmd run emulators:seed-owner
+```
+
+Run the local staff-flow smoke test (creates staff user, verifies forced password change, verifies permissions persistence, disables the user):
+
+```bash
+npm.cmd run emulators:smoke-staff
+```
+
+This creates or repairs local emulator records for:
+
+- Firebase Auth user `gastonstuart@googlemail.com`
+- `adminUsers/{uid}` protected owner record
+- `staffUsernames/stuart`
+
+You can then sign in as username `stuart` and use `/admin/users` locally.
+
 Before shipping changes:
 
 ```bash
@@ -74,6 +110,11 @@ VITE_FIREBASE_STORAGE_BUCKET=eep-student-showcase.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY=optional_recaptcha_v3_site_key
 VITE_STAFF_AUTH_DOMAIN=staff.eep-student-showcase.local
+VITE_USE_FIREBASE_EMULATORS=false
+VITE_FIREBASE_EMULATOR_HOST=127.0.0.1
+VITE_FIREBASE_AUTH_EMULATOR_PORT=9099
+VITE_FIRESTORE_EMULATOR_PORT=8080
+VITE_FUNCTIONS_EMULATOR_PORT=5001
 ```
 
 The Firebase web app values come from Firebase Console > Project settings > General > Your apps > Web app.
@@ -92,6 +133,8 @@ Staff sign in at `/login` with:
 - `Password`
 
 The browser normalizes the username and signs in to Firebase Auth with a hidden internal email. The frontend and Functions backend both use the stable default internal domain `staff.eep-student-showcase.local`; for example, `science.jones` becomes `science.jones@staff.eep-student-showcase.local`. If `VITE_STAFF_AUTH_DOMAIN` is overridden for the browser, the Functions environment variable `STAFF_AUTH_DOMAIN` must be set to the exact same hostname. Do not use `GCLOUD_PROJECT` or the Firebase Auth domain as the staff email domain. The migration username `stuart` maps to the protected owner Auth email `gastonstuart@googlemail.com`.
+
+The Vite app connects to Auth, Firestore, and Functions emulators only when `VITE_USE_FIREBASE_EMULATORS=true`.
 
 Staff access records live in `adminUsers/{uid}` and include:
 
@@ -147,6 +190,7 @@ There is no public email password reset on `/login`; staff are told to contact a
 - No standalone callable can clear `mustChangePassword`; only `changeOwnPassword` can clear it after a successful Admin SDK password update.
 - Firestore rules allow public reads only for approved/published content, allow public pending project submissions only through the validated schema, deny client writes to `adminUsers`, `staffUsernames`, and `auditLogs`, and enforce section/action permissions for private content.
 - A random Firebase Auth user without an active valid staff record has no private access.
+- If the Functions backend is unavailable, `/admin/users` disables create/update/reset/enable/disable/archive controls and shows a backend-unavailable message instead of pretending the action can succeed.
 
 ### Authentication Blocking
 

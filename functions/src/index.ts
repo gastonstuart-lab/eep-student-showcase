@@ -15,6 +15,7 @@ import {
   assertValidUid,
   buildStaffDocument,
   fullPermissions,
+  internalStaffAuthDomain,
   normalizePermissions,
   protectedOwnerEmail,
   protectedOwnerNeedsRepair,
@@ -29,6 +30,11 @@ import {
 } from './staffSecurity.js'
 
 initializeApp()
+
+export const staffBackendHealth = onCall(() => ({
+  ok: true,
+  internalStaffAuthDomain,
+}))
 
 function assertStaffPayload(data: unknown, requirePassword: boolean) {
   const payload = data as Partial<StaffPayload>
