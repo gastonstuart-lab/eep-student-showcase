@@ -4,6 +4,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } fr
 import { watchAdminUser } from './data'
 import { auth, isFirebaseConfigured } from './firebase'
 import type { AdminRole, AdminUser } from './types'
+import { canManageProjectsForAdmin, canManageSectionForAdmin } from './utils/authorization'
 
 export const bootstrapSuperAdminEmail = 'gastonstuart@googlemail.com'
 
@@ -126,10 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       adminUser: effectiveAdmin,
       isAdmin: Boolean(effectiveAdmin),
       isSuperAdmin: effectiveAdmin?.role === 'superAdmin',
-      canManageSection: (sectionId: string) =>
-        effectiveAdmin?.role === 'superAdmin' ||
-        Boolean(effectiveAdmin?.active && effectiveAdmin.allowedSectionIds.includes(sectionId)),
-      canManageProjects: effectiveAdmin?.role === 'superAdmin' || Boolean(effectiveAdmin?.allowedSectionIds.includes('eep')),
+      canManageSection: (sectionId: string) => canManageSectionForAdmin(effectiveAdmin, sectionId),
+      canManageProjects: canManageProjectsForAdmin(effectiveAdmin),
       login: async (email: string, password: string) => {
         if (!auth) {
           throw new Error('Firebase Auth is not configured.')
