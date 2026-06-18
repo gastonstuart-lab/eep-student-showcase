@@ -4569,18 +4569,3 @@ html {
     width: 100%;
   }
 }
-
-/* =========================================================
-   Showcase project-grid visibility safeguard
-   Project cards must remain visible even if ScrollReveal
-   or IntersectionObserver does not add .is-visible.
-   ========================================================= */
-.project-grid .reveal,
-.project-grid .reveal.is-visible,
-.project-card.reveal,
-.project-card.reveal.is-visible {
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: none !important;
-}
-

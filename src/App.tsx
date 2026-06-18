@@ -1427,11 +1427,11 @@ function confirmDelete(message: string) {
   return window.confirm(message)
 }
 
-function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project }: { project: Project }) {
   const { t } = useLanguage()
 
   return (
-    <article className="project-card reveal">
+    <article className="project-card">
       <img
         src={projectImageSrc(project)}
         alt={`${project.title} preview`}
