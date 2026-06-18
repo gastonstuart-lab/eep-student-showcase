@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { isFirebaseConfigured } from './firebase'
 import { watchProjects } from './data'
 import type { Project, ProjectStatus } from './types'
+import { firestoreInitialLoadTimeoutMessage, firestoreInitialLoadTimeoutMs } from './utils/firestoreStatus'
 
 export function useProjects(status?: ProjectStatus, enabled = true) {
   const [projects, setProjects] = useState<Project[]>([])
@@ -19,19 +20,28 @@ export function useProjects(status?: ProjectStatus, enabled = true) {
 
     setLoading(true)
     setError('')
+    const timeout = window.setTimeout(() => {
+      setError(firestoreInitialLoadTimeoutMessage())
+      setLoading(false)
+    }, firestoreInitialLoadTimeoutMs)
     const unsubscribe = watchProjects(
       (nextProjects) => {
+        window.clearTimeout(timeout)
         setProjects(nextProjects)
         setLoading(false)
       },
       (watchError) => {
+        window.clearTimeout(timeout)
         setError(watchError.message)
         setLoading(false)
       },
       status,
     )
 
-    return unsubscribe
+    return () => {
+      window.clearTimeout(timeout)
+      unsubscribe()
+    }
   }, [enabled, status])
 
   return { projects, loading, error }

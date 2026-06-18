@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { watchAllPublishedContentItems, watchContentItems } from './data'
 import { isFirebaseConfigured } from './firebase'
 import type { ContentItem, ContentStatus } from './types'
+import { firestoreInitialLoadTimeoutMessage, firestoreInitialLoadTimeoutMs } from './utils/firestoreStatus'
 
 export function useContentItems(sectionId: string, status?: ContentStatus, enabled = true) {
   const [contentItems, setContentItems] = useState<ContentItem[]>([])
@@ -19,20 +20,29 @@ export function useContentItems(sectionId: string, status?: ContentStatus, enabl
 
     setLoading(true)
     setError('')
+    const timeout = window.setTimeout(() => {
+      setError(firestoreInitialLoadTimeoutMessage())
+      setLoading(false)
+    }, firestoreInitialLoadTimeoutMs)
     const unsubscribe = watchContentItems(
       sectionId,
       (nextContentItems) => {
+        window.clearTimeout(timeout)
         setContentItems(nextContentItems)
         setLoading(false)
       },
       (watchError) => {
+        window.clearTimeout(timeout)
         setError(watchError.message)
         setLoading(false)
       },
       status,
     )
 
-    return unsubscribe
+    return () => {
+      window.clearTimeout(timeout)
+      unsubscribe()
+    }
   }, [enabled, sectionId, status])
 
   return { contentItems, loading, error }
@@ -49,18 +59,28 @@ export function useAllPublishedContentItems() {
     }
 
     setLoading(true)
+    setError('')
+    const timeout = window.setTimeout(() => {
+      setError(firestoreInitialLoadTimeoutMessage())
+      setLoading(false)
+    }, firestoreInitialLoadTimeoutMs)
     const unsubscribe = watchAllPublishedContentItems(
       (nextContentItems) => {
+        window.clearTimeout(timeout)
         setContentItems(nextContentItems)
         setLoading(false)
       },
       (watchError) => {
+        window.clearTimeout(timeout)
         setError(watchError.message)
         setLoading(false)
       },
     )
 
-    return unsubscribe
+    return () => {
+      window.clearTimeout(timeout)
+      unsubscribe()
+    }
   }, [])
 
   return { contentItems, loading, error }
