@@ -4,7 +4,18 @@ export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
 export type ContentStatus = 'draft' | 'published' | 'hidden'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
 export type Department = 'IED' | 'EEP' | 'ESL'
-export type AdminRole = 'superAdmin' | 'editor'
+export type AdminRole = 'superAdmin' | 'admin' | 'editor'
+
+export interface StaffPermissions {
+  manageUsers: boolean
+  manageProjects: boolean
+  manageHubSettings: boolean
+  createContent: boolean
+  editContent: boolean
+  publishContent: boolean
+  deleteContent: boolean
+  viewAuditLog: boolean
+}
 
 export type ProjectCategory =
   | 'Local Businesses'
@@ -82,15 +93,38 @@ export type HubPageInput = Omit<HubPage, 'id' | 'updatedAt'>
 export interface AdminUser {
   id: string
   email: string
+  username: string
+  normalizedUsername: string
+  authEmail: string
+  contactEmail: string
   displayName: string
   role: AdminRole
   active: boolean
+  protectedOwner: boolean
+  mustChangePassword: boolean
   allowedSectionIds: string[]
+  permissions: StaffPermissions
+  createdBy: string
+  updatedBy: string
+  lastPasswordResetAt?: Timestamp
   createdAt?: Timestamp
   updatedAt?: Timestamp
 }
 
 export type AdminUserInput = Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'>
+
+export interface AuditLogEntry {
+  id: string
+  action: string
+  actorUid: string
+  actorUsername: string
+  actorDisplayName: string
+  targetType: string
+  targetId: string
+  targetLabel: string
+  summary: Record<string, unknown>
+  createdAt?: Timestamp
+}
 
 export const categories: ProjectCategory[] = [
   'Local Businesses',

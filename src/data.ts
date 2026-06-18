@@ -26,12 +26,16 @@ import type {
   Project,
   ProjectInput,
   ProjectStatus,
+  AuditLogEntry,
 } from './types'
+import { normalizeStaffPermissions } from './utils/authorization'
+import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername } from './utils/staffAuth'
 
 const projectsPath = 'projects'
 const contentItemsPath = 'contentItems'
 const hubPagesPath = 'hubPages'
 const adminUsersPath = 'adminUsers'
+const auditLogsPath = 'auditLogs'
 
 const requireDb = () => {
   if (!db) {
@@ -103,12 +107,39 @@ const hubPageFromFirestore = (id: string, data: DocumentData): HubPage => ({
 const adminUserFromFirestore = (id: string, data: DocumentData): AdminUser => ({
   id,
   email: data.email ?? '',
+  username: data.username ?? (data.email === protectedOwnerEmail ? protectedOwnerUsername : normalizeStaffUsername(data.email ?? id)),
+  normalizedUsername:
+    data.normalizedUsername ?? normalizeStaffUsername(data.username ?? (data.email === protectedOwnerEmail ? protectedOwnerUsername : data.email ?? id)),
+  authEmail: data.authEmail ?? data.email ?? '',
+  contactEmail: data.contactEmail ?? '',
   displayName: data.displayName ?? '',
-  role: data.role === 'superAdmin' ? 'superAdmin' : 'editor',
+  role: data.role === 'superAdmin' || data.role === 'admin' ? data.role : 'editor',
   active: Boolean(data.active),
+  protectedOwner: Boolean(data.protectedOwner) || data.email === protectedOwnerEmail,
+  mustChangePassword: Boolean(data.mustChangePassword),
   allowedSectionIds: Array.isArray(data.allowedSectionIds) ? data.allowedSectionIds : [],
+  permissions: normalizeStaffPermissions(
+    data.role === 'superAdmin' || data.role === 'admin' ? data.role : 'editor',
+    data.permissions,
+  ),
+  createdBy: data.createdBy ?? '',
+  updatedBy: data.updatedBy ?? '',
+  lastPasswordResetAt: data.lastPasswordResetAt,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
+})
+
+const auditLogFromFirestore = (id: string, data: DocumentData): AuditLogEntry => ({
+  id,
+  action: data.action ?? '',
+  actorUid: data.actorUid ?? '',
+  actorUsername: data.actorUsername ?? '',
+  actorDisplayName: data.actorDisplayName ?? '',
+  targetType: data.targetType ?? '',
+  targetId: data.targetId ?? '',
+  targetLabel: data.targetLabel ?? '',
+  summary: data.summary ?? {},
+  createdAt: data.createdAt,
 })
 
 export const watchProjects = (
@@ -276,7 +307,7 @@ export const watchAdminUsers = (onChange: (adminUsers: AdminUser[]) => void, onE
     (snapshot) => {
       const adminUsers = snapshot.docs
         .map((adminDoc) => adminUserFromFirestore(adminDoc.id, adminDoc.data()))
-        .sort((a, b) => a.email.localeCompare(b.email))
+        .sort((a, b) => a.normalizedUsername.localeCompare(b.normalizedUsername))
 
       onChange(adminUsers)
     },
@@ -301,6 +332,15 @@ export const updateAdminUser = (uid: string, adminUser: Partial<AdminUserInput>)
   })
 
 export const deleteAdminUser = (uid: string) => deleteDoc(doc(requireDb(), adminUsersPath, uid))
+
+export const watchAuditLogs = (onChange: (entries: AuditLogEntry[]) => void, onError: (error: Error) => void) =>
+  onSnapshot(
+    query(collection(requireDb(), auditLogsPath), orderBy('createdAt', 'desc')),
+    (snapshot) => {
+      onChange(snapshot.docs.map((auditDoc) => auditLogFromFirestore(auditDoc.id, auditDoc.data())))
+    },
+    onError,
+  )
 
 export const seedProjects = async () => {
   const firestore = requireDb()

@@ -4,7 +4,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email_verified == true
         && (
           isBootstrapSuperAdmin()
           || (
@@ -16,8 +15,7 @@ service cloud.firestore {
 
     function isBootstrapSuperAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'gastonstuart@googlemail.com'
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email == 'gastonstuart@googlemail.com';
     }
 
     function adminRecord() {
@@ -33,16 +31,110 @@ service cloud.firestore {
     }
 
     function canManageSection(sectionId) {
+      return canCreateContent(sectionId) || canEditContent(sectionId) || canPublishContent(sectionId);
+    }
+
+    function hasStaffPermissions() {
+      return isAdmin() && adminRecord().keys().hasAny(['permissions']);
+    }
+
+    function hasPermission(permission) {
       return isSuperAdmin()
         || (
           isAdmin()
-          && adminRecord().role == 'editor'
-          && sectionId in adminRecord().allowedSectionIds
+          && hasStaffPermissions()
+          && adminRecord().permissions[permission] == true
         );
     }
 
+    function hasSectionAccess(sectionId) {
+      return isSuperAdmin()
+        || (
+          isAdmin()
+          && (
+            sectionId in adminRecord().allowedSectionIds
+            || '*' in adminRecord().allowedSectionIds
+          )
+        );
+    }
+
+    function hasLegacySectionAccess(sectionId) {
+      return isAdmin()
+        && !hasStaffPermissions()
+        && adminRecord().role == 'editor'
+        && sectionId in adminRecord().allowedSectionIds;
+    }
+
     function canManageProjects() {
-      return isSuperAdmin() || canManageSection('eep');
+      return isSuperAdmin()
+        || (
+          hasSectionAccess('eep')
+          && (
+            hasPermission('manageProjects')
+            || hasLegacySectionAccess('eep')
+          )
+        );
+    }
+
+    function canManageUsers() {
+      return hasPermission('manageUsers');
+    }
+
+    function canManageHubSettings(sectionId) {
+      return hasSectionAccess(sectionId)
+        && (
+          hasPermission('manageHubSettings')
+          || hasLegacySectionAccess(sectionId)
+        );
+    }
+
+    function canCreateContent(sectionId) {
+      return hasSectionAccess(sectionId)
+        && (
+          hasPermission('createContent')
+          || hasLegacySectionAccess(sectionId)
+        );
+    }
+
+    function canEditContent(sectionId) {
+      return hasSectionAccess(sectionId)
+        && (
+          hasPermission('editContent')
+          || hasLegacySectionAccess(sectionId)
+        );
+    }
+
+    function canPublishContent(sectionId) {
+      return hasSectionAccess(sectionId)
+        && (
+          hasPermission('publishContent')
+          || hasLegacySectionAccess(sectionId)
+        );
+    }
+
+    function canDeleteContent(sectionId) {
+      return hasSectionAccess(sectionId)
+        && (
+          hasPermission('deleteContent')
+          || hasLegacySectionAccess(sectionId)
+        );
+    }
+
+    function canViewAuditLog() {
+      return hasPermission('viewAuditLog');
+    }
+
+    function contentStatusDidChange() {
+      return resource.data.status != request.resource.data.status;
+    }
+
+    function publishingStatusDidChange() {
+      return contentStatusDidChange()
+        && (
+          request.resource.data.status == 'published'
+          || resource.data.status == 'published'
+          || request.resource.data.status == 'hidden'
+        );
     }
 
     function isShortString(value, maxLength) {
@@ -104,19 +196,41 @@ service cloud.firestore {
 
     match /contentItems/{contentItemId} {
       allow read: if resource.data.status == 'published' || canManageSection(resource.data.sectionId);
-      allow create: if canManageSection(request.resource.data.sectionId);
-      allow update: if canManageSection(resource.data.sectionId) && canManageSection(request.resource.data.sectionId);
-      allow delete: if canManageSection(resource.data.sectionId);
+      allow create: if canCreateContent(request.resource.data.sectionId)
+        && (
+          request.resource.data.status != 'published'
+          || canPublishContent(request.resource.data.sectionId)
+        );
+      allow update: if canEditContent(resource.data.sectionId)
+        && canEditContent(request.resource.data.sectionId)
+        && (
+          !publishingStatusDidChange()
+          || (
+            canPublishContent(resource.data.sectionId)
+            && canPublishContent(request.resource.data.sectionId)
+          )
+        );
+      allow delete: if canDeleteContent(resource.data.sectionId);
     }
 
     match /hubPages/{hubPageId} {
       allow read: if true;
-      allow create, update, delete: if canManageSection(hubPageId);
+      allow create, update, delete: if canManageHubSettings(hubPageId);
     }
 
     match /adminUsers/{adminUid} {
-      allow get: if request.auth != null && request.auth.uid == adminUid;
-      allow list, create, update, delete: if isSuperAdmin();
+      allow get: if request.auth != null && (request.auth.uid == adminUid || canManageUsers());
+      allow list: if canManageUsers();
+      allow create, update, delete: if false;
+    }
+
+    match /staffUsernames/{username} {
+      allow read, write: if false;
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if canViewAuditLog();
+      allow create, update, delete: if false;
     }
   }
 }

@@ -42,6 +42,17 @@ const unverifiedBootstrapAuth = {
   email_verified: false,
 }
 
+const fullPermissions = {
+  manageUsers: true,
+  manageProjects: true,
+  manageHubSettings: true,
+  createContent: true,
+  editContent: true,
+  publishContent: true,
+  deleteContent: true,
+  viewAuditLog: true,
+}
+
 const pendingProject = {
   title: 'Student Google Site',
   groupName: 'Team One',
@@ -86,6 +97,16 @@ async function seedAdminUsers() {
       role: 'editor',
       active: true,
       allowedSectionIds: ['esl-science'],
+      permissions: {
+        manageUsers: false,
+        manageProjects: false,
+        manageHubSettings: false,
+        createContent: true,
+        editContent: true,
+        publishContent: false,
+        deleteContent: false,
+        viewAuditLog: false,
+      },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
@@ -104,6 +125,7 @@ async function seedAdminUsers() {
       role: 'superAdmin',
       active: true,
       allowedSectionIds: ['*'],
+      permissions: fullPermissions,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
@@ -182,15 +204,8 @@ describe('Firestore security rules', () => {
     }))
   })
 
-  it('allows verified bootstrap super admin to manage protected data', async () => {
+  it('allows the protected bootstrap owner to manage protected content without email-verification onboarding', async () => {
     const db = testEnv.authenticatedContext(bootstrapUid, bootstrapAuth).firestore()
-    await assertSucceeds(setDoc(doc(db, 'adminUsers', 'new-admin'), {
-      email: 'new@example.com',
-      displayName: 'New Admin',
-      role: 'editor',
-      active: true,
-      allowedSectionIds: ['eep'],
-    }))
     await assertSucceeds(setDoc(doc(db, 'contentItems', 'science'), {
       title: 'Science',
       summary: 'Admin write',
@@ -207,9 +222,16 @@ describe('Firestore security rules', () => {
       imageUrl: '',
       createdBy: bootstrapAuth.email,
     }))
+    await assertFails(setDoc(doc(db, 'adminUsers', 'new-admin'), {
+      email: 'new@example.com',
+      displayName: 'New Admin',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['eep'],
+    }))
   })
 
-  it('requires the bootstrap super admin to use the exact verified owner email', async () => {
+  it('requires the bootstrap super admin to use the exact owner email, not email verification', async () => {
     const wrongEmailDb = testEnv.authenticatedContext(wrongBootstrapEmailUid, wrongBootstrapEmailAuth).firestore()
     const unverifiedDb = testEnv.authenticatedContext(unverifiedBootstrapUid, unverifiedBootstrapAuth).firestore()
 
@@ -220,12 +242,21 @@ describe('Firestore security rules', () => {
       active: true,
       allowedSectionIds: ['eep'],
     }))
-    await assertFails(setDoc(doc(unverifiedDb, 'adminUsers', 'blocked-unverified'), {
-      email: 'blocked@example.com',
-      displayName: 'Blocked',
-      role: 'editor',
-      active: true,
-      allowedSectionIds: ['eep'],
+    await assertSucceeds(setDoc(doc(unverifiedDb, 'contentItems', 'owner-without-email-verification'), {
+      title: 'Owner',
+      summary: 'Owner write',
+      body: '',
+      type: 'announcement',
+      department: 'ESL',
+      sectionId: 'esl-science',
+      sectionName: 'Science',
+      status: 'draft',
+      featured: false,
+      mediaUrl: '',
+      linkUrl: '',
+      eventDate: '',
+      imageUrl: '',
+      createdBy: unverifiedBootstrapAuth.email,
     }))
   })
 
@@ -233,7 +264,7 @@ describe('Firestore security rules', () => {
     await seedAdminUsers()
     const db = testEnv.authenticatedContext(recordSuperAdminUid, recordSuperAdminAuth).firestore()
 
-    await assertSucceeds(setDoc(doc(db, 'adminUsers', 'managed-by-record-super'), {
+    await assertFails(setDoc(doc(db, 'adminUsers', 'managed-by-record-super'), {
       email: 'managed@example.com',
       displayName: 'Managed',
       role: 'editor',

@@ -25,16 +25,8 @@ const signInWithEmailAndPassword = vi.fn(async (email: string, password: string)
 const signOut = vi.fn(async () => {
   currentUser = null
 })
-const sendEmailVerification = vi.fn(async (user: MockUser) => {
-  void user
-})
-const sendPasswordResetEmail = vi.fn(async (email: string) => {
-  void email
-})
 const reload = vi.fn(async (user: MockUser) => {
-  if (user.email === bootstrapSuperAdminEmail) {
-    user.emailVerified = true
-  }
+  void user
 })
 
 vi.mock('../firebase', () => ({
@@ -44,20 +36,28 @@ vi.mock('../firebase', () => ({
     },
   },
   db: {},
+  functions: null,
   isFirebaseConfigured: true,
 }))
 
 vi.mock('firebase/auth', () => ({
+  EmailAuthProvider: {
+    credential: vi.fn((email: string, password: string) => ({ email, password })),
+  },
   onAuthStateChanged: vi.fn((_auth, callback: (user: MockUser | null) => void) => {
     callback(currentUser)
     return vi.fn()
   }),
+  reauthenticateWithCredential: vi.fn(),
   reload: (user: MockUser) => reload(user),
-  sendEmailVerification: (user: MockUser) => sendEmailVerification(user),
-  sendPasswordResetEmail: (_auth: unknown, email: string) => sendPasswordResetEmail(email),
   signInWithEmailAndPassword: (_auth: unknown, email: string, password: string) =>
     signInWithEmailAndPassword(email, password),
   signOut: () => signOut(),
+  updatePassword: vi.fn(),
+}))
+
+vi.mock('firebase/functions', () => ({
+  httpsCallable: vi.fn(),
 }))
 
 vi.mock('../data', () => ({
@@ -114,10 +114,28 @@ function makeAdmin(overrides: Partial<AdminUser> = {}): AdminUser {
   return {
     id: 'teacher-uid',
     email: 'teacher@example.com',
+    username: 'teacher',
+    normalizedUsername: 'teacher',
+    authEmail: 'teacher@staff.eep-student-showcase.local',
+    contactEmail: 'teacher@example.com',
     displayName: 'Teacher',
     role: 'editor',
     active: true,
+    protectedOwner: false,
+    mustChangePassword: false,
     allowedSectionIds: ['esl-science'],
+    permissions: {
+      manageUsers: false,
+      manageProjects: false,
+      manageHubSettings: false,
+      createContent: true,
+      editContent: true,
+      publishContent: false,
+      deleteContent: false,
+      viewAuditLog: false,
+    },
+    createdBy: '',
+    updatedBy: '',
     ...overrides,
   }
 }
@@ -164,30 +182,24 @@ describe('teacher authentication flow', () => {
     vi.clearAllMocks()
   })
 
-  it('invokes Firebase email/password login without exposing signup', async () => {
+  it('invokes Firebase email/password login with an internal username identifier and no signup UI', async () => {
     const user = userEvent.setup()
     renderLogin()
 
-    await user.type(screen.getByLabelText(/email/i), 'teacher@example.com')
+    await user.type(screen.getByLabelText(/username/i), 'Science.Jones')
     await user.type(screen.getByLabelText(/password/i), 'correct-password')
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-    expect(signInWithEmailAndPassword).toHaveBeenCalledWith('teacher@example.com', 'correct-password')
+    expect(signInWithEmailAndPassword).toHaveBeenCalledWith(
+      'science.jones@eep-student-showcase.firebaseapp.com',
+      'correct-password',
+    )
     expect(screen.queryByRole('button', { name: /sign up|register/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/contact an ied hub administrator/i)).toBeInTheDocument()
   })
 
-  it('shows the verification-required screen for an unverified bootstrap owner', async () => {
+  it('recognises the bootstrap owner as a protected super administrator without email-verification onboarding', async () => {
     currentUser = makeUser({ email: bootstrapSuperAdminEmail, emailVerified: false })
-
-    renderLogin()
-
-    expect(await screen.findByText(/verify your email/i)).toBeInTheDocument()
-    expect(screen.getByText(bootstrapSuperAdminEmail)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /send verification email/i })).toBeEnabled()
-  })
-
-  it('recognises the verified bootstrap owner as a super administrator', async () => {
-    currentUser = makeUser({ email: bootstrapSuperAdminEmail, emailVerified: true })
 
     renderProbe()
 
@@ -196,39 +208,15 @@ describe('teacher authentication flow', () => {
     expect(screen.getByText('role:superAdmin')).toBeInTheDocument()
   })
 
-  it('does not grant administrator access to an unverified ordinary account', async () => {
+  it('grants staff access from an active staff record without relying on email verification', async () => {
     currentUser = makeUser({ emailVerified: false })
     adminRecords['teacher-uid'] = makeAdmin()
 
     renderProbe()
 
     expect(await screen.findByText('signed-in:true')).toBeInTheDocument()
-    expect(screen.getByText('admin:false')).toBeInTheDocument()
-    expect(screen.getByText('role:none')).toBeInTheDocument()
-  })
-
-  it('sends verification email and applies resend cooldown', async () => {
-    const user = userEvent.setup()
-    currentUser = makeUser({ email: bootstrapSuperAdminEmail, emailVerified: false })
-
-    renderLogin()
-    await user.click(await screen.findByRole('button', { name: /send verification email/i }))
-
-    expect(sendEmailVerification).toHaveBeenCalledWith(currentUser)
-    expect(screen.getByRole('button', { name: /resend in 60s/i })).toBeDisabled()
-    expect(screen.getByText(/verification email sent/i)).toBeInTheDocument()
-  })
-
-  it('reloads the user and recognises verification on check-again', async () => {
-    const user = userEvent.setup()
-    currentUser = makeUser({ email: bootstrapSuperAdminEmail, emailVerified: false })
-
-    renderLogin()
-    await user.click(await screen.findByRole('button', { name: /check again/i }))
-
-    expect(reload).toHaveBeenCalledWith(currentUser)
-    expect(currentUser?.getIdToken).toHaveBeenCalledWith(true)
-    expect(window.location.pathname).toBe('/admin')
+    expect(screen.getByText('admin:true')).toBeInTheDocument()
+    expect(screen.getByText('role:editor')).toBeInTheDocument()
   })
 
   it('keeps a verified user without an active role out of administrator access', async () => {
@@ -252,19 +240,15 @@ describe('teacher authentication flow', () => {
     expect(screen.getByText('section:false')).toBeInTheDocument()
   })
 
-  it('invokes password reset with neutral confirmation wording', async () => {
-    const user = userEvent.setup()
+  it('does not expose public email password reset from the login screen', () => {
     renderLogin()
 
-    await user.type(screen.getByLabelText(/email/i), 'teacher@example.com')
-    await user.click(screen.getByRole('button', { name: /forgot password/i }))
-
-    expect(sendPasswordResetEmail).toHaveBeenCalledWith('teacher@example.com')
-    expect(await screen.findByText(/if this teacher email exists/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /forgot password/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/contact an ied hub administrator/i)).toBeInTheDocument()
   })
 
   it('maps useful authentication errors without raw Firebase codes', () => {
-    expect(mapAuthError({ code: 'auth/invalid-credential' })).toMatch(/email or password/i)
+    expect(mapAuthError({ code: 'auth/invalid-credential' })).toMatch(/username or password/i)
     expect(mapAuthError({ code: 'auth/too-many-requests' })).toMatch(/too many attempts/i)
     expect(mapAuthError({ code: 'auth/user-disabled' })).toMatch(/disabled/i)
     expect(mapAuthError(new Error('Firebase Auth is not configured.'))).toMatch(/not connected/i)

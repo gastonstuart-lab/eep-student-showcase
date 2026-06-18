@@ -10,7 +10,7 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom'
-import { AuthProvider, bootstrapSuperAdminEmail, mapAuthError, useAuth } from './auth'
+import { AuthProvider, mapAuthError, useAuth } from './auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
@@ -20,16 +20,14 @@ import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import {
   createContentItem,
   createProject,
-  deleteAdminUser,
   deleteContentItem,
   deleteProject,
-  saveAdminUser,
   saveHubPage,
   seedProjects,
-  updateAdminUser,
   updateContentItem,
   updateProject,
   watchAdminUsers,
+  watchAuditLogs,
 } from './data'
 import { isFirebaseConfigured } from './firebase'
 import { hubConfigById, hubConfigs } from './hubs'
@@ -38,6 +36,9 @@ import { categoryTranslationKeys, statusTranslationKeys, type TranslationKey } f
 import { useAllPublishedContentItems, useContentItems } from './useContentItems'
 import { useHubPage, useHubPages } from './useHubPages'
 import { useProjects } from './useProjects'
+import { archiveStaffUser, createStaffUser, disableStaffUser, enableStaffUser, resetStaffPassword, updateStaffAccess } from './staffFunctions'
+import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
+import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
   categories,
@@ -45,6 +46,7 @@ import {
   type AdminRole,
   type AdminUser,
   type AdminUserInput,
+  type AuditLogEntry,
   type ContentItem,
   type ContentItemInput,
   type ContentStatus,
@@ -543,6 +545,7 @@ function Shell() {
           <Route path="/submit" element={<SubmitPage destination="eep-showcase" />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/change-password" element={<PasswordChangePage />} />
           <Route
             path="/admin"
             element={
@@ -586,8 +589,16 @@ function Shell() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute requireSuperAdmin>
+              <ProtectedRoute requireManageUsers>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit"
+            element={
+              <ProtectedRoute requireAuditLog>
+                <AuditLogPage />
               </ProtectedRoute>
             }
           />
@@ -664,14 +675,19 @@ function FirebaseNotice() {
 function ProtectedRoute({
   children,
   requireSuperAdmin = false,
+  requireManageUsers = false,
+  requireAuditLog = false,
   sectionId,
 }: {
   children: ReactElement
   requireSuperAdmin?: boolean
+  requireManageUsers?: boolean
+  requireAuditLog?: boolean
   sectionId?: string
 }) {
-  const { user, loading, adminLoading, isAdmin, isSuperAdmin, canManageSection } = useAuth()
+  const { user, loading, adminLoading, adminUser, isAdmin, isSuperAdmin, canManageUsers, canViewAuditLog, canManageSection } = useAuth()
   const { t } = useLanguage()
+  const location = useLocation()
 
   if (loading || adminLoading) {
     return <PageMessage title={t('checkingSessionTitle')} body={t('checkingSessionBody')} />
@@ -681,12 +697,18 @@ function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
-  if (!user.emailVerified) {
-    return <VerificationRequiredPanel />
+  if (adminUser?.mustChangePassword && location.pathname !== '/admin/change-password') {
+    return <Navigate to="/admin/change-password" replace />
   }
 
-  if (!isAdmin || (requireSuperAdmin && !isSuperAdmin) || (sectionId && !canManageSection(sectionId))) {
-    return <AccessDenied sectionId={sectionId} requireSuperAdmin={requireSuperAdmin} />
+  if (
+    !isAdmin ||
+    (requireSuperAdmin && !isSuperAdmin) ||
+    (requireManageUsers && !canManageUsers) ||
+    (requireAuditLog && !canViewAuditLog) ||
+    (sectionId && !canManageSection(sectionId))
+  ) {
+    return <AccessDenied sectionId={sectionId} requireSuperAdmin={requireSuperAdmin || requireManageUsers || requireAuditLog} />
   }
 
   return children
@@ -695,13 +717,13 @@ function ProtectedRoute({
 export function AccessDenied({ sectionId, requireSuperAdmin = false }: { sectionId?: string; requireSuperAdmin?: boolean }) {
   const { t } = useLanguage()
   const { user } = useAuth()
-  const body = user?.emailVerified
+  const body = user
     ? sectionId
-      ? 'Your teacher account is active, but it does not have permission to manage this section.'
+      ? 'Your staff account is active, but it does not have permission to manage this section.'
       : requireSuperAdmin
         ? 'This page is limited to super administrators.'
         : t('accessDeniedBody')
-    : 'Verify your email address before administrator access can begin.'
+    : 'Sign in with an administrator-provisioned staff account.'
 
   return (
     <section className="admin-page">
@@ -1937,27 +1959,12 @@ function AboutPage() {
 }
 
 export function LoginPage() {
-  const { login, sendPasswordReset, user } = useAuth()
+  const { login, user, adminUser } = useAuth()
   const { t } = useLanguage()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [status, setStatus] = useState('')
   const [signingIn, setSigningIn] = useState(false)
-  const [resettingPassword, setResettingPassword] = useState(false)
-  const [resetCooldown, setResetCooldown] = useState(0)
-
-  useEffect(() => {
-    if (!resetCooldown) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(() => {
-      setResetCooldown((seconds) => Math.max(0, seconds - 1))
-    }, 1000)
-
-    return () => window.clearTimeout(timer)
-  }, [resetCooldown])
 
   if (!isFirebaseConfigured) {
     return (
@@ -1969,8 +1976,8 @@ export function LoginPage() {
     )
   }
 
-  if (user && !user.emailVerified) {
-    return <VerificationRequiredPanel />
+  if (user && adminUser?.mustChangePassword) {
+    return <Navigate to="/admin/change-password" replace />
   }
 
   if (user) {
@@ -1980,37 +1987,14 @@ export function LoginPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
-    setStatus('')
     setSigningIn(true)
 
     try {
-      await login(email, password)
+      await login(username, password)
     } catch (loginError) {
       setError(mapAuthError(loginError))
     } finally {
       setSigningIn(false)
-    }
-  }
-
-  const resetPassword = async () => {
-    setError('')
-    setStatus('')
-
-    if (!email.trim()) {
-      setError('Enter your teacher email address before requesting a password reset.')
-      return
-    }
-
-    setResettingPassword(true)
-
-    try {
-      await sendPasswordReset(email.trim())
-      setStatus('If this teacher email exists, a password reset message will be sent shortly.')
-      setResetCooldown(45)
-    } catch (resetError) {
-      setError(mapAuthError(resetError))
-    } finally {
-      setResettingPassword(false)
     }
   }
 
@@ -2020,15 +2004,22 @@ export function LoginPage() {
         <PageHeading
           eyebrow={t('teacherAccess')}
           title={t('loginTitle')}
-          body={t('loginBody')}
+          body="Sign in with the username and password issued by an IED Hub administrator."
         />
         <label>
-          {t('email')}
-          <input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" />
+          Username
+          <input
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            required
+            type="text"
+          />
         </label>
         <label>
           {t('password')}
           <input
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -2038,16 +2029,8 @@ export function LoginPage() {
         <button className="primary-button" type="submit" disabled={signingIn}>
           {signingIn ? 'Signing in...' : t('signIn')}
         </button>
-        <button
-          className="secondary-button"
-          type="button"
-          disabled={resettingPassword || resetCooldown > 0}
-          onClick={resetPassword}
-        >
-          {resetCooldown > 0 ? `Forgot password? Try again in ${resetCooldown}s` : 'Forgot password?'}
-        </button>
+        <p className="muted">Forgot your password? Contact an IED Hub administrator.</p>
         <div aria-live="polite">
-          {status && <p className="form-message success-message">{status}</p>}
           {error && <p className="form-message">{error}</p>}
         </div>
       </form>
@@ -2055,100 +2038,107 @@ export function LoginPage() {
   )
 }
 
-function VerificationRequiredPanel() {
-  const { logout, refreshUser, sendVerificationEmail, user, isAdmin } = useAuth()
+function PasswordChangePage() {
+  const { user, adminUser, changePassword, logout } = useAuth()
   const navigate = useNavigate()
-  const [message, setMessage] = useState('Administrator access begins after your email address is verified.')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const [sending, setSending] = useState(false)
-  const [checking, setChecking] = useState(false)
-  const [cooldown, setCooldown] = useState(0)
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (!cooldown) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(() => {
-      setCooldown((seconds) => Math.max(0, seconds - 1))
-    }, 1000)
-
-    return () => window.clearTimeout(timer)
-  }, [cooldown])
-
-  const sendVerification = async () => {
-    setError('')
-    setSending(true)
-
-    try {
-      await sendVerificationEmail()
-      setMessage('Verification email sent. Open the message, click the link, then return here.')
-      setCooldown(60)
-    } catch (sendError) {
-      setError(mapAuthError(sendError))
-    } finally {
-      setSending(false)
-    }
+  if (!user) {
+    return <Navigate to="/login" replace />
   }
 
-  const checkAgain = async () => {
+  if (adminUser && !adminUser.mustChangePassword) {
+    return <Navigate to="/admin" replace />
+  }
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
     setError('')
-    setChecking(true)
+
+    if (newPassword.length < 12) {
+      setError('Use at least 12 characters for the new staff password.')
+      return
+    }
+
+    if (newPassword === currentPassword) {
+      setError('Choose a new password that is different from the temporary password.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('The new password and confirmation do not match.')
+      return
+    }
+
+    setSaving(true)
 
     try {
-      const refreshedUser = await refreshUser()
-
-      if (refreshedUser?.emailVerified) {
-        setMessage('Email verified. Checking administrator access...')
-        navigate('/admin', { replace: true })
-        return
-      }
-
-      setMessage('This email is still not verified. Use the latest verification email, then check again.')
-    } catch (refreshError) {
-      setError(mapAuthError(refreshError))
+      await changePassword(currentPassword, newPassword)
+      navigate('/admin', { replace: true })
+    } catch (changeError) {
+      setError(mapAuthError(changeError))
     } finally {
-      setChecking(false)
+      setSaving(false)
     }
   }
 
   return (
     <section className="login-page">
-      <div className="login-card verification-card">
+      <form className="login-card verification-card" onSubmit={submit}>
         <PageHeading
-          eyebrow="Teacher verification"
-          title="Verify your email"
-          body="You are signed in, but this teacher account must verify its email address before administrator access can begin."
+          eyebrow="Staff password"
+          title="Change your temporary password"
+          body="This staff account must set a new password before using the administration area."
         />
         <p className="submission-destination">
-          Signed in as <strong>{user?.email ?? 'this teacher account'}</strong>
+          Signed in as <strong>{adminUser?.username ?? user.email ?? 'this staff account'}</strong>
         </p>
+        <label>
+          Current temporary password
+          <input
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            required
+            type="password"
+          />
+        </label>
+        <label>
+          New password
+          <input
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            required
+            type="password"
+          />
+        </label>
+        <label>
+          Confirm new password
+          <input
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            required
+            type="password"
+          />
+        </label>
         <div className="admin-actions">
-          <button
-            className="primary-button blue"
-            type="button"
-            disabled={sending || cooldown > 0}
-            onClick={sendVerification}
-          >
-            {sending ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send verification email'}
-          </button>
-          <button className="secondary-button" type="button" disabled={checking} onClick={checkAgain}>
-            {checking ? 'Checking...' : "I've verified my email - check again"}
+          <button className="primary-button blue" type="submit" disabled={saving}>
+            {saving ? 'Saving...' : 'Change password'}
           </button>
           <button className="secondary-button" type="button" onClick={() => void logout()}>
-            Sign out / Use another account
+            Sign out
           </button>
         </div>
         <div aria-live="polite">
-          <p className="form-message success-message">{message}</p>
           {error && <p className="form-message">{error}</p>}
         </div>
-        {isAdmin && (
-          <p className="muted">
-            Your administrator role is present, but it will remain inactive until email verification is complete.
-          </p>
-        )}
-      </div>
+      </form>
     </section>
   )
 }
@@ -2175,7 +2165,7 @@ function FirebaseMissingPanel() {
 }
 
 function AdminDashboard() {
-  const { canManageProjects, isSuperAdmin } = useAuth()
+  const { canManageProjects, canManageUsers, canViewAuditLog } = useAuth()
   const { projects, loading, error } = useProjects(undefined, canManageProjects)
   const { t } = useLanguage()
   const [seedMessage, setSeedMessage] = useState('')
@@ -2216,9 +2206,14 @@ function AdminDashboard() {
         <Link className="secondary-button" to="/admin/hubs">
           Hub Pages
         </Link>
-        {isSuperAdmin && (
+        {canManageUsers && (
           <Link className="secondary-button" to="/admin/users">
-            Manage Access
+            Staff Access
+          </Link>
+        )}
+        {canViewAuditLog && (
+          <Link className="secondary-button" to="/admin/audit">
+            Audit Log
           </Link>
         )}
         {canManageProjects && (
@@ -2275,25 +2270,36 @@ function HubAdminListPage() {
 
 const adminRoleLabels: Record<AdminRole, string> = {
   superAdmin: 'Super administrator',
+  admin: 'Administrator',
   editor: 'Editor',
 }
 
 const emptyAdminUser: AdminUserInput = {
   email: '',
+  username: '',
+  normalizedUsername: '',
+  authEmail: '',
+  contactEmail: '',
   displayName: '',
   role: 'editor',
   active: true,
+  protectedOwner: false,
+  mustChangePassword: true,
   allowedSectionIds: [],
+  permissions: emptyStaffPermissions,
+  createdBy: '',
+  updatedBy: '',
 }
 
 function AdminUsersPage() {
-  const { user, adminUser } = useAuth()
+  const { adminUser } = useAuth()
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(isFirebaseConfigured)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [editingId, setEditingId] = useState('')
-  const [draftUid, setDraftUid] = useState('')
+  const [temporaryPassword, setTemporaryPassword] = useState('')
+  const [createdCredential, setCreatedCredential] = useState<{ username: string; temporaryPassword: string } | null>(null)
   const [draft, setDraft] = useState<AdminUserInput>(emptyAdminUser)
   const editingUser = adminUsers.find((item) => item.id === editingId)
 
@@ -2316,88 +2322,151 @@ function AdminUsersPage() {
 
   const startCreate = () => {
     setEditingId('')
-    setDraftUid('')
     setDraft(emptyAdminUser)
+    setTemporaryPassword('')
+    setCreatedCredential(null)
     setMessage('')
   }
 
   const startEdit = (item: AdminUser) => {
     setEditingId(item.id)
-    setDraftUid(item.id)
     setDraft({
       email: item.email,
+      username: item.username,
+      normalizedUsername: item.normalizedUsername,
+      authEmail: item.authEmail,
+      contactEmail: item.contactEmail,
       displayName: item.displayName,
       role: item.role,
       active: item.active,
+      protectedOwner: item.protectedOwner,
+      mustChangePassword: item.mustChangePassword,
       allowedSectionIds: item.allowedSectionIds,
+      permissions: item.permissions,
+      createdBy: item.createdBy,
+      updatedBy: item.updatedBy,
     })
+    setTemporaryPassword('')
+    setCreatedCredential(null)
     setMessage('')
   }
 
   const saveAdmin = async (event: FormEvent) => {
     event.preventDefault()
     setMessage('')
-    const uid = draftUid.trim()
+    setCreatedCredential(null)
+    const normalizedUsername = normalizeStaffUsername(draft.username)
+    const usernameError = validateStaffUsername(normalizedUsername)
 
-    if (!uid) {
-      setMessage('Firebase UID is required.')
+    if (usernameError) {
+      setMessage(usernameError)
       return
     }
 
-    if (!draft.email.trim()) {
-      setMessage('Email is required.')
+    if (!draft.displayName.trim()) {
+      setMessage('Display name is required.')
       return
+    }
+
+    if (!editingId && temporaryPassword.length < 12) {
+      setMessage('Temporary passwords must be at least 12 characters.')
+      return
+    }
+
+    const payload = {
+      ...draft,
+      username: normalizedUsername,
+      normalizedUsername,
+      authEmail: staffUsernameToAuthEmail(normalizedUsername),
+      email: draft.contactEmail || draft.email || staffUsernameToAuthEmail(normalizedUsername),
+      permissions: draft.role === 'superAdmin' ? fullStaffPermissions : draft.permissions,
+      temporaryPassword,
     }
 
     try {
       if (editingId) {
-        await updateAdminUser(editingId, draft)
-        setMessage(`Updated access for ${draft.email}.`)
+        await updateStaffAccess(editingId, payload)
+        setMessage(`Updated staff access for ${normalizedUsername}.`)
       } else {
-        await saveAdminUser(uid, draft)
-        setMessage(`Created access for ${draft.email}.`)
-        startCreate()
+        await createStaffUser({ ...payload, temporaryPassword })
+        setCreatedCredential({ username: normalizedUsername, temporaryPassword })
+        setMessage(`Created staff account for ${normalizedUsername}. Share the temporary password securely.`)
+        setEditingId('')
+        setDraft(emptyAdminUser)
+        setTemporaryPassword('')
       }
     } catch (saveError) {
-      setMessage(saveError instanceof Error ? saveError.message : 'Could not save administrator access.')
+      setMessage(saveError instanceof Error ? saveError.message : 'Could not save staff access.')
     }
   }
 
   const deactivateAdmin = async (item: AdminUser) => {
-    if (item.id === user?.uid && adminUser?.source === 'bootstrap') {
-      setMessage(`The bootstrap owner ${bootstrapSuperAdminEmail} cannot remove their own final super-admin access here.`)
+    if (item.protectedOwner) {
+      setMessage(`The protected owner ${protectedOwnerUsername} cannot be disabled.`)
       return
     }
 
-    await updateAdminUser(item.id, { active: false })
-    setMessage(`Deactivated ${item.email}.`)
+    await disableStaffUser(item.id)
+    setMessage(`Disabled ${item.username}.`)
+  }
+
+  const activateAdmin = async (item: AdminUser) => {
+    await enableStaffUser(item.id)
+    setMessage(`Enabled ${item.username}.`)
+  }
+
+  const resetPassword = async (item: AdminUser) => {
+    const nextTemporaryPassword = window.prompt(`Enter a new temporary password for ${item.username}. It will not be stored.`)
+
+    if (!nextTemporaryPassword) {
+      return
+    }
+
+    if (nextTemporaryPassword.length < 12) {
+      setMessage('Temporary passwords must be at least 12 characters.')
+      return
+    }
+
+    await resetStaffPassword(item.id, nextTemporaryPassword)
+    setCreatedCredential({ username: item.username, temporaryPassword: nextTemporaryPassword })
+    setMessage(`Password reset prepared for ${item.username}. Share the temporary password securely.`)
   }
 
   const removeAdmin = async (item: AdminUser) => {
-    if (!confirmDelete(`Remove access for ${item.email}?`)) {
+    if (!confirmDelete(`Archive staff access for ${item.username}?`)) {
       return
     }
 
-    if (item.id === user?.uid && adminUser?.source === 'bootstrap') {
-      setMessage(`The bootstrap owner ${bootstrapSuperAdminEmail} cannot remove their own final super-admin access here.`)
+    if (item.protectedOwner) {
+      setMessage(`The protected owner ${protectedOwnerUsername} cannot be archived.`)
       return
     }
 
-    await deleteAdminUser(item.id)
-    setMessage(`Removed access for ${item.email}.`)
+    await archiveStaffUser(item.id)
+    setMessage(`Archived ${item.username}.`)
   }
 
   return (
     <section className="admin-page">
       <PageHeading
-        eyebrow="Super administrator"
-        title="Manage administrator access"
-        body="Add editors after they already have a Firebase Authentication account. Use the Firebase UID as the document ID."
+        eyebrow="Staff Access"
+        title="Manage staff accounts"
+        body="Create administrator-provisioned staff accounts, assign section access, and control action-level permissions."
       />
       <p className="content-admin-context">
-        Bootstrap owner: <strong>{bootstrapSuperAdminEmail}</strong>. This account must use a verified email address.
+        Protected owner: <strong>{protectedOwnerUsername}</strong> ({protectedOwnerEmail}). This account cannot be disabled, archived, or stripped of final super-administrator access here.
       </p>
+      {adminUser?.source === 'bootstrap' && (
+        <p className="module-note quiet">
+          You are using the protected bootstrap owner path. After Functions are configured, create the persisted <strong>stuart</strong> staff record before adding other staff.
+        </p>
+      )}
       {message && <p className="form-message" aria-live="polite">{message}</p>}
+      {createdCredential && (
+        <div className="form-message success-message" aria-live="polite">
+          <strong>One-time credential:</strong> username {createdCredential.username}; temporary password {createdCredential.temporaryPassword}. The staff member must change it on first login.
+        </div>
+      )}
       {loading && <PageMessage title="Loading administrators" body="Fetching administrator records..." />}
       {error && <PageMessage title="Could not load administrators" body={error} />}
 
@@ -2411,7 +2480,13 @@ function AdminUsersPage() {
               </button>
             )}
           </div>
-          <AdminUserForm draft={draft} uid={draftUid} editing={Boolean(editingId)} onDraftChange={setDraft} onUidChange={setDraftUid} />
+          <AdminUserForm
+            draft={draft}
+            editing={Boolean(editingId)}
+            temporaryPassword={temporaryPassword}
+            onDraftChange={setDraft}
+            onTemporaryPasswordChange={setTemporaryPassword}
+          />
           <button className="primary-button" type="submit">
             {editingUser ? 'Save access' : 'Create access'}
           </button>
@@ -2429,8 +2504,9 @@ function AdminUsersPage() {
                     <span className="badge">{adminRoleLabels[item.role]}</span>
                   </div>
                   <h2>{item.displayName || item.email}</h2>
-                  <p className="meta">{item.email}</p>
-                  <p className="meta">UID: {item.id}</p>
+                  <p className="meta">Username: {item.username}</p>
+                  {item.contactEmail && <p className="meta">Contact: {item.contactEmail}</p>}
+                  {item.protectedOwner && <p className="module-note quiet">Protected owner</p>}
                   <p>
                     Sections:{' '}
                     {item.role === 'superAdmin'
@@ -2439,16 +2515,26 @@ function AdminUsersPage() {
                         ? item.allowedSectionIds.join(', ')
                         : 'None'}
                   </p>
+                  <p className="meta">
+                    Permissions:{' '}
+                    {staffPermissionKeys.filter((permission) => item.permissions[permission]).join(', ') || 'None'}
+                  </p>
                 </div>
                 <div className="admin-item-actions">
                   <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
                     Edit
                   </button>
-                  <button className="secondary-button" type="button" disabled={!item.active} onClick={() => void deactivateAdmin(item)}>
-                    Deactivate
+                  <button className="secondary-button" type="button" onClick={() => void resetPassword(item)}>
+                    Reset password
                   </button>
-                  <button className="danger-button" type="button" onClick={() => void removeAdmin(item)}>
-                    Remove
+                  <button className="secondary-button" type="button" disabled={item.active} onClick={() => void activateAdmin(item)}>
+                    Enable
+                  </button>
+                  <button className="secondary-button" type="button" disabled={!item.active || item.protectedOwner} onClick={() => void deactivateAdmin(item)}>
+                    Disable
+                  </button>
+                  <button className="danger-button" type="button" disabled={item.protectedOwner} onClick={() => void removeAdmin(item)}>
+                    Archive
                   </button>
                 </div>
               </article>
@@ -2456,7 +2542,7 @@ function AdminUsersPage() {
           ) : (
             <div className="empty-manager-state">
               <h3>No administrator records yet.</h3>
-              <p>The verified bootstrap owner can still manage the application.</p>
+              <p>The protected bootstrap owner can still manage the application during migration.</p>
             </div>
           )}
         </div>
@@ -2467,18 +2553,18 @@ function AdminUsersPage() {
 
 function AdminUserForm({
   draft,
-  uid,
   editing,
+  temporaryPassword,
   onDraftChange,
-  onUidChange,
+  onTemporaryPasswordChange,
 }: {
   draft: AdminUserInput
-  uid: string
   editing: boolean
+  temporaryPassword: string
   onDraftChange: (draft: AdminUserInput) => void
-  onUidChange: (uid: string) => void
+  onTemporaryPasswordChange: (password: string) => void
 }) {
-  const update = (field: keyof AdminUserInput, value: string | boolean | string[]) => {
+  const update = (field: keyof AdminUserInput, value: string | boolean | string[] | AdminUserInput['permissions']) => {
     onDraftChange({ ...draft, [field]: value })
   }
 
@@ -2491,23 +2577,50 @@ function AdminUserForm({
     )
   }
 
+  const togglePermission = (permission: keyof AdminUserInput['permissions']) => {
+    update('permissions', {
+      ...draft.permissions,
+      [permission]: !draft.permissions[permission],
+    })
+  }
+
+  const rolePermissions = draft.role === 'superAdmin' ? fullStaffPermissions : draft.permissions
+
   return (
     <div className="form-grid">
-      <label className="span-2">
-        Firebase UID
-        <input value={uid} onChange={(event) => onUidChange(event.target.value)} disabled={editing} required />
-      </label>
       <label>
-        Email
-        <input value={draft.email} onChange={(event) => update('email', event.target.value)} required type="email" />
+        Username
+        <input
+          value={draft.username}
+          onChange={(event) => update('username', normalizeStaffUsername(event.target.value))}
+          disabled={editing || draft.protectedOwner}
+          required
+        />
       </label>
       <label>
         Display name
-        <input value={draft.displayName} onChange={(event) => update('displayName', event.target.value)} />
+        <input value={draft.displayName} onChange={(event) => update('displayName', event.target.value)} required />
+      </label>
+      <label>
+        Contact email
+        <input value={draft.contactEmail} onChange={(event) => update('contactEmail', event.target.value)} type="email" />
       </label>
       <label>
         Role
-        <select value={draft.role} onChange={(event) => update('role', event.target.value as AdminRole)}>
+        <select
+          value={draft.role}
+          onChange={(event) => {
+            const role = event.target.value as AdminRole
+            update('role', role)
+            onDraftChange({
+              ...draft,
+              role,
+              permissions: role === 'superAdmin' ? fullStaffPermissions : draft.permissions,
+              allowedSectionIds: role === 'superAdmin' ? ['*'] : draft.allowedSectionIds.filter((item) => item !== '*'),
+            })
+          }}
+          disabled={draft.protectedOwner}
+        >
           {Object.entries(adminRoleLabels).map(([role, label]) => (
             <option key={role} value={role}>
               {label}
@@ -2519,7 +2632,23 @@ function AdminUserForm({
         <input checked={draft.active} onChange={(event) => update('active', event.target.checked)} type="checkbox" />
         <span>Account is active</span>
       </label>
-      {draft.role === 'editor' && (
+      <label className="checkbox-row">
+        <input checked={draft.mustChangePassword} onChange={(event) => update('mustChangePassword', event.target.checked)} type="checkbox" />
+        <span>Require password change at next login</span>
+      </label>
+      {!editing && (
+        <label className="span-2">
+          Temporary password
+          <input
+            autoComplete="new-password"
+            value={temporaryPassword}
+            onChange={(event) => onTemporaryPasswordChange(event.target.value)}
+            required
+            type="password"
+          />
+        </label>
+      )}
+      {draft.role !== 'superAdmin' && (
         <fieldset className="span-2 section-checkboxes">
           <legend>Allowed sections</legend>
           {hubConfigs.map((config) => (
@@ -2536,7 +2665,83 @@ function AdminUserForm({
           ))}
         </fieldset>
       )}
+      <fieldset className="span-2 section-checkboxes">
+        <legend>Action permissions</legend>
+        {staffPermissionKeys.map((permission) => (
+          <label className="checkbox-row" key={permission}>
+            <input
+              checked={rolePermissions[permission]}
+              disabled={draft.role === 'superAdmin'}
+              onChange={() => togglePermission(permission)}
+              type="checkbox"
+            />
+            <span>{permission}</span>
+          </label>
+        ))}
+      </fieldset>
     </div>
+  )
+}
+
+function AuditLogPage() {
+  const [entries, setEntries] = useState<AuditLogEntry[]>([])
+  const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      return undefined
+    }
+
+    return watchAuditLogs(
+      (nextEntries) => {
+        setEntries(nextEntries)
+        setLoading(false)
+      },
+      (watchError) => {
+        setError(watchError.message)
+        setLoading(false)
+      },
+    )
+  }, [])
+
+  return (
+    <section className="admin-page">
+      <PageHeading
+        eyebrow="Audit Log"
+        title="Staff activity history"
+        body="Review protected staff, content, project, and hub-setting actions recorded by trusted backend operations."
+      />
+      {loading && <PageMessage title="Loading audit log" body="Fetching the latest staff activity..." />}
+      {error && <PageMessage title="Could not load audit log" body={error} />}
+      <div className="content-admin-list">
+        {entries.length ? (
+          entries.map((entry) => (
+            <article className="admin-item content-admin-item" key={entry.id}>
+              <div>
+                <div className="content-item-badges">
+                  <span className="badge">{entry.action}</span>
+                  <span className="status-badge status-published">{entry.targetType}</span>
+                </div>
+                <h2>{entry.targetLabel || entry.targetId}</h2>
+                <p className="meta">
+                  {entry.actorDisplayName || entry.actorUsername || entry.actorUid}
+                  {entry.createdAt ? ` - ${entry.createdAt.toDate().toLocaleString()}` : ''}
+                </p>
+                <p className="meta">{JSON.stringify(entry.summary)}</p>
+              </div>
+            </article>
+          ))
+        ) : (
+          !loading && (
+            <div className="empty-manager-state">
+              <h3>No audit entries yet.</h3>
+              <p>Trusted backend actions will appear here after staff provisioning or publishing events occur.</p>
+            </div>
+          )
+        )}
+      </div>
+    </section>
   )
 }
 

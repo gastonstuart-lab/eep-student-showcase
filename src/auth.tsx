@@ -1,28 +1,45 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   reload,
-  sendEmailVerification,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
   type User,
 } from 'firebase/auth'
+import { httpsCallable } from 'firebase/functions'
 import { watchAdminUser } from './data'
-import { auth, isFirebaseConfigured } from './firebase'
-import type { AdminRole, AdminUser } from './types'
-import { canManageProjectsForAdmin, canManageSectionForAdmin } from './utils/authorization'
+import { auth, functions, isFirebaseConfigured } from './firebase'
+import type { AdminRole, AdminUser, StaffPermissions } from './types'
+import {
+  canManageHubSettingsForAdmin,
+  canManageProjectsForAdmin,
+  canManageSectionForAdmin,
+  canManageUsersForAdmin,
+  canViewAuditLogForAdmin,
+  fullStaffPermissions,
+} from './utils/authorization'
+import { loginIdentifierToAuthEmail, protectedOwnerEmail, protectedOwnerUsername } from './utils/staffAuth'
 
-export const bootstrapSuperAdminEmail = 'gastonstuart@googlemail.com'
+export const bootstrapSuperAdminEmail = protectedOwnerEmail
 
 export interface EffectiveAdmin {
   id: string
   email: string
+  username: string
+  normalizedUsername: string
+  authEmail: string
+  contactEmail: string
   displayName: string
   role: AdminRole
   active: boolean
+  protectedOwner: boolean
+  mustChangePassword: boolean
   allowedSectionIds: string[]
+  permissions: StaffPermissions
   source: 'bootstrap' | 'adminUsers'
 }
 
@@ -34,13 +51,15 @@ interface AuthContextValue {
   adminUser: EffectiveAdmin | null
   isAdmin: boolean
   isSuperAdmin: boolean
+  canManageUsers: boolean
   canManageSection: (sectionId: string) => boolean
+  canManageHubSettings: (sectionId: string) => boolean
   canManageProjects: boolean
-  login: (email: string, password: string) => Promise<void>
+  canViewAuditLog: boolean
+  login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<User | null>
-  sendVerificationEmail: () => Promise<void>
-  sendPasswordReset: (email: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -57,7 +76,7 @@ export function mapAuthError(error: unknown): string {
     code === 'auth/wrong-password' ||
     code === 'auth/invalid-email'
   ) {
-    return 'The email or password was not recognised. Check the details and try again.'
+    return 'The username or password was not recognised. Check the details and try again.'
   }
 
   if (code === 'auth/too-many-requests') {
@@ -69,7 +88,7 @@ export function mapAuthError(error: unknown): string {
   }
 
   if (code === 'auth/user-disabled') {
-    return 'This teacher account has been disabled. Ask a super administrator for help.'
+    return 'This staff account has been disabled. Ask an IED Hub administrator for help.'
   }
 
   if (message.includes('Firebase Auth is not configured')) {
@@ -77,7 +96,7 @@ export function mapAuthError(error: unknown): string {
   }
 
   if (code === 'auth/missing-email') {
-    return 'Enter a teacher email address first.'
+    return 'Enter a staff username first.'
   }
 
   return 'Something went wrong. Please try again.'
@@ -104,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!user || !user.emailVerified) {
+    if (!user) {
       return undefined
     }
 
@@ -125,31 +144,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userUid = user?.uid
   const userEmail = user?.email ?? null
   const userDisplayName = user?.displayName ?? null
-  const userEmailVerified = Boolean(user?.emailVerified)
 
   const bootstrapAdmin = useMemo<EffectiveAdmin | null>(() => {
     const email = userEmail?.toLowerCase()
 
-    if (!userUid || email !== bootstrapSuperAdminEmail || !userEmailVerified) {
+    if (!userUid || email !== bootstrapSuperAdminEmail) {
       return null
     }
 
     return {
       id: userUid,
       email: userEmail ?? bootstrapSuperAdminEmail,
-      displayName: userDisplayName ?? 'Bootstrap administrator',
+      username: protectedOwnerUsername,
+      normalizedUsername: protectedOwnerUsername,
+      authEmail: bootstrapSuperAdminEmail,
+      contactEmail: bootstrapSuperAdminEmail,
+      displayName: userDisplayName ?? 'Stuart',
       role: 'superAdmin',
       active: true,
+      protectedOwner: true,
+      mustChangePassword: false,
       allowedSectionIds: ['*'],
+      permissions: fullStaffPermissions,
       source: 'bootstrap',
     }
-  }, [userDisplayName, userEmail, userEmailVerified, userUid])
+  }, [userDisplayName, userEmail, userUid])
 
   const observedAdminUid = adminRecordState?.uid ?? ''
   const adminRecord = observedAdminUid === userUid ? adminRecordState?.record ?? null : null
   const isAdminRecordLoading = Boolean(
-    user &&
-      userEmailVerified &&
+      user &&
       isFirebaseConfigured &&
       !bootstrapAdmin &&
       observedAdminUid !== userUid &&
@@ -161,20 +185,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return bootstrapAdmin
     }
 
-    if (!user || !userEmailVerified || !adminRecord?.active) {
+    if (!user || !adminRecord?.active) {
       return null
     }
 
     return {
       id: adminRecord.id,
       email: adminRecord.email,
+      username: adminRecord.username,
+      normalizedUsername: adminRecord.normalizedUsername,
+      authEmail: adminRecord.authEmail,
+      contactEmail: adminRecord.contactEmail,
       displayName: adminRecord.displayName,
       role: adminRecord.role,
       active: adminRecord.active,
+      protectedOwner: adminRecord.protectedOwner,
+      mustChangePassword: adminRecord.mustChangePassword,
       allowedSectionIds: adminRecord.allowedSectionIds,
+      permissions: adminRecord.permissions,
       source: 'adminUsers',
     }
-  }, [adminRecord, bootstrapAdmin, user, userEmailVerified])
+  }, [adminRecord, bootstrapAdmin, user])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -185,13 +216,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       adminUser: effectiveAdmin,
       isAdmin: Boolean(effectiveAdmin),
       isSuperAdmin: effectiveAdmin?.role === 'superAdmin',
+      canManageUsers: canManageUsersForAdmin(effectiveAdmin),
       canManageSection: (sectionId: string) => canManageSectionForAdmin(effectiveAdmin, sectionId),
+      canManageHubSettings: (sectionId: string) => canManageHubSettingsForAdmin(effectiveAdmin, sectionId),
       canManageProjects: canManageProjectsForAdmin(effectiveAdmin),
-      login: async (email: string, password: string) => {
+      canViewAuditLog: canViewAuditLogForAdmin(effectiveAdmin),
+      login: async (username: string, password: string) => {
         if (!auth) {
           throw new Error('Firebase Auth is not configured.')
         }
-        await signInWithEmailAndPassword(auth, email, password)
+        await signInWithEmailAndPassword(auth, loginIdentifierToAuthEmail(username), password)
       },
       logout: async () => {
         if (auth) {
@@ -215,21 +249,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthVersion((version) => version + 1)
         return refreshedUser
       },
-      sendVerificationEmail: async () => {
+      changePassword: async (currentPassword: string, newPassword: string) => {
         const currentUser = auth?.currentUser ?? user
 
-        if (!currentUser) {
-          throw new Error('No signed-in teacher account was found.')
+        if (!currentUser?.email) {
+          throw new Error('No signed-in staff account was found.')
         }
 
-        await sendEmailVerification(currentUser)
-      },
-      sendPasswordReset: async (email: string) => {
-        if (!auth) {
-          throw new Error('Firebase Auth is not configured.')
+        await reauthenticateWithCredential(currentUser, EmailAuthProvider.credential(currentUser.email, currentPassword))
+        await updatePassword(currentUser, newPassword)
+
+        if (functions) {
+          const completeRequiredPasswordChange = httpsCallable(functions, 'completeRequiredPasswordChange')
+          await completeRequiredPasswordChange()
         }
 
-        await sendPasswordResetEmail(auth, email)
+        await currentUser.getIdToken(true)
+        setAdminRecordState(null)
+        setAuthVersion((version) => version + 1)
       },
     }),
     [adminError, effectiveAdmin, isAdminRecordLoading, loading, user],

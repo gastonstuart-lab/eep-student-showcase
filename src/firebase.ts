@@ -2,6 +2,7 @@ import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import { getAuth, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
+import { getFunctions, type Functions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,6 +23,7 @@ export const isFirebaseConfigured = Boolean(
 let app: FirebaseApp | null = null
 let auth: Auth | null = null
 let db: Firestore | null = null
+let functions: Functions | null = null
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
@@ -36,6 +38,7 @@ if (isFirebaseConfigured) {
 
   auth = getAuth(app)
   db = getFirestore(app)
+  functions = getFunctions(app)
 }
 
-export { app, auth, db }
+export { app, auth, db, functions }
