@@ -52,3 +52,52 @@ jobs:
 
       - name: Functions build
         run: npm --prefix functions run build
+
+      - name: Install Chromium for authenticated browser checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Build emulator-connected app
+        env:
+          VITE_FIREBASE_API_KEY: demo-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: eep-student-showcase.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: eep-student-showcase
+          VITE_FIREBASE_APP_ID: 1:123456789:web:studio-test
+          VITE_FIREBASE_STORAGE_BUCKET: eep-student-showcase.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: 123456789
+          VITE_USE_FIREBASE_EMULATORS: 'true'
+          VITE_FIREBASE_EMULATOR_HOST: 127.0.0.1
+          VITE_FIREBASE_AUTH_EMULATOR_PORT: 9099
+          VITE_FIRESTORE_EMULATOR_PORT: 8080
+          VITE_FUNCTIONS_EMULATOR_PORT: 5001
+        run: npm run build
+
+      - name: Start Firebase emulators
+        run: |
+          npx firebase emulators:start --only auth,firestore,functions > firebase-emulators.log 2>&1 &
+          for i in {1..60}; do
+            if curl --silent --fail http://127.0.0.1:4400/emulators >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat firebase-emulators.log
+          exit 1
+
+      - name: Seed temporary local owner
+        env:
+          LOCAL_OWNER_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
+        run: npm --prefix functions run seed:owner:local
+
+      - name: Authenticated admin and studio browser checks
+        env:
+          ROUTE_SCROLL_ADMIN_USERNAME: stuart
+          ROUTE_SCROLL_ADMIN_PASSWORD: StudioTest-${{ github.run_id }}-${{ github.run_attempt }}!
+        run: npm run test:route-scroll
+
+      - name: Upload emulator logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authenticated-studio-emulator-logs
+          path: firebase-emulators.log
+          if-no-files-found: ignore
