@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   onSnapshot,
@@ -103,6 +104,15 @@ const contentItemFromFirestore = (id: string, data: DocumentData): ContentItem =
 
 function stripUndefinedFields<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)) as T
+}
+
+function deleteUndefinedFields<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).map(([fieldName, fieldValue]) => [
+      fieldName,
+      fieldValue === undefined ? deleteField() : fieldValue,
+    ]),
+  ) as T
 }
 
 const hubPageFromFirestore = (id: string, data: DocumentData): HubPage => ({
@@ -269,7 +279,7 @@ export const createContentItem = (contentItem: ContentItemInput) =>
 
 export const updateContentItem = (id: string, contentItem: Partial<ContentItemInput>) =>
   updateDoc(doc(requireDb(), contentItemsPath, id), {
-    ...stripUndefinedFields(contentItem),
+    ...deleteUndefinedFields(contentItem),
     updatedAt: serverTimestamp(),
   })
 

@@ -76,5 +76,6 @@ describe('content appearance helpers', () => {
 
   it('trims and strips blank optional badge values when sanitising a draft', () => {
     expect(sanitizeContentItemInput({ ...baseDraft, badgeText: '  New  ' }).badgeText).toBe('New')
+    expect(sanitizeContentItemInput({ ...baseDraft, badgeText: '   ' }).badgeText).toBeUndefined()
   })
 })
