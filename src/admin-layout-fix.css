@@ -1,0 +1,9 @@
+/*
+ * Hub administration contains more than one editor card in the left column.
+ * Making every card sticky causes later forms to cover the save controls of
+ * earlier forms as the page scrolls. Keep these editor cards in normal flow.
+ */
+.content-admin-grid .content-admin-list:first-child > .content-editor {
+  position: static;
+  top: auto;
+}
