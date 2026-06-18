@@ -18,6 +18,7 @@ import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
 import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
+import { ContentCard } from './components/public/ContentCard'
 import {
   createContentItem,
   createProject,
@@ -48,6 +49,18 @@ import {
   updateStaffAccess,
 } from './staffFunctions'
 import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
+import {
+  contentAccentStyleLabels,
+  contentAppearanceDefaults,
+  contentCtaStyleLabels,
+  contentDisplayStyleLabels,
+  contentImagePlacementLabels,
+  contentItemPreviewFromInput,
+  contentTextAlignmentLabels,
+  contentWidthLabels,
+  sanitizeContentItemInput,
+  validateContentAppearance,
+} from './utils/contentAppearance'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
@@ -105,6 +118,13 @@ const emptyContentItem: ContentItemInput = {
   linkUrl: '',
   eventDate: '',
   imageUrl: '',
+  displayStyle: contentAppearanceDefaults.displayStyle,
+  contentWidth: contentAppearanceDefaults.contentWidth,
+  imagePlacement: contentAppearanceDefaults.imagePlacement,
+  textAlignment: contentAppearanceDefaults.textAlignment,
+  accentStyle: contentAppearanceDefaults.accentStyle,
+  badgeText: '',
+  ctaStyle: contentAppearanceDefaults.ctaStyle,
   createdBy: '',
 }
 
@@ -595,7 +615,7 @@ function Shell() {
 
       {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
 
-      <main className="page-transition" id="main-content" key={location.pathname} tabIndex={-1}>
+      <main className="page-transition route-main" id="main-content" key={location.pathname} tabIndex={-1}>
         {location.pathname !== '/' && <BackNavigation />}
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -1626,48 +1646,8 @@ function ContentSection({
   )
 }
 
-function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
-  const { t } = useLanguage()
-  const targetUrl = item.linkUrl || item.mediaUrl
-  const cardDate = formatContentDate(item)
-
-  return (
-    <article className={`${compact ? 'content-card compact' : 'content-card'}${targetUrl ? ' has-link' : ''}`}>
-      {item.imageUrl && !compact && <img src={item.imageUrl} alt={`${item.title} visual`} />}
-      <div>
-        <span className="badge">{contentTypeLabels[item.type]}</span>
-        <h3>{item.title}</h3>
-        {cardDate && <p className="meta">{cardDate}</p>}
-        <p>{item.summary}</p>
-        {!compact && item.body && <p className="muted">{item.body}</p>}
-        {targetUrl && (
-          <a className="small-link" href={targetUrl} target="_blank" rel="noreferrer">
-            {t('openContentLink')}
-          </a>
-        )}
-      </div>
-    </article>
-  )
-}
-
-function formatContentDate(item: ContentItem) {
-  if (item.eventDate) {
-    return formatEventDate(item.eventDate)
-  }
-
-  const stamp = item.updatedAt ?? item.createdAt
-
-  if (!stamp || typeof stamp.toDate !== 'function') {
-    return ''
-  }
-
-  const date = stamp.toDate()
-
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+function confirmDelete(message: string) {
+  return window.confirm(message)
 }
 
 function formatEventDate(value: string) {
@@ -1679,10 +1659,6 @@ function formatEventDate(value: string) {
   return Number.isNaN(date.getTime())
     ? value
     : new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
-}
-
-function confirmDelete(message: string) {
-  return window.confirm(message)
 }
 
 export function ProjectCard({ project }: { project: Project }) {
@@ -2956,6 +2932,7 @@ function HubAdminEditor({
   const [contentDraft, setContentDraft] = useState<ContentItemInput>(() => emptyContentDraftFor(config, userEmail))
   const [statusFilter, setStatusFilter] = useState<ContentStatusFilter>('all')
   const [previewItem, setPreviewItem] = useState<ContentItem | null>(null)
+  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop')
   const [message, setMessage] = useState('')
   const editingItem = contentItems.find((item) => item.id === editingId)
   const visibleContentItems =
@@ -2984,6 +2961,13 @@ function HubAdminEditor({
       linkUrl: item.linkUrl,
       eventDate: item.eventDate,
       imageUrl: item.imageUrl,
+      displayStyle: item.displayStyle,
+      contentWidth: item.contentWidth,
+      imagePlacement: item.imagePlacement,
+      textAlignment: item.textAlignment,
+      accentStyle: item.accentStyle,
+      badgeText: item.badgeText ?? '',
+      ctaStyle: item.ctaStyle,
       createdBy: item.createdBy || userEmail,
       sortOrder: item.sortOrder,
     })
@@ -3011,13 +2995,22 @@ function HubAdminEditor({
     event.preventDefault()
     setMessage('')
 
+    const validationErrors = validateContentAppearance(contentDraft)
+
+    if (validationErrors.length > 0) {
+      setMessage(validationErrors[0])
+      return
+    }
+
+    const sanitizedDraft = sanitizeContentItemInput(contentDraft)
     const payload = {
-      ...contentDraft,
+      ...sanitizedDraft,
       department: config.department,
       sectionId: config.sectionId,
       sectionName: config.sectionName,
-      createdBy: contentDraft.createdBy || userEmail,
-      sortOrder: contentDraft.sortOrder ?? contentItems.length + 1,
+      createdBy: sanitizedDraft.createdBy || userEmail,
+      sortOrder: sanitizedDraft.sortOrder ?? contentItems.length + 1,
+      ctaStyle: sanitizedDraft.linkUrl || sanitizedDraft.mediaUrl ? sanitizedDraft.ctaStyle : 'hidden',
     }
 
     try {
@@ -3054,6 +3047,13 @@ function HubAdminEditor({
       linkUrl: item.linkUrl,
       eventDate: item.eventDate,
       imageUrl: item.imageUrl,
+      displayStyle: item.displayStyle,
+      contentWidth: item.contentWidth,
+      imagePlacement: item.imagePlacement,
+      textAlignment: item.textAlignment,
+      accentStyle: item.accentStyle,
+      badgeText: item.badgeText,
+      ctaStyle: item.ctaStyle,
       createdBy: userEmail,
       sortOrder: contentItems.length + 1,
     })
@@ -3138,6 +3138,30 @@ function HubAdminEditor({
               <h2>{editingItem ? 'Edit Content Item' : 'Create Content Item'}</h2>
             </div>
             <ContentItemForm draft={contentDraft} onChange={setContentDraft} />
+            <section className="content-preview-section" aria-label="Preview">
+              <div className="modal-header">
+                <h3>Preview</h3>
+                <div className="preview-toggle" role="group" aria-label="Preview device size">
+                  <button
+                    className={`small-button${previewViewport === 'desktop' ? ' is-active' : ''}`}
+                    type="button"
+                    onClick={() => setPreviewViewport('desktop')}
+                  >
+                    Desktop
+                  </button>
+                  <button
+                    className={`small-button${previewViewport === 'mobile' ? ' is-active' : ''}`}
+                    type="button"
+                    onClick={() => setPreviewViewport('mobile')}
+                  >
+                    Mobile
+                  </button>
+                </div>
+              </div>
+              <div className={`content-preview-frame content-preview-frame-${previewViewport}`}>
+                <ContentCard item={contentItemPreviewFromInput(contentDraft)} />
+              </div>
+            </section>
             <button className="primary-button" type="submit">
               {editingItem ? 'Save Content' : 'Create Content'}
             </button>
@@ -3320,61 +3344,158 @@ function ContentItemForm({
     onChange({ ...draft, [field]: value })
   }
 
+  const hasImage = Boolean(draft.imageUrl.trim())
+  const hasLink = Boolean(draft.linkUrl.trim() || draft.mediaUrl.trim())
+  const appearanceDisabled = !hasImage
+  const ctaDisabled = !hasLink
+
   return (
-    <div className="form-grid">
-      <label>
-        Title
-        <input value={draft.title} onChange={(event) => update('title', event.target.value)} required />
-      </label>
-      <label>
-        Type
-        <select value={draft.type} onChange={(event) => update('type', event.target.value as ContentType)} required>
-          {contentTypes.map((type) => (
-            <option key={type} value={type}>
-              {contentTypeLabels[type]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Status
-        <select value={draft.status} onChange={(event) => update('status', event.target.value as ContentStatus)} required>
-          {Object.entries(contentStatusLabels).map(([status, label]) => (
-            <option key={status} value={status}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Event date
-        <input value={draft.eventDate} onChange={(event) => update('eventDate', event.target.value)} type="date" />
-      </label>
-      <label className="span-2">
-        Summary
-        <input value={draft.summary} onChange={(event) => update('summary', event.target.value)} required />
-      </label>
-      <label className="span-2">
-        Body
-        <textarea value={draft.body} onChange={(event) => update('body', event.target.value)} />
-      </label>
-      <label>
-        YouTube or Google Drive link
-        <input value={draft.mediaUrl} onChange={(event) => update('mediaUrl', event.target.value)} type="url" />
-      </label>
-      <label>
-        Webpage/resource link
-        <input value={draft.linkUrl} onChange={(event) => update('linkUrl', event.target.value)} type="url" />
-      </label>
-      <label className="span-2">
-        Image URL
-        <input value={draft.imageUrl} onChange={(event) => update('imageUrl', event.target.value)} type="url" />
-      </label>
-      <label className="checkbox-row span-2">
-        <input checked={draft.featured} onChange={(event) => update('featured', event.target.checked)} type="checkbox" />
-        <span>Feature this item on the public hub</span>
-      </label>
-    </div>
+    <>
+      <div className="form-grid">
+        <label>
+          Title
+          <input value={draft.title} onChange={(event) => update('title', event.target.value)} required />
+        </label>
+        <label>
+          Type
+          <select value={draft.type} onChange={(event) => update('type', event.target.value as ContentType)} required>
+            {contentTypes.map((type) => (
+              <option key={type} value={type}>
+                {contentTypeLabels[type]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Status
+          <select value={draft.status} onChange={(event) => update('status', event.target.value as ContentStatus)} required>
+            {Object.entries(contentStatusLabels).map(([status, label]) => (
+              <option key={status} value={status}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Event date
+          <input value={draft.eventDate} onChange={(event) => update('eventDate', event.target.value)} type="date" />
+        </label>
+        <label className="span-2">
+          Summary
+          <input value={draft.summary} onChange={(event) => update('summary', event.target.value)} required />
+        </label>
+        <label className="span-2">
+          Body
+          <textarea value={draft.body} onChange={(event) => update('body', event.target.value)} />
+        </label>
+        <label>
+          YouTube or Google Drive link
+          <input value={draft.mediaUrl} onChange={(event) => update('mediaUrl', event.target.value)} type="url" />
+        </label>
+        <label>
+          Webpage/resource link
+          <input value={draft.linkUrl} onChange={(event) => update('linkUrl', event.target.value)} type="url" />
+        </label>
+        <label className="span-2">
+          Image URL
+          <input value={draft.imageUrl} onChange={(event) => update('imageUrl', event.target.value)} type="url" />
+        </label>
+        <label className="checkbox-row span-2">
+          <input checked={draft.featured} onChange={(event) => update('featured', event.target.checked)} type="checkbox" />
+          <span>Feature this item on the public hub</span>
+        </label>
+      </div>
+
+      <section className="display-layout-section" aria-labelledby="display-layout-heading">
+        <div className="section-heading">
+          <div>
+            <h3 id="display-layout-heading">Display &amp; Layout</h3>
+            <p>Choose a simple public presentation for this item.</p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <label>
+            Display style
+            <select value={draft.displayStyle} onChange={(event) => update('displayStyle', event.target.value as ContentItemInput['displayStyle'])}>
+              {Object.entries(contentDisplayStyleLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Content width
+            <select value={draft.contentWidth} onChange={(event) => update('contentWidth', event.target.value as ContentItemInput['contentWidth'])}>
+              {Object.entries(contentWidthLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Text alignment
+            <select value={draft.textAlignment} onChange={(event) => update('textAlignment', event.target.value as ContentItemInput['textAlignment'])}>
+              {Object.entries(contentTextAlignmentLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Visual emphasis
+            <select value={draft.accentStyle} onChange={(event) => update('accentStyle', event.target.value as ContentItemInput['accentStyle'])}>
+              {Object.entries(contentAccentStyleLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="span-2">
+            Badge text
+            <input
+              value={draft.badgeText ?? ''}
+              maxLength={24}
+              onChange={(event) => update('badgeText', event.target.value)}
+              placeholder="Optional short label"
+            />
+          </label>
+          <label>
+            Image placement
+            <select
+              disabled={appearanceDisabled}
+              value={appearanceDisabled ? 'hidden' : draft.imagePlacement}
+              onChange={(event) => update('imagePlacement', event.target.value as ContentItemInput['imagePlacement'])}
+            >
+              {Object.entries(contentImagePlacementLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            {!hasImage && <span className="field-help">Add an image to choose placement.</span>}
+          </label>
+          <label>
+            CTA presentation
+            <select
+              disabled={ctaDisabled}
+              value={ctaDisabled ? 'hidden' : draft.ctaStyle}
+              onChange={(event) => update('ctaStyle', event.target.value as ContentItemInput['ctaStyle'])}
+            >
+              {Object.entries(contentCtaStyleLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            {!hasLink && <span className="field-help">Add a link or media URL to show a CTA.</span>}
+          </label>
+        </div>
+      </section>
+    </>
   )
 }
 

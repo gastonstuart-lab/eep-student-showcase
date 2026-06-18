@@ -30,6 +30,7 @@ import type {
 } from './types'
 import { normalizeStaffPermissions } from './utils/authorization'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername } from './utils/staffAuth'
+import { normalizeContentAppearance, sanitizeContentItemInput } from './utils/contentAppearance'
 
 const projectsPath = 'projects'
 const contentItemsPath = 'contentItems'
@@ -79,11 +80,16 @@ const contentItemFromFirestore = (id: string, data: DocumentData): ContentItem =
   linkUrl: data.linkUrl ?? '',
   eventDate: data.eventDate ?? '',
   imageUrl: data.imageUrl ?? '',
+  ...normalizeContentAppearance(data),
   createdBy: data.createdBy ?? '',
   sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : undefined,
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
 })
+
+function stripUndefinedFields<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)) as T
+}
 
 const hubPageFromFirestore = (id: string, data: DocumentData): HubPage => ({
   id,
@@ -242,14 +248,14 @@ export const watchAllPublishedContentItems = (
 
 export const createContentItem = (contentItem: ContentItemInput) =>
   addDoc(collection(requireDb(), contentItemsPath), {
-    ...contentItem,
+    ...stripUndefinedFields(sanitizeContentItemInput(contentItem)),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
 
 export const updateContentItem = (id: string, contentItem: Partial<ContentItemInput>) =>
   updateDoc(doc(requireDb(), contentItemsPath, id), {
-    ...contentItem,
+    ...stripUndefinedFields(contentItem),
     updatedAt: serverTimestamp(),
   })
 

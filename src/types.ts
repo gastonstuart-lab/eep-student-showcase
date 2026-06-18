@@ -3,6 +3,12 @@ import type { Timestamp } from 'firebase/firestore'
 export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
 export type ContentStatus = 'draft' | 'published' | 'hidden'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
+export type ContentDisplayStyle = 'standard' | 'featured' | 'compact' | 'banner' | 'media'
+export type ContentWidth = 'normal' | 'wide' | 'full'
+export type ContentImagePlacement = 'top' | 'left' | 'right' | 'background' | 'hidden'
+export type ContentTextAlignment = 'left' | 'center'
+export type ContentAccentStyle = 'none' | 'eep' | 'esl' | 'warm' | 'dark'
+export type ContentCtaStyle = 'link' | 'primary' | 'secondary' | 'hidden'
 export type Department = 'IED' | 'EEP' | 'ESL'
 export type AdminRole = 'superAdmin' | 'admin' | 'editor'
 
@@ -61,6 +67,13 @@ export interface ContentItem {
   linkUrl: string
   eventDate: string
   imageUrl: string
+  displayStyle: ContentDisplayStyle
+  contentWidth: ContentWidth
+  imagePlacement: ContentImagePlacement
+  textAlignment: ContentTextAlignment
+  accentStyle: ContentAccentStyle
+  badgeText?: string
+  ctaStyle: ContentCtaStyle
   createdBy: string
   sortOrder?: number
   createdAt?: Timestamp

@@ -71,6 +71,29 @@ const pendingProject = {
   updatedAt: serverTimestamp(),
 }
 
+const validContentItem = {
+  title: 'Public Update',
+  summary: 'Visible',
+  body: '',
+  type: 'announcement',
+  department: 'ESL',
+  sectionId: 'esl-science',
+  sectionName: 'Science',
+  status: 'draft',
+  featured: false,
+  mediaUrl: '',
+  linkUrl: '',
+  eventDate: '',
+  imageUrl: '',
+  displayStyle: 'standard',
+  contentWidth: 'normal',
+  imagePlacement: 'top',
+  textAlignment: 'left',
+  accentStyle: 'none',
+  ctaStyle: 'hidden',
+  createdBy: 'science.editor@example.com',
+}
+
 beforeAll(async () => {
   testEnv = await initializeTestEnvironment({
     projectId,
@@ -152,6 +175,12 @@ describe('Firestore security rules', () => {
         linkUrl: '',
         eventDate: '',
         imageUrl: '',
+        displayStyle: 'standard',
+        contentWidth: 'normal',
+        imagePlacement: 'top',
+        textAlignment: 'left',
+        accentStyle: 'none',
+        ctaStyle: 'hidden',
         createdBy: '',
       })
       await setDoc(doc(db, 'contentItems', 'draft'), {
@@ -168,6 +197,12 @@ describe('Firestore security rules', () => {
         linkUrl: '',
         eventDate: '',
         imageUrl: '',
+        displayStyle: 'standard',
+        contentWidth: 'normal',
+        imagePlacement: 'top',
+        textAlignment: 'left',
+        accentStyle: 'none',
+        ctaStyle: 'hidden',
         createdBy: '',
       })
     })
@@ -204,6 +239,20 @@ describe('Firestore security rules', () => {
     }))
   })
 
+  it('rejects invalid content appearance values', async () => {
+    const db = testEnv.authenticatedContext(editorUid, editorAuth).firestore()
+
+    await assertFails(setDoc(doc(db, 'contentItems', 'bad-display'), {
+      ...validContentItem,
+      displayStyle: 'unexpected',
+    }))
+
+    await assertFails(setDoc(doc(db, 'contentItems', 'bad-badge'), {
+      ...validContentItem,
+      badgeText: 'x'.repeat(25),
+    }))
+  })
+
   it('allows the protected bootstrap owner to manage protected content without email-verification onboarding', async () => {
     const db = testEnv.authenticatedContext(bootstrapUid, bootstrapAuth).firestore()
     await assertSucceeds(setDoc(doc(db, 'contentItems', 'science'), {
@@ -220,6 +269,12 @@ describe('Firestore security rules', () => {
       linkUrl: '',
       eventDate: '',
       imageUrl: '',
+      displayStyle: 'standard',
+      contentWidth: 'normal',
+      imagePlacement: 'top',
+      textAlignment: 'left',
+      accentStyle: 'none',
+      ctaStyle: 'hidden',
       createdBy: bootstrapAuth.email,
     }))
     await assertFails(setDoc(doc(db, 'adminUsers', 'new-admin'), {
@@ -256,6 +311,12 @@ describe('Firestore security rules', () => {
       linkUrl: '',
       eventDate: '',
       imageUrl: '',
+      displayStyle: 'standard',
+      contentWidth: 'normal',
+      imagePlacement: 'top',
+      textAlignment: 'left',
+      accentStyle: 'none',
+      ctaStyle: 'hidden',
       createdBy: unverifiedBootstrapAuth.email,
     }))
   })
@@ -302,6 +363,12 @@ describe('Firestore security rules', () => {
       linkUrl: '',
       eventDate: '',
       imageUrl: '',
+      displayStyle: 'standard',
+      contentWidth: 'normal',
+      imagePlacement: 'top',
+      textAlignment: 'left',
+      accentStyle: 'none',
+      ctaStyle: 'hidden',
       createdBy: editorAuth.email,
     }))
     await assertFails(setDoc(doc(db, 'contentItems', 'blocked'), {
@@ -318,6 +385,12 @@ describe('Firestore security rules', () => {
       linkUrl: '',
       eventDate: '',
       imageUrl: '',
+      displayStyle: 'standard',
+      contentWidth: 'normal',
+      imagePlacement: 'top',
+      textAlignment: 'left',
+      accentStyle: 'none',
+      ctaStyle: 'hidden',
       createdBy: editorAuth.email,
     }))
     await assertFails(setDoc(doc(db, 'adminUsers', 'escalation'), {
@@ -347,6 +420,12 @@ describe('Firestore security rules', () => {
       linkUrl: '',
       eventDate: '',
       imageUrl: '',
+      displayStyle: 'standard',
+      contentWidth: 'normal',
+      imagePlacement: 'top',
+      textAlignment: 'left',
+      accentStyle: 'none',
+      ctaStyle: 'hidden',
       createdBy: disabledEditorAuth.email,
     }))
   })

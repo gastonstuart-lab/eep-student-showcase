@@ -113,11 +113,14 @@ async function expectRouteAtTop(page, expectedPath, label, expectedText) {
   await page.waitForFunction(() => document.querySelector('main h1, main h2'))
   await page.waitForTimeout(750)
   await page.waitForFunction(() => window.scrollY <= 4)
+  await page.waitForFunction(() => document.activeElement?.tagName === 'MAIN' || document.activeElement?.id === 'main-content')
 
   const result = await page.evaluate(() => {
     const heading = document.querySelector('main h1, main h2')
+    const main = document.querySelector('main')
     const topbarBottom = document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0
     const rect = heading?.getBoundingClientRect()
+    const mainStyle = main ? window.getComputedStyle(main) : null
 
     return {
       scrollY: window.scrollY,
@@ -130,6 +133,10 @@ async function expectRouteAtTop(page, expectedPath, label, expectedText) {
         rect.left < window.innerWidth,
       topbarBottom,
       headingTop: rect?.top ?? null,
+      mainFocused: document.activeElement === main,
+      mainOutline: mainStyle?.outlineStyle ?? '',
+      mainOutlineWidth: mainStyle?.outlineWidth ?? '',
+      hasHorizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
     }
   })
 
@@ -141,6 +148,43 @@ async function expectRouteAtTop(page, expectedPath, label, expectedText) {
     throw new Error(
       `${label}: expected first heading to be visible below sticky nav. Heading "${result.headingText}" top=${result.headingTop}, topbar=${result.topbarBottom}.`,
     )
+  }
+
+  if (!result.mainFocused) {
+    throw new Error(`${label}: expected the route main element to be focused after navigation.`)
+  }
+
+  if (result.mainOutline !== 'none' && result.mainOutlineWidth !== '0px') {
+    throw new Error(`${label}: expected the focused route main to have no visible outline, got ${result.mainOutline} / ${result.mainOutlineWidth}.`)
+  }
+
+  if (result.hasHorizontalOverflow) {
+    throw new Error(`${label}: expected no horizontal overflow on the route.`)
+  }
+}
+
+async function expectKeyboardFocusVisible(page, baseUrl, label) {
+  await page.goto(`${baseUrl}/`)
+  await page.waitForFunction(() => document.querySelector('main h1, main h2'))
+  await page.waitForTimeout(500)
+  await page.keyboard.press('Tab')
+  await page.waitForTimeout(100)
+
+  const result = await page.evaluate(() => {
+    const active = document.activeElement
+    const style = active ? window.getComputedStyle(active) : null
+
+    return {
+      activeTag: active?.tagName ?? '',
+      activeText: active?.textContent?.trim() ?? '',
+      outlineStyle: style?.outlineStyle ?? '',
+      outlineWidth: style?.outlineWidth ?? '',
+      outlineOffset: style?.outlineOffset ?? '',
+    }
+  })
+
+  if (result.outlineStyle === 'none' || result.outlineWidth === '0px') {
+    throw new Error(`${label}: expected keyboard focus to remain visible on the first interactive control.`)
   }
 }
 
@@ -229,12 +273,23 @@ async function runViewport(serverInfo, viewport) {
 
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      consoleErrors.push(message.text())
+      const text = message.text()
+
+      if (
+        text.includes('Could not reach Cloud Firestore backend') ||
+        text.includes('FirebaseError: [code=unavailable]') ||
+        text.includes('The operation could not be completed')
+      ) {
+        return
+      }
+
+      consoleErrors.push(text)
     }
   })
   page.on('pageerror', (error) => consoleErrors.push(error.message))
 
   try {
+    await expectKeyboardFocusVisible(page, serverInfo.baseUrl, `${viewport.name} keyboard focus`)
     await runNormalRouteCase(page, serverInfo.baseUrl, '/', '/eep', '/eep', 'EEP Learning Hub', `${viewport.name} home -> EEP`)
     await runNormalRouteCase(page, serverInfo.baseUrl, '/', '/esl', '/esl', 'ESL Learning Hub', `${viewport.name} home -> ESL`)
     await runNormalRouteCase(page, serverInfo.baseUrl, '/esl', '/esl/science', '/esl/science', 'Science Hub', `${viewport.name} ESL -> Science`)

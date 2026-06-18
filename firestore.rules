@@ -145,6 +145,77 @@ service cloud.firestore {
       return value is string && (value == '' || value.matches('https://.*'));
     }
 
+    function isOptionalDateString(value) {
+      return value is string && (value == '' || value.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+    }
+
+    function isOptionalPlainText(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength && value.matches('^[^<>\\r\\n]*$');
+    }
+
+    function hasContentUrl() {
+      return (request.resource.data.linkUrl is string && request.resource.data.linkUrl != '')
+        || (request.resource.data.mediaUrl is string && request.resource.data.mediaUrl != '');
+    }
+
+    function isValidContentItem() {
+      return request.resource.data.keys().hasOnly([
+        'title',
+        'summary',
+        'body',
+        'type',
+        'department',
+        'sectionId',
+        'sectionName',
+        'status',
+        'featured',
+        'mediaUrl',
+        'linkUrl',
+        'eventDate',
+        'imageUrl',
+        'displayStyle',
+        'contentWidth',
+        'imagePlacement',
+        'textAlignment',
+        'accentStyle',
+        'badgeText',
+        'ctaStyle',
+        'createdBy',
+        'sortOrder',
+        'createdAt',
+        'updatedAt'
+      ])
+      && isShortString(request.resource.data.title, 120)
+      && isShortString(request.resource.data.summary, 220)
+      && request.resource.data.body is string && request.resource.data.body.size() <= 5000
+      && request.resource.data.type in [
+        'announcement',
+        'event',
+        'video',
+        'resource',
+        'studentWork',
+        'link'
+      ]
+      && request.resource.data.department in ['IED', 'EEP', 'ESL']
+      && isShortString(request.resource.data.sectionId, 80)
+      && isShortString(request.resource.data.sectionName, 120)
+      && request.resource.data.status in ['draft', 'published', 'hidden']
+      && request.resource.data.featured is bool
+      && isOptionalUrl(request.resource.data.mediaUrl)
+      && isOptionalUrl(request.resource.data.linkUrl)
+      && isOptionalDateString(request.resource.data.eventDate)
+      && isOptionalUrl(request.resource.data.imageUrl)
+      && request.resource.data.displayStyle in ['standard', 'featured', 'compact', 'banner', 'media']
+      && request.resource.data.contentWidth in ['normal', 'wide', 'full']
+      && request.resource.data.imagePlacement in ['top', 'left', 'right', 'background', 'hidden']
+      && request.resource.data.textAlignment in ['left', 'center']
+      && request.resource.data.accentStyle in ['none', 'eep', 'esl', 'warm', 'dark']
+      && (!request.resource.data.keys().hasAny(['badgeText']) || isOptionalPlainText(request.resource.data.badgeText, 24))
+      && request.resource.data.ctaStyle in ['link', 'primary', 'secondary', 'hidden']
+      && (request.resource.data.ctaStyle == 'hidden' || hasContentUrl())
+      && (!request.resource.data.keys().hasAny(['sortOrder']) || request.resource.data.sortOrder is number);
+    }
+
     function isValidProjectCreate() {
       return request.resource.data.keys().hasOnly([
         'title',
@@ -197,11 +268,13 @@ service cloud.firestore {
     match /contentItems/{contentItemId} {
       allow read: if resource.data.status == 'published' || canManageSection(resource.data.sectionId);
       allow create: if canCreateContent(request.resource.data.sectionId)
+        && isValidContentItem()
         && (
           request.resource.data.status != 'published'
           || canPublishContent(request.resource.data.sectionId)
         );
       allow update: if canEditContent(resource.data.sectionId)
+        && isValidContentItem()
         && canEditContent(request.resource.data.sectionId)
         && (
           !publishingStatusDidChange()
