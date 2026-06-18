@@ -11,33 +11,33 @@ import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'fire
 let testEnv: RulesTestEnvironment
 
 const projectId = 'eep-student-showcase-rules-test'
+const bootstrapUid = 'bootstrap-owner'
+const editorUid = 'science-editor'
+const disabledEditorUid = 'disabled-editor'
+const recordSuperAdminUid = 'record-super-admin'
+const wrongBootstrapEmailUid = 'wrong-bootstrap'
+const unverifiedBootstrapUid = 'unverified-bootstrap'
 const bootstrapAuth = {
-  uid: 'bootstrap-owner',
   email: 'gastonstuart@googlemail.com',
   email_verified: true,
 }
 const editorAuth = {
-  uid: 'science-editor',
   email: 'science.editor@example.com',
   email_verified: true,
 }
 const disabledEditorAuth = {
-  uid: 'disabled-editor',
   email: 'disabled.editor@example.com',
   email_verified: true,
 }
 const recordSuperAdminAuth = {
-  uid: 'record-super-admin',
   email: 'record.super@example.com',
   email_verified: true,
 }
 const wrongBootstrapEmailAuth = {
-  uid: 'wrong-bootstrap',
   email: 'not-gastonstuart@googlemail.com',
   email_verified: true,
 }
 const unverifiedBootstrapAuth = {
-  uid: 'unverified-bootstrap',
   email: 'gastonstuart@googlemail.com',
   email_verified: false,
 }
@@ -80,7 +80,7 @@ afterAll(async () => {
 async function seedAdminUsers() {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore()
-    await setDoc(doc(db, 'adminUsers', editorAuth.uid), {
+    await setDoc(doc(db, 'adminUsers', editorUid), {
       email: editorAuth.email,
       displayName: 'Science Editor',
       role: 'editor',
@@ -89,7 +89,7 @@ async function seedAdminUsers() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
-    await setDoc(doc(db, 'adminUsers', disabledEditorAuth.uid), {
+    await setDoc(doc(db, 'adminUsers', disabledEditorUid), {
       email: disabledEditorAuth.email,
       displayName: 'Disabled Editor',
       role: 'editor',
@@ -98,7 +98,7 @@ async function seedAdminUsers() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
-    await setDoc(doc(db, 'adminUsers', recordSuperAdminAuth.uid), {
+    await setDoc(doc(db, 'adminUsers', recordSuperAdminUid), {
       email: recordSuperAdminAuth.email,
       displayName: 'Record Super Admin',
       role: 'superAdmin',
@@ -183,7 +183,7 @@ describe('Firestore security rules', () => {
   })
 
   it('allows verified bootstrap super admin to manage protected data', async () => {
-    const db = testEnv.authenticatedContext(bootstrapAuth.uid, bootstrapAuth).firestore()
+    const db = testEnv.authenticatedContext(bootstrapUid, bootstrapAuth).firestore()
     await assertSucceeds(setDoc(doc(db, 'adminUsers', 'new-admin'), {
       email: 'new@example.com',
       displayName: 'New Admin',
@@ -210,8 +210,8 @@ describe('Firestore security rules', () => {
   })
 
   it('requires the bootstrap super admin to use the exact verified owner email', async () => {
-    const wrongEmailDb = testEnv.authenticatedContext(wrongBootstrapEmailAuth.uid, wrongBootstrapEmailAuth).firestore()
-    const unverifiedDb = testEnv.authenticatedContext(unverifiedBootstrapAuth.uid, unverifiedBootstrapAuth).firestore()
+    const wrongEmailDb = testEnv.authenticatedContext(wrongBootstrapEmailUid, wrongBootstrapEmailAuth).firestore()
+    const unverifiedDb = testEnv.authenticatedContext(unverifiedBootstrapUid, unverifiedBootstrapAuth).firestore()
 
     await assertFails(setDoc(doc(wrongEmailDb, 'adminUsers', 'blocked-wrong-email'), {
       email: 'blocked@example.com',
@@ -231,7 +231,7 @@ describe('Firestore security rules', () => {
 
   it('allows active adminUsers super admins to manage protected data', async () => {
     await seedAdminUsers()
-    const db = testEnv.authenticatedContext(recordSuperAdminAuth.uid, recordSuperAdminAuth).firestore()
+    const db = testEnv.authenticatedContext(recordSuperAdminUid, recordSuperAdminAuth).firestore()
 
     await assertSucceeds(setDoc(doc(db, 'adminUsers', 'managed-by-record-super'), {
       email: 'managed@example.com',
@@ -255,7 +255,7 @@ describe('Firestore security rules', () => {
 
   it('allows editor access to allowed sections and rejects disallowed sections and admin management', async () => {
     await seedAdminUsers()
-    const db = testEnv.authenticatedContext(editorAuth.uid, editorAuth).firestore()
+    const db = testEnv.authenticatedContext(editorUid, editorAuth).firestore()
 
     await assertSucceeds(setDoc(doc(db, 'contentItems', 'allowed'), {
       title: 'Allowed',
@@ -300,7 +300,7 @@ describe('Firestore security rules', () => {
 
   it('rejects disabled administrator writes', async () => {
     await seedAdminUsers()
-    const db = testEnv.authenticatedContext(disabledEditorAuth.uid, disabledEditorAuth).firestore()
+    const db = testEnv.authenticatedContext(disabledEditorUid, disabledEditorAuth).firestore()
 
     await assertFails(setDoc(doc(db, 'contentItems', 'disabled'), {
       title: 'Disabled',
