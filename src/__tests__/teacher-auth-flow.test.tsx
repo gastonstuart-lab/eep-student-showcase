@@ -18,12 +18,19 @@ type MockUser = {
 let currentUser: MockUser | null = null
 let adminRecords: Record<string, AdminUser | null> = {}
 
-const signInWithEmailAndPassword = vi.fn(async (_email: string, _password: string) => undefined)
+const signInWithEmailAndPassword = vi.fn(async (email: string, password: string) => {
+  void email
+  void password
+})
 const signOut = vi.fn(async () => {
   currentUser = null
 })
-const sendEmailVerification = vi.fn(async (_user: MockUser) => undefined)
-const sendPasswordResetEmail = vi.fn(async (_email: string) => undefined)
+const sendEmailVerification = vi.fn(async (user: MockUser) => {
+  void user
+})
+const sendPasswordResetEmail = vi.fn(async (email: string) => {
+  void email
+})
 const reload = vi.fn(async (user: MockUser) => {
   if (user.email === bootstrapSuperAdminEmail) {
     user.emailVerified = true
