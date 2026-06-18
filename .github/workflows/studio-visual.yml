@@ -1,0 +1,86 @@
+name: Teacher Studio Visual Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/production-ready-ied-hub
+
+jobs:
+  studio-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_FIREBASE_API_KEY: demo-api-key
+      VITE_FIREBASE_AUTH_DOMAIN: eep-student-showcase.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: eep-student-showcase
+      VITE_FIREBASE_APP_ID: 1:123456789:web:studio-test
+      VITE_FIREBASE_STORAGE_BUCKET: eep-student-showcase.appspot.com
+      VITE_FIREBASE_MESSAGING_SENDER_ID: 123456789
+      VITE_USE_FIREBASE_EMULATORS: 'true'
+      VITE_FIREBASE_EMULATOR_HOST: 127.0.0.1
+      VITE_FIREBASE_AUTH_EMULATOR_PORT: 9099
+      VITE_FIRESTORE_EMULATOR_PORT: 8080
+      VITE_FUNCTIONS_EMULATOR_PORT: 5001
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start Firebase emulators
+        run: |
+          npx firebase emulators:start --only auth,firestore,functions > firebase-emulators.log 2>&1 &
+          echo $! > firebase-emulators.pid
+          for i in {1..60}; do
+            if curl --silent --fail http://127.0.0.1:4400/emulators >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat firebase-emulators.log
+          exit 1
+
+      - name: Create temporary test credentials
+        run: |
+          TEMP_TEST_PASSWORD="StudioTest-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}!"
+          echo "LOCAL_OWNER_PASSWORD=$TEMP_TEST_PASSWORD" >> "$GITHUB_ENV"
+          echo "ROUTE_SCROLL_ADMIN_USERNAME=stuart" >> "$GITHUB_ENV"
+          echo "ROUTE_SCROLL_ADMIN_PASSWORD=$TEMP_TEST_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Seed local owner
+        run: npm --prefix functions run seed:owner:local
+
+      - name: Run authenticated browser checks
+        run: npm run test:route-scroll
+
+      - name: Upload emulator logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teacher-studio-emulator-logs
+          path: firebase-emulators.log
+          if-no-files-found: ignore
