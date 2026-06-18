@@ -29,14 +29,26 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install functions
+        run: npm ci --prefix functions
+
       - name: Lint
         run: npm run lint
 
+      - name: Functions lint
+        run: npm --prefix functions run lint
+
       - name: Unit tests
         run: npm test
+
+      - name: Functions tests
+        run: npm --prefix functions test
 
       - name: Firestore rules tests
         run: npm run test:rules
 
       - name: Production build
         run: npm run build
+
+      - name: Functions build
+        run: npm --prefix functions run build

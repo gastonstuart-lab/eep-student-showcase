@@ -73,6 +73,7 @@ VITE_FIREBASE_APP_ID=your_web_app_id
 VITE_FIREBASE_STORAGE_BUCKET=eep-student-showcase.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY=optional_recaptcha_v3_site_key
+VITE_STAFF_AUTH_DOMAIN=staff.eep-student-showcase.local
 ```
 
 The Firebase web app values come from Firebase Console > Project settings > General > Your apps > Web app.
@@ -81,70 +82,93 @@ App Check is optional. To activate it, create/register a reCAPTCHA v3 site key i
 
 Never commit real API keys beyond the Firebase public web config placeholders, service accounts, private keys, logs, build output, `.env`, `.firebase`, or emulator cache files.
 
-## Authorization Model
+## Closed Staff Access Model
 
-Firestore rules are the final security boundary.
+The public learning pages are visible, and public student submissions remain anonymous pending submissions. Staff administration is closed: there is no signup UI, no public registration route, no student account system, and no public email reset for internally generated staff identifiers.
 
-Bootstrap super administrator:
+Staff sign in at `/login` with:
 
-```text
-gastonstuart@googlemail.com
-```
+- `Username`
+- `Password`
 
-This account is a super administrator only when signed in with Firebase Auth and the email is verified.
+The browser normalizes the username and signs in to Firebase Auth with a hidden internal email. For example, `science.jones` becomes `science.jones@VITE_STAFF_AUTH_DOMAIN`. The migration username `stuart` maps to the protected owner Auth email `gastonstuart@googlemail.com`.
 
-Additional administrators live in `adminUsers/{uid}` where the document ID is the Firebase Authentication UID.
+Staff access records live in `adminUsers/{uid}` and include:
 
-Fields:
-
-- `email`
+- `username`, `normalizedUsername`, hidden `authEmail`, optional `contactEmail`
 - `displayName`
-- `role`: `superAdmin` or `editor`
+- `role`: `superAdmin`, `admin`, or `editor`
 - `active`
+- `protectedOwner`
+- `mustChangePassword`
 - `allowedSectionIds`
-- `createdAt`
-- `updatedAt`
+- granular `permissions`
+- created/updated audit metadata
 
 Permissions:
 
-- `superAdmin`: manages projects, all hubs/content, and administrator records.
-- `editor`: manages only sections listed in `allowedSectionIds`.
-- EEP project management requires `eep` in `allowedSectionIds`.
-- Editors cannot manage administrator records or escalate permissions.
-- Disabled administrator records have no write access.
-- Public visitors can read only approved projects, published content, and public hub pages.
-- Public visitors can create only valid pending project submissions.
+- `manageUsers`
+- `manageProjects`
+- `manageHubSettings`
+- `createContent`
+- `editContent`
+- `publishContent`
+- `deleteContent`
+- `viewAuditLog`
 
-Use `/admin/users` as the bootstrap owner or another super admin to add editors. The person must already have a Firebase Authentication account so their UID can be used.
+Super administrators receive all permissions. Administrators and editors receive explicit permissions plus selected section IDs. Legacy editor records without a `permissions` object retain their section-scoped behavior for compatibility, but new staff records should always include explicit permissions.
 
-### Administrator account setup
+Protected owner:
 
-Do not enable public self-registration. Teacher accounts are created deliberately in Firebase Authentication, then authorised by verified email and role.
+```text
+username: stuart
+Auth email: gastonstuart@googlemail.com
+```
 
-1. In Firebase Console > Authentication, create the teacher email/password account.
-2. The teacher signs in at `/login`.
-3. If the email is not verified, the application shows the verification-required screen and can send the Firebase verification email.
-4. The teacher opens the verification email and clicks the verification link.
-5. The teacher returns to the app and uses "I've verified my email - check again" to refresh the Firebase user and ID token.
-6. The bootstrap owner `gastonstuart@googlemail.com` receives super-admin access automatically only after the email is verified.
-7. Other teachers require an active `adminUsers/{uid}` role record before they can manage content. Editors remain limited to their `allowedSectionIds`.
+The protected owner bootstrap path does not depend on email verification. The protected owner cannot be disabled, archived, or demoted by ordinary staff management flows. Only the protected owner may create or change another super administrator.
 
-Password recovery is available from `/login` with "Forgot password?". The confirmation is intentionally neutral, so it does not reveal whether a teacher account exists.
+### Staff Workflow
 
-Verification troubleshooting:
+1. An authorised staff user with `manageUsers` opens `/admin/users`.
+2. They create a staff account with username, display name, optional contact email, role, sections, permissions, and a temporary password.
+3. The browser calls the `createStaffUser` Cloud Function. The function validates the caller, reserves the username transactionally, creates the Firebase Auth user with the Admin SDK, creates the staff record, sets `mustChangePassword: true`, and writes an audit entry. The temporary password is never stored.
+4. The administrator shares the one-time temporary password out of band.
+5. The staff member signs in by username and must change the temporary password before any admin page opens.
+6. Administrator password resets use `resetStaffPassword`, set a new temporary password, revoke refresh tokens, set `mustChangePassword: true`, and write an audit entry.
+7. Disabling staff uses `disableStaffUser`, disables Firebase Auth, revokes refresh tokens, marks the staff record inactive, and preserves authored content and audit history.
+8. Archiving is preferred over permanent deletion. The current implementation archives/disables access rather than deleting Auth and audit history.
 
-- Confirm the Firebase Authentication account email exactly matches the intended teacher email.
-- For the bootstrap owner, the email must be exactly `gastonstuart@googlemail.com`.
-- Ask the teacher to use the newest verification email if several were sent.
-- After clicking the email link, use "I've verified my email - check again" or refresh the app.
-- If a verified teacher still sees access denied, confirm their `adminUsers/{uid}` document exists, is `active: true`, and has the correct `role` and `allowedSectionIds`.
+There is no public email password reset on `/login`; staff are told to contact an IED Hub administrator.
+
+### Enforcement
+
+- React hides and gates staff UI based on the active staff record and explicit permissions.
+- Cloud Functions re-check caller permissions server-side before creating, updating, resetting, disabling, enabling, or archiving staff.
+- Firestore rules allow public reads only for approved/published content, allow public pending project submissions only through the validated schema, deny client writes to `adminUsers`, `staffUsernames`, and `auditLogs`, and enforce section/action permissions for private content.
+- A random Firebase Auth user without an active valid staff record has no private access.
+
+### Authentication Blocking
+
+The repository includes a prepared `blockUnprovisionedStaffSignup` blocking function. It rejects user creation when the internal username was not reserved by the staff provisioning function.
+
+Important operational caveat: Firebase Authentication blocking functions require upgrading Firebase Authentication to Identity Platform and registering/deploying the blocking function in Firebase/Google Cloud. This may require Blaze billing. Do not enable billing or deploy the blocking function without explicit approval.
+
+Until Identity Platform blocking is enabled, arbitrary Firebase Auth account creation may still be technically possible through Firebase APIs, but those accounts receive no private Firestore access because rules require the protected owner email or an active staff record. This is not the same as Authentication-level signup blocking.
+
+### Migration
+
+- Stuart can sign in as `stuart`; internally this uses `gastonstuart@googlemail.com`.
+- After Functions are configured, create the persisted protected owner staff record for `stuart`.
+- Keep `teacher@eep.com` disabled or unprivileged unless explicitly needed. Do not auto-grant it broad rights.
 
 ## Firestore Collections
 
 - `projects`: student project submissions and approved showcase records.
 - `contentItems`: announcements, events, resources, videos, links, and student work.
 - `hubPages`: public hub page copy/settings keyed by section ID.
-- `adminUsers`: administrator/editor access records keyed by Firebase Auth UID.
+- `adminUsers`: staff access records keyed by Firebase Auth UID.
+- `staffUsernames`: server-managed username reservations for uniqueness.
+- `auditLogs`: immutable staff/action audit entries written by trusted backend logic.
 
 Required public project submission constraints are mirrored in client validation and Firestore rules: bounded text fields, valid category, Google Sites URL, optional HTTPS image URL, pending status, no featured/student-pick flags, and timestamps.
 
@@ -155,12 +179,16 @@ npm.cmd run lint
 npm.cmd test
 npm.cmd run test:rules
 npm.cmd run build
+npm.cmd --prefix functions run lint
+npm.cmd --prefix functions test
+npm.cmd --prefix functions run build
 ```
 
 Deployment commands are prepared but should only be run after explicit approval:
 
 ```bash
 firebase.cmd deploy --only firestore:rules --project eep-student-showcase
+firebase.cmd deploy --only functions --project eep-student-showcase
 firebase.cmd deploy --only hosting:iedhub --project eep-student-showcase
 ```
 
@@ -175,10 +203,14 @@ Rollback:
 GitHub Actions workflow `.github/workflows/validate.yml` runs on pushes and pull requests:
 
 - `npm ci`
+- `npm ci --prefix functions`
 - lint
+- functions lint
 - unit tests
+- functions tests
 - Firestore rules tests with Java and Firebase emulator
 - production build
+- functions build
 
 CI does not deploy.
 
@@ -189,12 +221,15 @@ Current structure:
 - `src/App.tsx`: routes and remaining page composition
 - `src/auth.tsx`: authentication and effective authorization state
 - `src/data.ts`: Firestore data services
+- `src/staffFunctions.ts`: callable staff-access function wrappers
 - `src/hubs.ts`: hub configuration
 - `src/i18n`: language mode and translations
 - `src/components/public`: premium public visual components
 - `src/components/ErrorBoundary.tsx`: app-level error boundary
 - `src/utils/validation.ts`: project submission validation
+- `src/utils/staffAuth.ts`: username normalization and internal Auth identifier generation
 - `src/__tests__`: Vitest regression and validation tests
+- `functions/src/index.ts`: staff provisioning, password reset, archive/disable, audit, and blocking function code
 - `firestore.rules` and `firestore.rules.test.ts`: security boundary and emulator coverage
 
 `App.tsx` is still large, but new work should continue extracting pages, forms, and admin modules incrementally without changing public routes or Firestore collection names.
@@ -208,11 +243,13 @@ Current structure:
 - `npm.cmd test` passes.
 - `npm.cmd run test:rules` passes in an environment with Java.
 - `npm.cmd run build` passes.
+- `npm.cmd --prefix functions run lint`, `npm.cmd --prefix functions test`, and `npm.cmd --prefix functions run build` pass.
 - Public pages load in English, Traditional Chinese, and bilingual modes.
 - Showcase cards remain visible after async loading, filtering, and searching.
 - Public submissions create pending projects only.
 - Unauthorized authenticated users see Access denied.
 - Editors are limited to allowed sections by Firestore rules.
+- Staff account changes go through Cloud Functions, not direct client writes to `adminUsers`.
 - Unknown routes show the 404 page.
 - No production deploy has been run without approval.
 
