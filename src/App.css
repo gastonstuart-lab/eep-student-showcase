@@ -1802,6 +1802,12 @@ main {
   box-shadow: 0 14px 34px rgba(108, 67, 0, 0.12);
 }
 
+.success-message {
+  color: #0a6c4a;
+  background: #e7f8ef;
+  border-color: #9bd7b9;
+}
+
 .hero-section {
   position: relative;
   display: grid;

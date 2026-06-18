@@ -10,7 +10,7 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom'
-import { AuthProvider, bootstrapSuperAdminEmail, useAuth } from './auth'
+import { AuthProvider, bootstrapSuperAdminEmail, mapAuthError, useAuth } from './auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
@@ -681,21 +681,33 @@ function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
+  if (!user.emailVerified) {
+    return <VerificationRequiredPanel />
+  }
+
   if (!isAdmin || (requireSuperAdmin && !isSuperAdmin) || (sectionId && !canManageSection(sectionId))) {
-    return <AccessDenied />
+    return <AccessDenied sectionId={sectionId} requireSuperAdmin={requireSuperAdmin} />
   }
 
   return children
 }
 
-export function AccessDenied() {
+export function AccessDenied({ sectionId, requireSuperAdmin = false }: { sectionId?: string; requireSuperAdmin?: boolean }) {
   const { t } = useLanguage()
+  const { user } = useAuth()
+  const body = user?.emailVerified
+    ? sectionId
+      ? 'Your teacher account is active, but it does not have permission to manage this section.'
+      : requireSuperAdmin
+        ? 'This page is limited to super administrators.'
+        : t('accessDeniedBody')
+    : 'Verify your email address before administrator access can begin.'
 
   return (
     <section className="admin-page">
       <PageMessage
         title={t('accessDeniedTitle')}
-        body={t('accessDeniedBody')}
+        body={body}
       />
       <Link className="secondary-button" to="/">
         {t('returnToPublicHub')}
@@ -1924,13 +1936,28 @@ function AboutPage() {
   )
 }
 
-function LoginPage() {
-  const { login, user } = useAuth()
+export function LoginPage() {
+  const { login, sendPasswordReset, user } = useAuth()
   const { t } = useLanguage()
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+  const [signingIn, setSigningIn] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
+  const [resetCooldown, setResetCooldown] = useState(0)
+
+  useEffect(() => {
+    if (!resetCooldown) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setResetCooldown((seconds) => Math.max(0, seconds - 1))
+    }, 1000)
+
+    return () => window.clearTimeout(timer)
+  }, [resetCooldown])
 
   if (!isFirebaseConfigured) {
     return (
@@ -1942,6 +1969,10 @@ function LoginPage() {
     )
   }
 
+  if (user && !user.emailVerified) {
+    return <VerificationRequiredPanel />
+  }
+
   if (user) {
     return <Navigate to="/admin" replace />
   }
@@ -1949,12 +1980,37 @@ function LoginPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
+    setStatus('')
+    setSigningIn(true)
 
     try {
       await login(email, password)
-      navigate('/admin')
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : t('loginFailed'))
+      setError(mapAuthError(loginError))
+    } finally {
+      setSigningIn(false)
+    }
+  }
+
+  const resetPassword = async () => {
+    setError('')
+    setStatus('')
+
+    if (!email.trim()) {
+      setError('Enter your teacher email address before requesting a password reset.')
+      return
+    }
+
+    setResettingPassword(true)
+
+    try {
+      await sendPasswordReset(email.trim())
+      setStatus('If this teacher email exists, a password reset message will be sent shortly.')
+      setResetCooldown(45)
+    } catch (resetError) {
+      setError(mapAuthError(resetError))
+    } finally {
+      setResettingPassword(false)
     }
   }
 
@@ -1979,11 +2035,120 @@ function LoginPage() {
             type="password"
           />
         </label>
-        <button className="primary-button" type="submit">
-          {t('signIn')}
+        <button className="primary-button" type="submit" disabled={signingIn}>
+          {signingIn ? 'Signing in...' : t('signIn')}
         </button>
-        {error && <p className="form-message">{error}</p>}
+        <button
+          className="secondary-button"
+          type="button"
+          disabled={resettingPassword || resetCooldown > 0}
+          onClick={resetPassword}
+        >
+          {resetCooldown > 0 ? `Forgot password? Try again in ${resetCooldown}s` : 'Forgot password?'}
+        </button>
+        <div aria-live="polite">
+          {status && <p className="form-message success-message">{status}</p>}
+          {error && <p className="form-message">{error}</p>}
+        </div>
       </form>
+    </section>
+  )
+}
+
+function VerificationRequiredPanel() {
+  const { logout, refreshUser, sendVerificationEmail, user, isAdmin } = useAuth()
+  const navigate = useNavigate()
+  const [message, setMessage] = useState('Administrator access begins after your email address is verified.')
+  const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+
+  useEffect(() => {
+    if (!cooldown) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setCooldown((seconds) => Math.max(0, seconds - 1))
+    }, 1000)
+
+    return () => window.clearTimeout(timer)
+  }, [cooldown])
+
+  const sendVerification = async () => {
+    setError('')
+    setSending(true)
+
+    try {
+      await sendVerificationEmail()
+      setMessage('Verification email sent. Open the message, click the link, then return here.')
+      setCooldown(60)
+    } catch (sendError) {
+      setError(mapAuthError(sendError))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const checkAgain = async () => {
+    setError('')
+    setChecking(true)
+
+    try {
+      const refreshedUser = await refreshUser()
+
+      if (refreshedUser?.emailVerified) {
+        setMessage('Email verified. Checking administrator access...')
+        navigate('/admin', { replace: true })
+        return
+      }
+
+      setMessage('This email is still not verified. Use the latest verification email, then check again.')
+    } catch (refreshError) {
+      setError(mapAuthError(refreshError))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  return (
+    <section className="login-page">
+      <div className="login-card verification-card">
+        <PageHeading
+          eyebrow="Teacher verification"
+          title="Verify your email"
+          body="You are signed in, but this teacher account must verify its email address before administrator access can begin."
+        />
+        <p className="submission-destination">
+          Signed in as <strong>{user?.email ?? 'this teacher account'}</strong>
+        </p>
+        <div className="admin-actions">
+          <button
+            className="primary-button blue"
+            type="button"
+            disabled={sending || cooldown > 0}
+            onClick={sendVerification}
+          >
+            {sending ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send verification email'}
+          </button>
+          <button className="secondary-button" type="button" disabled={checking} onClick={checkAgain}>
+            {checking ? 'Checking...' : "I've verified my email - check again"}
+          </button>
+          <button className="secondary-button" type="button" onClick={() => void logout()}>
+            Sign out / Use another account
+          </button>
+        </div>
+        <div aria-live="polite">
+          <p className="form-message success-message">{message}</p>
+          {error && <p className="form-message">{error}</p>}
+        </div>
+        {isAdmin && (
+          <p className="muted">
+            Your administrator role is present, but it will remain inactive until email verification is complete.
+          </p>
+        )}
+      </div>
     </section>
   )
 }

@@ -117,6 +117,28 @@ Permissions:
 
 Use `/admin/users` as the bootstrap owner or another super admin to add editors. The person must already have a Firebase Authentication account so their UID can be used.
 
+### Administrator account setup
+
+Do not enable public self-registration. Teacher accounts are created deliberately in Firebase Authentication, then authorised by verified email and role.
+
+1. In Firebase Console > Authentication, create the teacher email/password account.
+2. The teacher signs in at `/login`.
+3. If the email is not verified, the application shows the verification-required screen and can send the Firebase verification email.
+4. The teacher opens the verification email and clicks the verification link.
+5. The teacher returns to the app and uses "I've verified my email - check again" to refresh the Firebase user and ID token.
+6. The bootstrap owner `gastonstuart@googlemail.com` receives super-admin access automatically only after the email is verified.
+7. Other teachers require an active `adminUsers/{uid}` role record before they can manage content. Editors remain limited to their `allowedSectionIds`.
+
+Password recovery is available from `/login` with "Forgot password?". The confirmation is intentionally neutral, so it does not reveal whether a teacher account exists.
+
+Verification troubleshooting:
+
+- Confirm the Firebase Authentication account email exactly matches the intended teacher email.
+- For the bootstrap owner, the email must be exactly `gastonstuart@googlemail.com`.
+- Ask the teacher to use the newest verification email if several were sent.
+- After clicking the email link, use "I've verified my email - check again" or refresh the app.
+- If a verified teacher still sees access denied, confirm their `adminUsers/{uid}` document exists, is `active: true`, and has the correct `role` and `allowedSectionIds`.
+
 ## Firestore Collections
 
 - `projects`: student project submissions and approved showcase records.
