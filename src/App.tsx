@@ -385,6 +385,19 @@ function Shell() {
     return () => observer.disconnect()
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!location.hash) {
+      return
+    }
+
+    const id = decodeURIComponent(location.hash.slice(1))
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [location.hash, location.pathname])
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -1419,7 +1432,11 @@ function ProjectCard({ project }: { project: Project }) {
 
   return (
     <article className="project-card reveal">
-      <img src={project.imageUrl || fallbackImage(project)} alt={`${project.title} preview`} />
+      <img
+        src={projectImageSrc(project)}
+        alt={`${project.title} preview`}
+        onError={(event) => handleProjectImageError(event, project)}
+      />
       <div className="project-card-body">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
         <h2>{project.title}</h2>
@@ -1449,7 +1466,11 @@ function Spotlight({ titleKey, projects }: { titleKey: TranslationKey; projects:
       {projects.length ? (
         projects.map((project) => (
           <Link className="spotlight-item" key={project.id} to={`/projects/${project.id}`}>
-            <img src={project.imageUrl || fallbackImage(project)} alt={`${project.title} thumbnail`} />
+            <img
+              src={projectImageSrc(project)}
+              alt={`${project.title} thumbnail`}
+              onError={(event) => handleProjectImageError(event, project)}
+            />
             <span>
               <strong>{project.title}</strong>
               <small>{project.groupName}</small>
@@ -1481,7 +1502,12 @@ function ProjectDetailPage() {
 
   return (
     <section className="detail-page page-panel">
-      <img className="detail-image" src={project.imageUrl || fallbackImage(project)} alt={`${project.title} project visual`} />
+      <img
+        className="detail-image"
+        src={projectImageSrc(project)}
+        alt={`${project.title} project visual`}
+        onError={(event) => handleProjectImageError(event, project)}
+      />
       <div className="detail-content">
         <span className="badge">{t(categoryTranslationKeys[project.category])}</span>
         <h1>{project.title}</h1>
@@ -2533,7 +2559,7 @@ function ProjectPreview({ project }: { project: Project }) {
 
   return (
     <div className="project-preview">
-      <img src={project.imageUrl || fallbackImage(project)} alt="" />
+      <img src={projectImageSrc(project)} alt="" onError={(event) => handleProjectImageError(event, project)} />
       <div>
         <span className="badge">{t(statusTranslationKeys[project.status])}</span>
         <h2>{project.title}</h2>
@@ -2705,6 +2731,18 @@ function PageMessage({ title, body }: { title: string; body: string }) {
       <p>{body}</p>
     </div>
   )
+}
+
+function projectImageSrc(project: Project) {
+  return project.imageUrl || fallbackImage(project)
+}
+
+function handleProjectImageError(event: { currentTarget: HTMLImageElement }, project: Project) {
+  const fallback = fallbackImage(project)
+
+  if (event.currentTarget.src !== fallback) {
+    event.currentTarget.src = fallback
+  }
 }
 
 function fallbackImage(project: Project) {
