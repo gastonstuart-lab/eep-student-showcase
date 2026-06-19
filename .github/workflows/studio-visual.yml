@@ -51,6 +51,9 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Build Functions
+        run: npm --prefix functions run build
+
       - name: Start Firebase emulators
         run: |
           npx firebase emulators:start --only auth,firestore,functions > firebase-emulators.log 2>&1 &
