@@ -2212,7 +2212,12 @@ function HubAdminListPage() {
           const hubPage = hubPages.find((item) => item.sectionId === config.sectionId)
 
           return (
-            <Link className="hub-card" key={config.sectionId} to={`/admin/hubs/${config.sectionId}`}>
+            <Link
+              className="hub-card hub-card--admin"
+              data-section-id={config.sectionId}
+              key={config.sectionId}
+              to={`/admin/hubs/${config.sectionId}`}
+            >
               <span>{config.department}</span>
               <h2>{hubPage?.title ?? config.defaults.title}</h2>
               <p>{hubPage?.subtitle ?? config.defaults.subtitle}</p>

@@ -1034,6 +1034,82 @@ html {
   box-shadow: 0 24px 55px rgba(25, 72, 112, 0.16);
 }
 
+.hub-admin-list .hub-card--admin {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(13rem, 19vw, 18rem);
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(3, 27, 51, 0.18) 0%, rgba(3, 27, 51, 0.54) 54%, rgba(3, 27, 51, 0.82) 100%),
+    linear-gradient(115deg, rgba(0, 107, 70, 0.34), rgba(0, 107, 214, 0.22)),
+    var(--hub-admin-card-image, url('/images/ied-premium/heroes/ied-home-hero.webp')) center / cover;
+  border-color: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 24px 62px rgba(16, 71, 113, 0.2);
+}
+
+.hub-admin-list .hub-card--admin::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.28), transparent 14rem);
+  content: '';
+}
+
+.hub-admin-list .hub-card--admin span,
+.hub-admin-list .hub-card--admin h2,
+.hub-admin-list .hub-card--admin p {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 14px rgba(0, 22, 43, 0.46);
+}
+
+.hub-admin-list .hub-card--admin span {
+  color: #ffffff;
+  width: fit-content;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 999px;
+  background: rgba(0, 30, 57, 0.48);
+  box-shadow: 0 12px 28px rgba(0, 22, 43, 0.2);
+}
+
+.hub-admin-list .hub-card--admin h2 {
+  color: #ffffff;
+}
+
+.hub-admin-list .hub-card--admin p {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='ied'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/ied-home-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='eep'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/showcase-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='esl'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/esl-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='esl-science'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/science-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='esl-language-arts'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/language-arts-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='esl-performance-arts'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/performance-arts-hero.webp');
+}
+
+.hub-admin-list .hub-card--admin[data-section-id='esl-social-studies'] {
+  --hub-admin-card-image: url('/images/ied-premium/heroes/social-studies-hero.webp');
+}
+
 .muted-card {
   opacity: 0.82;
 }
