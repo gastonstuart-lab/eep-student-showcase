@@ -230,6 +230,8 @@ html {
 }
 
 .programme-card .programme-card-action {
+  position: relative;
+  isolation: isolate;
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -240,14 +242,48 @@ html {
   min-height: 3.25rem;
   padding: 0.85rem 1.15rem;
   color: #ffffff;
-  border: none;
-  border-radius: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.86rem;
+  overflow: hidden;
   font-size: 1.05rem;
   font-weight: 850;
   text-decoration: none;
-  transition: all 180ms ease;
+  text-shadow: 0 1px 12px rgba(0, 22, 43, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 16px 34px rgba(20, 74, 115, 0.18);
+  transition:
+    transform 180ms var(--ease-public),
+    box-shadow 180ms ease,
+    filter 180ms ease;
   cursor: pointer;
   margin-top: auto;
+}
+
+.programme-card .programme-card-action::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.34), transparent 9rem),
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  opacity: 0.86;
+  content: '';
+  transition:
+    opacity 180ms ease,
+    transform 220ms var(--ease-public);
+}
+
+.programme-card .programme-card-action::after {
+  display: inline-grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  content: '→';
+  transition: transform 180ms var(--ease-public), background 180ms ease;
 }
 
 .programme-eep {
@@ -256,15 +292,18 @@ html {
 }
 
 .programme-eep .programme-card-action {
-  background: #0b63ce;
+  background:
+    linear-gradient(135deg, #0b63ce 0%, #0a56b9 48%, #073f91 100%);
   color: #ffffff;
 }
 
 .programme-eep .programme-card-action:hover,
 .programme-eep .programme-card-action:focus-visible {
-  background: #064aa3;
-  box-shadow: 0 8px 20px rgba(11, 99, 206, 0.25);
-  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 20px 42px rgba(11, 99, 206, 0.32);
+  filter: saturate(1.08);
+  transform: translateY(-2px);
 }
 
 .programme-esl {
@@ -273,15 +312,30 @@ html {
 }
 
 .programme-esl .programme-card-action {
-  background: #0f8f83;
+  background:
+    linear-gradient(135deg, #0f8f83 0%, #0a7b72 48%, #075f59 100%);
   color: #ffffff;
 }
 
 .programme-esl .programme-card-action:hover,
 .programme-esl .programme-card-action:focus-visible {
-  background: #0a6b63;
-  box-shadow: 0 8px 20px rgba(15, 143, 131, 0.25);
-  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 20px 42px rgba(15, 143, 131, 0.32);
+  filter: saturate(1.08);
+  transform: translateY(-2px);
+}
+
+.programme-card .programme-card-action:hover::before,
+.programme-card .programme-card-action:focus-visible::before {
+  opacity: 1;
+  transform: translateX(12%);
+}
+
+.programme-card .programme-card-action:hover::after,
+.programme-card .programme-card-action:focus-visible::after {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(0.2rem);
 }
 
 .programme-card:hover,
@@ -5050,38 +5104,98 @@ html {
 }
 
 .premium-card-cta {
+  position: relative;
+  isolation: isolate;
   display: flex;
   min-height: 3.35rem;
   align-items: center;
   justify-content: center;
   margin: auto clamp(1rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.25rem);
   padding: 0.85rem 1rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 0.95rem;
+  overflow: hidden;
   color: #ffffff;
   font-weight: 900;
   text-align: center;
   text-decoration: none;
+  text-shadow: 0 1px 14px rgba(0, 22, 43, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 18px 38px rgba(18, 66, 105, 0.18);
+  transition:
+    transform 200ms var(--ease-public),
+    box-shadow 200ms ease,
+    filter 200ms ease;
+}
+
+.premium-card-cta::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.36), transparent 8.8rem),
+    linear-gradient(105deg, transparent 0 38%, rgba(255, 255, 255, 0.18) 48%, transparent 58% 100%);
+  opacity: 0.84;
+  content: '';
+  transition:
+    opacity 200ms ease,
+    transform 260ms var(--ease-public);
+}
+
+.premium-pathway-card:hover .premium-card-cta,
+.premium-image-card:hover .premium-card-cta,
+.premium-subject-card:hover .premium-card-cta,
+.premium-card-cta:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 22px 46px rgba(18, 66, 105, 0.24);
+  filter: saturate(1.08);
+}
+
+.premium-pathway-card:hover .premium-card-cta::before,
+.premium-image-card:hover .premium-card-cta::before,
+.premium-subject-card:hover .premium-card-cta::before,
+.premium-card-cta:focus-visible::before {
+  opacity: 1;
+  transform: translateX(12%);
+}
+
+.premium-card-cta:focus-visible {
+  outline: 3px solid rgba(11, 99, 206, 0.28);
+  outline-offset: 3px;
+}
+
+.premium-pathway-eep .premium-card-cta,
+.premium-pathway-esl .premium-card-cta,
+.premium-subject-science .premium-card-cta {
+  background:
+    linear-gradient(135deg, #0b63ce 0%, #0a56b9 48%, #073f91 100%);
 }
 
 .premium-pathway-esl .premium-card-cta,
 .premium-subject-science .premium-card-cta {
-  background: var(--color-esl);
+  background:
+    linear-gradient(135deg, #0f8f83 0%, #0a7b72 48%, #075f59 100%);
 }
 
 .premium-image-card-indigo .premium-card-cta,
 .premium-subject-language .premium-card-cta {
-  background: var(--color-language);
+  background:
+    linear-gradient(135deg, #5975d9 0%, #4d63c0 50%, #344899 100%);
 }
 
 .premium-image-card-amber .premium-card-cta,
 .premium-subject-performance .premium-card-cta {
-  background: var(--color-performance);
+  background:
+    linear-gradient(135deg, #b76217 0%, #965012 50%, #783e0c 100%);
 }
 
 .premium-image-card-terracotta .premium-card-cta,
 .premium-subject-social .premium-card-cta {
-  background: var(--color-social);
+  background:
+    linear-gradient(135deg, #b45f24 0%, #914a19 50%, #713713 100%);
 }
 
 .premium-card-cta-secondary,
