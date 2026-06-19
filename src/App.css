@@ -6,6 +6,10 @@ html {
   scroll-behavior: smooth;
 }
 
+.route-main:focus {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -2507,7 +2511,7 @@ main {
 
 .eyebrow {
   margin: 0 0 0.75rem;
-  color: #008f5d;
+  color: #006b46;
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -2565,7 +2569,7 @@ h2 {
 
 .eyebrow .translation-line {
   margin-top: 0.14rem;
-  color: #008f5d;
+  color: #006b46;
   font-size: 0.9em;
   letter-spacing: 0;
 }
@@ -2609,7 +2613,7 @@ h2 .translation-line {
 
 .primary-button {
   color: #ffffff;
-  background: #008f5d;
+  background: #006b46;
 }
 
 .primary-button.blue {
@@ -3150,7 +3154,7 @@ h2 .translation-line {
 
 .meta,
 .muted {
-  color: #607d95;
+  color: #4f6d84;
 }
 
 .sidebar {
@@ -3598,6 +3602,8 @@ h2 .translation-line {
 
 .prezi-frame {
   position: relative;
+  max-width: 100%;
+  min-width: 0;
   min-height: 18rem;
   overflow: hidden;
   border: 1px solid #b7d9ee;
@@ -4403,20 +4409,21 @@ html {
 .premium-hero-media,
 .premium-hero__media {
   position: absolute;
-  inset: 0;
+  inset: 1px;
   z-index: 0;
   display: block;
-  width: 100%;
-  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--radius-lg) - 1px);
 }
 
 .premium-hero-media img,
 .premium-hero__media img {
   display: block;
   width: 100%;
-  height: 100%;
+  height: calc(100% + 2px);
   object-fit: cover;
   object-position: var(--hero-position, center);
+  transform: translateY(-2px);
 }
 
 .premium-hero__overlay {
@@ -4536,7 +4543,7 @@ html {
 }
 
 .premium-button-teal {
-  background: var(--color-esl);
+  background: #0a6b63;
 }
 
 .premium-button-indigo {
@@ -4544,11 +4551,11 @@ html {
 }
 
 .premium-button-amber {
-  background: var(--color-performance);
+  background: #8c4a11;
 }
 
 .premium-button-terracotta {
-  background: var(--color-social);
+  background: #8d491d;
 }
 
 .premium-button-outline {
@@ -4807,6 +4814,22 @@ html {
     display: none;
   }
 
+  .premium-hero--dark .premium-hero-copy .eyebrow {
+    color: #006b46;
+  }
+
+  .premium-hero--dark .premium-hero-copy h1 {
+    color: var(--color-ink);
+  }
+
+  .premium-hero--dark .premium-lead {
+    color: #173f6b;
+  }
+
+  .premium-hero--dark .premium-body {
+    color: var(--color-ink-soft);
+  }
+
   .premium-pathway-image,
   .premium-image-card,
   .premium-subject-card {
@@ -4842,10 +4865,13 @@ html {
 
 .honeypot-field {
   position: absolute;
-  left: -10000px;
+  inset: 0 auto auto 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .section-checkboxes {

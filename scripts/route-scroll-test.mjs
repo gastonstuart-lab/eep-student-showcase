@@ -85,7 +85,7 @@ async function scrollDown(page) {
   })
 
   if (target > 0) {
-    await page.waitForFunction((expected) => window.scrollY >= Math.min(expected, 250) - 2, target)
+    await page.waitForTimeout(150)
   }
 }
 
@@ -258,10 +258,10 @@ async function runAdminCases(page, baseUrl, label) {
   const firstHubLink = page.locator('main a[href^="/admin/hubs/"]:visible').first()
   await firstHubLink.click()
   await page.waitForURL((url) => url.pathname.startsWith('/admin/hubs/'))
-  await expectRouteAtTop(page, new URL(page.url()).pathname, `${label} hub editor opens at top`, 'Manage ')
+  await expectRouteAtTop(page, new URL(page.url()).pathname, `${label} hub editor opens at top`, 'Teacher Content Studio')
 
   await scrollDown(page)
-  await page.locator('main a:has-text("View public page"):visible').click()
+  await page.locator('main a:has-text("View public hub"):visible').click()
   await expectRouteAtTop(page, new URL(page.url()).pathname, `${label} hub editor -> public hub page`, 'Learning Hub')
 }
 

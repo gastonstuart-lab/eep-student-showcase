@@ -14,6 +14,7 @@ dist
 dist-ssr
 .firebase
 screenshots/
+audit-results/
 *-screenshots/
 *-screenshots.zip
 *review-board*.png

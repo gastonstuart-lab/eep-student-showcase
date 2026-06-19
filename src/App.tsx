@@ -1081,7 +1081,7 @@ function HubPageView({ sectionId }: { sectionId: string }) {
           <ContentSection title="Featured Work" items={featured} highlight />
           <ContentSection title="Videos / Performances" items={videos} />
         </div>
-        <aside className="performance-sidebar">
+        <div className="performance-sidebar">
           <ContentSection title="Upcoming Events" items={events} compact />
           <ContentSection title="Resources / Web Links" items={resources} compact />
           <ContentSection title="Recent Updates" items={recent} compact />
@@ -1095,7 +1095,7 @@ function HubPageView({ sectionId }: { sectionId: string }) {
               </Link>
             </section>
           )}
-        </aside>
+        </div>
       </div>
     </section>
   )

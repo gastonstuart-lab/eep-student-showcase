@@ -55,8 +55,11 @@ jobs:
         run: |
           npx firebase emulators:start --only auth,firestore,functions > firebase-emulators.log 2>&1 &
           echo $! > firebase-emulators.pid
-          for i in {1..60}; do
-            if curl --silent --fail http://127.0.0.1:4400/emulators >/dev/null; then
+          for i in {1..90}; do
+            if bash -c '</dev/tcp/127.0.0.1/9099' 2>/dev/null \
+              && bash -c '</dev/tcp/127.0.0.1/8080' 2>/dev/null \
+              && bash -c '</dev/tcp/127.0.0.1/5001' 2>/dev/null; then
+              sleep 3
               exit 0
             fi
             sleep 2
