@@ -1299,9 +1299,327 @@ html {
   margin-left: 0.4rem;
 }
 
+.staff-access-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.staff-access-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.68fr);
+  gap: clamp(1rem, 2vw, 1.4rem);
+  align-items: end;
+  overflow: hidden;
+  padding: clamp(1.25rem, 2.6vw, 2.2rem);
+  border: 1px solid rgba(204, 226, 244, 0.9);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 248, 255, 0.92)),
+    radial-gradient(circle at 86% 18%, rgba(244, 191, 69, 0.24), transparent 15rem),
+    radial-gradient(circle at 12% 86%, rgba(15, 143, 131, 0.15), transparent 17rem);
+  box-shadow: var(--shadow-soft);
+}
+
+.staff-access-hero::after {
+  position: absolute;
+  inset: auto -7rem -10rem auto;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(0, 107, 214, 0.18), transparent 62%),
+    radial-gradient(circle at 32% 24%, rgba(15, 143, 131, 0.22), transparent 42%);
+  content: '';
+  pointer-events: none;
+}
+
+.staff-access-hero > div {
+  position: relative;
+  z-index: 1;
+}
+
+.staff-access-hero h1 {
+  max-width: 11ch;
+  margin: 0 0 0.75rem;
+  color: #0f385c;
+  font-size: clamp(2.6rem, 5vw, 4.8rem);
+  line-height: 0.98;
+}
+
+.staff-access-hero p:not(.eyebrow) {
+  max-width: 43rem;
+  margin: 0;
+  color: #355b78;
+  font-size: clamp(1.05rem, 1.3vw, 1.24rem);
+}
+
+.staff-access-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.staff-access-metrics article {
+  min-height: 7.5rem;
+  padding: 1rem;
+  border: 1px solid rgba(183, 217, 238, 0.9);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 16px 34px rgba(18, 66, 105, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.staff-access-metrics span {
+  display: block;
+  color: #0b63ce;
+  font-size: clamp(1.8rem, 3.1vw, 2.7rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.staff-access-metrics p {
+  margin: 0.35rem 0 0;
+  color: #426782;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.staff-owner-note {
+  margin-top: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 252, 255, 0.92)),
+    radial-gradient(circle at 96% 20%, rgba(244, 191, 69, 0.18), transparent 10rem);
+  box-shadow: 0 12px 30px rgba(18, 66, 105, 0.07);
+}
+
+.staff-access-layout {
+  grid-template-columns: minmax(22rem, 0.78fr) minmax(0, 1.22fr);
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
+.staff-access-editor {
+  overflow: hidden;
+  padding: clamp(1rem, 2vw, 1.25rem);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 251, 255, 0.95)),
+    radial-gradient(circle at 92% 4%, rgba(15, 143, 131, 0.16), transparent 10rem);
+}
+
+.staff-panel-header {
+  align-items: start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(204, 226, 244, 0.9);
+}
+
+.staff-panel-header span {
+  color: #006b46;
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.staff-panel-header h2 {
+  margin: 0.15rem 0 0;
+  color: #0f385c;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+}
+
+.staff-access-editor .form-grid {
+  gap: 0.85rem;
+}
+
+.staff-access-editor label {
+  color: #315a76;
+  font-size: 0.88rem;
+}
+
+.staff-access-editor input,
+.staff-access-editor select {
+  min-height: 3rem;
+  border-radius: 0.78rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.staff-access-editor .primary-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.staff-account-list {
+  gap: 0.85rem;
+}
+
+.staff-account-card {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  padding: clamp(1rem, 1.7vw, 1.25rem);
+  border-color: rgba(204, 226, 244, 0.95);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 251, 255, 0.95)),
+    radial-gradient(circle at 100% 0%, rgba(0, 107, 214, 0.1), transparent 14rem);
+  box-shadow: var(--shadow-soft);
+}
+
+.staff-account-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.36rem;
+  background: linear-gradient(180deg, #0b63ce, #0f8f83);
+  content: '';
+}
+
+.staff-account-card-main {
+  min-width: 0;
+}
+
+.staff-account-badges {
+  margin-bottom: 0.65rem;
+}
+
+.badge-owner {
+  color: #704b00;
+  background: #fff1c2;
+}
+
+.staff-account-card h2 {
+  margin: 0 0 0.35rem;
+  color: #0f385c;
+  font-size: clamp(1.2rem, 1.7vw, 1.55rem);
+}
+
+.staff-account-identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  margin: 0 0 0.9rem;
+  color: #4f6d84;
+  font-weight: 850;
+}
+
+.staff-account-identity span:first-child {
+  color: #0b63ce;
+}
+
+.staff-access-chip-group,
+.staff-permission-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.staff-access-chip,
+.staff-permission-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.staff-access-chip {
+  color: #06437f;
+  background: #eaf6ff;
+  border: 1px solid #c7e2f5;
+}
+
+.staff-permission-row {
+  margin-top: 0.7rem;
+}
+
+.staff-permission-row span {
+  color: #315a76;
+  background: #f4f8fb;
+  border: 1px solid #dcecf7;
+}
+
+.staff-account-card .admin-item-actions {
+  align-self: center;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 8.6rem;
+}
+
+.staff-account-card .admin-item-actions button {
+  width: 100%;
+  min-height: 2.55rem;
+  justify-content: center;
+}
+
+@media (max-width: 1080px) {
+  .staff-access-hero,
+  .staff-access-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-access-editor {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .staff-access-page {
+    gap: 0.85rem;
+  }
+
+  .staff-access-hero {
+    padding: 1rem;
+  }
+
+  .staff-access-hero h1 {
+    font-size: clamp(2.35rem, 15vw, 3.45rem);
+  }
+
+  .staff-access-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-access-metrics article {
+    min-height: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .staff-access-editor,
+  .staff-account-card {
+    border-radius: var(--radius-md);
+  }
+
+  .staff-account-card {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-account-card .admin-item-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .staff-account-card .admin-item-actions .danger-button {
+    grid-column: 1 / -1;
+  }
+}
+
 .content-editor {
   position: sticky;
   top: 5.4rem;
+}
+
+@media (max-width: 1080px) {
+  .content-editor.staff-access-editor {
+    position: static;
+  }
 }
 
 .preview-panel {

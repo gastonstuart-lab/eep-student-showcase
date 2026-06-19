@@ -2264,6 +2264,12 @@ function AdminUsersPage() {
   const [createdCredential, setCreatedCredential] = useState<{ username: string; temporaryPassword: string } | null>(null)
   const [draft, setDraft] = useState<AdminUserInput>(emptyAdminUser)
   const editingUser = adminUsers.find((item) => item.id === editingId)
+  const activeAdminCount = adminUsers.filter((item) => item.active).length
+  const editorCount = adminUsers.filter((item) => item.role === 'editor').length
+  const sectionLabelById = useMemo(
+    () => Object.fromEntries(hubConfigs.map((config) => [config.sectionId, config.sectionName])) as Record<string, string>,
+    [],
+  )
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -2457,13 +2463,31 @@ function AdminUsersPage() {
   }
 
   return (
-    <section className="admin-page">
-      <PageHeading
-        eyebrow="Staff Access"
-        title="Manage staff accounts"
-        body="Create administrator-provisioned staff accounts, assign section access, and control action-level permissions."
-      />
-      <p className="content-admin-context">
+    <section className="admin-page staff-access-page">
+      <div className="staff-access-hero">
+        <div>
+          <p className="eyebrow">Staff Access</p>
+          <h1>Manage staff accounts</h1>
+          <p>
+            Create administrator-provisioned staff accounts, assign section access, and keep sensitive actions under clear control.
+          </p>
+        </div>
+        <div className="staff-access-metrics" aria-label="Staff access summary">
+          <article>
+            <span>{adminUsers.length}</span>
+            <p>Total accounts</p>
+          </article>
+          <article>
+            <span>{activeAdminCount}</span>
+            <p>Active</p>
+          </article>
+          <article>
+            <span>{editorCount}</span>
+            <p>Editors</p>
+          </article>
+        </div>
+      </div>
+      <p className="content-admin-context staff-owner-note">
         Protected owner: <strong>{protectedOwnerUsername}</strong> ({protectedOwnerEmail}). This account cannot be disabled, archived, or stripped of final super-administrator access here.
       </p>
       {adminUser?.source === 'bootstrap' && (
@@ -2483,10 +2507,13 @@ function AdminUsersPage() {
       {loading && <PageMessage title="Loading administrators" body="Fetching administrator records..." />}
       {error && <PageMessage title="Could not load administrators" body={error} />}
 
-      <div className="content-admin-grid">
-        <form className="content-editor" onSubmit={saveAdmin}>
-          <div className="modal-header">
-            <h2>{editingUser ? `Edit ${editingUser.email}` : 'Add administrator or editor'}</h2>
+      <div className="content-admin-grid staff-access-layout">
+        <form className="content-editor staff-access-editor" onSubmit={saveAdmin}>
+          <div className="modal-header staff-panel-header">
+            <div>
+              <span>{editingUser ? 'Editing access' : 'New staff access'}</span>
+              <h2>{editingUser ? editingUser.displayName || editingUser.email : 'Add administrator or editor'}</h2>
+            </div>
             {editingUser && (
               <button className="small-button" type="button" onClick={startCreate}>
                 New
@@ -2511,33 +2538,37 @@ function AdminUsersPage() {
           )}
         </form>
 
-        <div className="content-admin-list">
+        <div className="content-admin-list staff-account-list">
           {adminUsers.length ? (
             adminUsers.map((item) => (
-              <article className="admin-item content-admin-item" key={item.id}>
-                <div>
-                  <div className="content-item-badges">
+              <article className="admin-item content-admin-item staff-account-card" key={item.id}>
+                <div className="staff-account-card-main">
+                  <div className="content-item-badges staff-account-badges">
                     <span className={`status-badge ${item.active ? 'status-published' : 'status-hidden'}`}>
                       {item.active ? 'Active' : 'Inactive'}
                     </span>
                     <span className="badge">{adminRoleLabels[item.role]}</span>
+                    {item.protectedOwner && <span className="badge badge-owner">Protected owner</span>}
                   </div>
                   <h2>{item.displayName || item.email}</h2>
-                  <p className="meta">Username: {item.username}</p>
-                  {item.contactEmail && <p className="meta">Contact: {item.contactEmail}</p>}
-                  {item.protectedOwner && <p className="module-note quiet">Protected owner</p>}
-                  <p>
-                    Sections:{' '}
-                    {item.role === 'superAdmin'
-                      ? 'All sections'
-                      : item.allowedSectionIds.length
-                        ? item.allowedSectionIds.join(', ')
-                        : 'None'}
+                  <p className="staff-account-identity">
+                    <span>@{item.username}</span>
+                    {item.contactEmail && <span>{item.contactEmail}</span>}
                   </p>
-                  <p className="meta">
-                    Permissions:{' '}
-                    {staffPermissionKeys.filter((permission) => item.permissions[permission]).join(', ') || 'None'}
-                  </p>
+                  <div className="staff-access-chip-group" aria-label={`Section access for ${item.username}`}>
+                    {(item.role === 'superAdmin' ? ['All sections'] : item.allowedSectionIds.length
+                      ? item.allowedSectionIds.map((sectionId) => sectionLabelById[sectionId] ?? sectionId)
+                      : ['No sections']).map((label) => (
+                      <span className="staff-access-chip" key={label}>{label}</span>
+                    ))}
+                  </div>
+                  <div className="staff-permission-row" aria-label={`Permissions for ${item.username}`}>
+                    {staffPermissionKeys.filter((permission) => item.permissions[permission]).length
+                      ? staffPermissionKeys.filter((permission) => item.permissions[permission]).map((permission) => (
+                        <span key={permission}>{permission}</span>
+                      ))
+                      : <span>Permissions not granted</span>}
+                  </div>
                 </div>
                 <div className="admin-item-actions">
                   <button className="secondary-button" type="button" onClick={() => startEdit(item)}>
