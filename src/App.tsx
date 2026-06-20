@@ -523,6 +523,11 @@ function Shell() {
                   {chromeText('navAdmin')}
                 </Link>
               )}
+              {isAdmin && (
+                <Link className="small-button admin-hubs-shortcut" to="/admin/hubs" onClick={() => setMobileMenuOpen(false)}>
+                  Hubs
+                </Link>
+              )}
               {isSuperAdmin && (
                 <Link className="small-button" to="/admin/users" onClick={() => setMobileMenuOpen(false)}>
                   Access

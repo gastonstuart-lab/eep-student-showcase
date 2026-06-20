@@ -2786,6 +2786,10 @@ html {
   min-width: 0;
 }
 
+.admin-hubs-shortcut {
+  display: none;
+}
+
 .mobile-menu-button {
   display: none;
   min-height: 2.2rem;
@@ -6633,6 +6637,10 @@ html {
     background: #f8fcff;
   }
 
+  .topbar-actions.is-open .admin-hubs-shortcut {
+    display: flex;
+  }
+
   .language-toggle-button {
     width: 100%;
     min-width: 0;
@@ -6749,6 +6757,10 @@ html {
 
   .workspace-account {
     display: none;
+  }
+
+  .workspace-topbar-shortcut {
+    display: inline-flex;
   }
 
   .workspace-main {
