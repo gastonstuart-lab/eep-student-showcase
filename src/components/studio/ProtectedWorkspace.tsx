@@ -160,7 +160,7 @@ export function StepIndicator({ steps, currentStep }: { steps: string[]; current
   return (
     <ol className="workspace-step-indicator" aria-label="Wizard progress">
       {steps.map((step, index) => (
-        <li className={index === currentStep ? 'is-current' : index < currentStep ? 'is-complete' : ''} key={step}>
+        <li className={index === currentStep ? 'is-current' : index < currentStep ? 'is-complete' : ''} key={step} aria-current={index === currentStep ? 'step' : undefined}>
           <span>{index + 1}</span>{step}
         </li>
       ))}
