@@ -73,7 +73,7 @@ export function buildWorkspaceNav(admin: EffectiveAdmin | null, configs: HubConf
     if (canPublish) {
       items.push({ label: 'Published', to: `/admin/hubs/${firstSection.sectionId}`, group: 'core' })
     }
-    items.push({ label: 'View Public Hub', to: firstSection.route, group: 'core' })
+    items.push({ label: 'Open Public Hub', to: firstSection.route, group: 'core' })
   }
 
   if (canManageProjectsForAdmin(admin)) {
