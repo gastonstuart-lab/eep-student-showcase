@@ -19,6 +19,8 @@ import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
 import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import { HubContentLibrary } from './components/studio/HubContentLibrary'
+import { EmptyState, PrimaryActionCard, ProtectedAppShell, SummaryCard } from './components/studio/ProtectedWorkspace'
+import { buildWorkspaceNav, getAccessibleHubConfigs } from './components/studio/workspaceModel'
 import { ContentLayout } from './components/public/ContentLayout'
 import {
   createProject,
@@ -45,7 +47,7 @@ import {
   resetStaffPassword,
   updateStaffAccess,
 } from './staffFunctions'
-import { emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
+import { canCreateContentForAdmin, emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
@@ -730,7 +732,7 @@ function ProtectedRoute({
     return <AccessDenied sectionId={sectionId} requireSuperAdmin={requireSuperAdmin || requireManageUsers || requireAuditLog} />
   }
 
-  return children
+  return <ProtectedAppShell>{children}</ProtectedAppShell>
 }
 
 export function AccessDenied({ sectionId, requireSuperAdmin = false }: { sectionId?: string; requireSuperAdmin?: boolean }) {
@@ -2114,17 +2116,45 @@ function FirebaseMissingPanel() {
 }
 
 function AdminDashboard() {
-  const { canManageProjects, canManageUsers, canViewAuditLog } = useAuth()
+  const { adminUser, canManageProjects } = useAuth()
   const { projects, loading, error } = useProjects(undefined, canManageProjects)
   const { t } = useLanguage()
   const [seedMessage, setSeedMessage] = useState('')
+  const accessibleHubs = useMemo(() => getAccessibleHubConfigs(adminUser), [adminUser])
+  const navItems = useMemo(() => buildWorkspaceNav(adminUser), [adminUser])
+  const defaultWorkspaceHub = accessibleHubs.find((config) => config.sectionId !== 'ied') ?? accessibleHubs[0]
+  const firstCreatableHub = accessibleHubs.find((config) => config.sectionId !== 'ied' && canCreateContentForAdmin(adminUser, config.sectionId))
+    ?? accessibleHubs.find((config) => canCreateContentForAdmin(adminUser, config.sectionId))
+  const primaryActions = [
+    ...(firstCreatableHub ? [{
+      title: `Create for ${firstCreatableHub.sectionName}`,
+      body: 'Start a draft, update, resource, event, link, or student-work story.',
+      to: `/admin/hubs/${firstCreatableHub.sectionId}`,
+      label: 'Create Content',
+    }] : []),
+    ...(defaultWorkspaceHub ? [{
+      title: `${defaultWorkspaceHub.sectionName} library`,
+      body: 'Review drafts, scheduled posts, published updates, and reusable resources.',
+      to: `/admin/hubs/${defaultWorkspaceHub.sectionId}`,
+      label: 'Open Library',
+    }] : []),
+    ...(canManageProjects ? [{
+      title: 'Review EEP submissions',
+      body: 'Approve student website submissions and manage the public showcase queue.',
+      to: '/admin/pending',
+      label: 'Review Queue',
+    }] : []),
+    ...(navItems.some((item) => item.to === '/admin/users') ? [{
+      title: 'Manage staff access',
+      body: 'Provision staff accounts, assign sections, and keep protected-owner controls safe.',
+      to: '/admin/users',
+      label: 'Staff Access',
+    }] : []),
+  ].slice(0, 4)
 
   const stats = {
-    total: projects.length,
     pending: projects.filter((project) => project.status === 'pending').length,
     approved: projects.filter((project) => project.status === 'approved').length,
-    rejected: projects.filter((project) => project.status === 'rejected').length,
-    hidden: projects.filter((project) => project.status === 'hidden').length,
     featured: projects.filter((project) => project.featured).length,
   }
 
@@ -2139,49 +2169,54 @@ function AdminDashboard() {
   }
 
   return (
-    <section className="admin-page">
-      <PageHeading
-        eyebrow={t('adminEyebrow')}
-        title={t('adminTitle')}
-        body={t('adminBody')}
-      />
-      <div className="admin-actions">
-        <Link className="primary-button" to="/admin/pending">
-          {t('pendingSubmissions')}
-        </Link>
-        <Link className="secondary-button" to="/admin/approved">
-          {t('approvedProjects')}
-        </Link>
-        <Link className="secondary-button" to="/admin/hubs">
-          Hub Pages
-        </Link>
-        {canManageUsers && (
-          <Link className="secondary-button" to="/admin/users">
-            Staff Access
-          </Link>
-        )}
-        {canViewAuditLog && (
-          <Link className="secondary-button" to="/admin/audit">
-            Audit Log
-          </Link>
-        )}
-        {canManageProjects && (
-          <button className="secondary-button" type="button" onClick={() => void runSeed()}>
-            {t('seedSampleData')}
-          </button>
-        )}
+    <section className="admin-page workspace-dashboard">
+      <div className="workspace-dashboard-hero">
+        <div>
+          <p className="eyebrow">{adminUser?.role === 'superAdmin' ? 'Platform Overview' : 'Teacher Workspace'}</p>
+          <h1>{adminUser?.role === 'editor' ? 'Your publishing workspace' : t('adminTitle')}</h1>
+          <p>
+            {adminUser?.role === 'superAdmin'
+              ? 'Monitor every hub, staff access, submissions, and platform activity from one calm workspace.'
+              : `Work only in ${accessibleHubs.map((config) => config.sectionName).join(', ') || 'your assigned hubs'}. Tools appear when your account has permission to use them.`}
+          </p>
+        </div>
+        <div className="workspace-dashboard-context" aria-label="Current access summary">
+          <span>{adminUser?.displayName || adminUser?.username}</span>
+          <strong>{accessibleHubs.length ? accessibleHubs.map((config) => config.sectionName).join(' · ') : 'No assigned hubs'}</strong>
+          <small>{adminUser?.protectedOwner ? 'Protected owner safeguards active' : 'Role-aware permissions active'}</small>
+        </div>
       </div>
+
+      {primaryActions.length ? (
+        <div className="workspace-action-grid" aria-label="Primary workspace actions">
+          {primaryActions.map((action) => (
+            <PrimaryActionCard key={`${action.label}:${action.to}`} {...action} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No workspace actions are available yet."
+          body="This account is active, but it has no assigned publishing tools. Ask a super administrator to review section access and permissions."
+        />
+      )}
+
       {seedMessage && <p className="form-message">{seedMessage}</p>}
       {loading && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
       {error && <PageMessage title={t('couldNotLoadDashboard')} body={error} />}
-      <div className="stats-grid">
-        {Object.entries(stats).map(([label, value]) => (
-          <article className="stat-card" key={label}>
-            <span>{value}</span>
-            <p>{t(statLabelKeys[label])}</p>
-          </article>
-        ))}
-      </div>
+      {(canManageProjects && (stats.pending > 0 || stats.approved > 0 || stats.featured > 0)) && (
+        <div className="workspace-summary-grid" aria-label="EEP project summary">
+          {stats.pending > 0 && <SummaryCard label={t(statLabelKeys.pending)} value={stats.pending} tone="warning" />}
+          {stats.approved > 0 && <SummaryCard label={t(statLabelKeys.approved)} value={stats.approved} tone="good" />}
+          {stats.featured > 0 && <SummaryCard label={t(statLabelKeys.featured)} value={stats.featured} />}
+        </div>
+      )}
+      {canManageProjects && (
+        <div className="workspace-utility-row">
+          <button className="workspace-text-button" type="button" onClick={() => void runSeed()}>
+            {t('seedSampleData')}
+          </button>
+        </div>
+      )}
     </section>
   )
 }
