@@ -4947,24 +4947,39 @@ html {
 }
 
 .premium-button {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  min-height: 3.35rem;
+  min-height: 2.6rem;
   align-items: center;
   justify-content: center;
-  padding: 0.85rem 1.65rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  width: fit-content;
+  padding: 0.58rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 0.62rem;
   color: #ffffff;
-  font-size: 1.02rem;
-  font-weight: 900;
+  font-size: 0.92rem;
+  font-weight: 850;
   line-height: 1.15;
   text-decoration: none;
-  box-shadow: 0 14px 28px rgba(11, 99, 206, 0.16);
+  overflow: hidden;
+  text-shadow: none;
+  box-shadow: 0 10px 22px rgba(18, 66, 105, 0.16);
   transition:
     transform 180ms var(--ease-public),
     box-shadow 180ms ease,
     background 180ms ease,
     border-color 180ms ease;
+}
+
+.premium-button::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 100%);
+  opacity: 0.72;
+  content: '';
+  transition: opacity 180ms ease;
 }
 
 .premium-button span {
@@ -4973,7 +4988,12 @@ html {
 
 .premium-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 36px rgba(11, 49, 95, 0.18);
+  border-color: rgba(255, 255, 255, 0.46);
+  box-shadow: 0 14px 28px rgba(11, 49, 95, 0.2);
+}
+
+.premium-button:hover::before {
+  opacity: 1;
 }
 
 .premium-button:hover span {
@@ -4981,7 +5001,7 @@ html {
 }
 
 .premium-button:focus-visible {
-  outline: 3px solid rgba(11, 99, 206, 0.28);
+  outline: 3px solid rgba(11, 99, 206, 0.32);
   outline-offset: 3px;
 }
 
@@ -4991,7 +5011,7 @@ html {
 }
 
 .premium-button-teal {
-  background: #0a6b63;
+  background: #0a7b72;
 }
 
 .premium-button-indigo {
@@ -5007,10 +5027,33 @@ html {
 }
 
 .premium-button-outline {
-  color: var(--color-ink);
-  background: rgba(255, 255, 255, 0.88);
-  border-color: #b7d9ee;
-  box-shadow: none;
+  color: #ffffff;
+  background: rgba(12, 49, 83, 0.58);
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 10px 22px rgba(18, 66, 105, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.premium-hero-eep .premium-button-outline,
+.premium-hero-showcase .premium-button-outline {
+  background: rgba(11, 99, 206, 0.72);
+}
+
+.premium-hero-esl .premium-button-outline,
+.premium-hero-science .premium-button-outline {
+  background: rgba(10, 123, 114, 0.72);
+}
+
+.premium-hero-language .premium-button-outline {
+  background: rgba(102, 120, 216, 0.72);
+}
+
+.premium-hero-performance .premium-button-outline {
+  background: rgba(183, 98, 23, 0.74);
+}
+
+.premium-hero-social .premium-button-outline {
+  background: rgba(164, 86, 34, 0.74);
 }
 
 .premium-pathway-grid {
@@ -5465,6 +5508,18 @@ html {
   background: #0a7b72;
 }
 
+.premium-subject-language > .premium-card-cta {
+  background: #6678d8;
+}
+
+.premium-subject-performance > .premium-card-cta {
+  background: #b76217;
+}
+
+.premium-subject-social > .premium-card-cta {
+  background: #a45622;
+}
+
 .premium-image-card-actions .premium-card-cta-secondary {
   background: rgba(255, 255, 255, 0.16);
 }
@@ -5551,7 +5606,8 @@ html {
   }
 
   .premium-button {
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .premium-hero-media,

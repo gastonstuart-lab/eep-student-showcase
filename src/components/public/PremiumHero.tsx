@@ -7,6 +7,8 @@ export interface PremiumHeroAction {
   variant?: 'blue' | 'teal' | 'indigo' | 'amber' | 'terracotta' | 'outline'
 }
 
+const ctaLabel = (label: string) => (label.includes('→') || label.includes('↓') ? label : `${label} →`)
+
 export function PremiumHero({
   eyebrow,
   title,
@@ -61,11 +63,11 @@ export function PremiumHero({
 
               return isExternal ? (
                 <a className={className} href={action.to} key={`${action.label}-${action.to}`} target="_blank" rel="noreferrer">
-                  <span>{action.label}</span>
+                  <span>{ctaLabel(action.label)}</span>
                 </a>
               ) : (
                 <Link className={className} key={`${action.label}-${action.to}`} to={action.to}>
-                  <span>{action.label}</span>
+                  <span>{ctaLabel(action.label)}</span>
                 </Link>
               )
             })}

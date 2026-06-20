@@ -1276,7 +1276,7 @@ function getProgramCards(sectionId: string): ProgrammeFeature[] {
         body: 'Student projects and the existing Student Website Showcase browse and submission flow.',
         image: premiumAssets.cards.showcase,
         imageAlt: 'Digital student showcase publishing visual',
-        primaryLabel: 'Browse Showcase',
+        primaryLabel: 'Explore Projects & Showcases',
         primaryUrl: '/eep/showcase',
         secondaryLabel: 'Submit Project',
         secondaryUrl: '/eep/showcase/submit',

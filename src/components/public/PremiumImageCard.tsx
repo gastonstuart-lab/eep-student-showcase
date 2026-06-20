@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 
+const ctaLabel = (label: string) => (label.includes('→') ? label : `${label} →`)
+
 export function PremiumImageCard({
   title,
   kicker,
@@ -34,14 +36,14 @@ export function PremiumImageCard({
       <div className="premium-image-card-actions">
         {actionTo ? (
           <Link className="premium-card-cta" to={actionTo}>
-            {actionLabel}
+            {ctaLabel(actionLabel)}
           </Link>
         ) : (
-          <span className="premium-card-cta is-static">{actionLabel}</span>
+          <span className="premium-card-cta is-static">{ctaLabel(actionLabel)}</span>
         )}
         {secondaryLabel && secondaryTo && (
           <Link className="premium-card-cta premium-card-cta-secondary" to={secondaryTo}>
-            {secondaryLabel}
+            {ctaLabel(secondaryLabel)}
           </Link>
         )}
       </div>

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 
+const ctaLabel = (label: string) => (label.includes('→') ? label : `${label} →`)
+
 export function SubjectPathwayCard({
   to,
   title,
@@ -25,7 +27,7 @@ export function SubjectPathwayCard({
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
-      <span className="premium-card-cta">{cta}</span>
+      <span className="premium-card-cta">{ctaLabel(cta)}</span>
     </Link>
   )
 }
