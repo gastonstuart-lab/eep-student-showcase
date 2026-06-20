@@ -806,12 +806,6 @@ function HomePage() {
           to="/eep"
           title="EEP Learning Hub"
           description={t('eepHomeDescription')}
-          features={[
-            t('eepFeatureBooksStories'),
-            t('eepFeatureReadingVocab'),
-            t('eepFeatureCreativeWork'),
-            t('eepFeatureProjectsShowcases'),
-          ]}
           cta={`${t('exploreEepHub')} →`}
           desktopImage={premiumAssets.cards.eep}
           imageAlt="Books, workbooks, and story-based English enrichment materials"
@@ -822,7 +816,6 @@ function HomePage() {
           to="/esl"
           title="ESL Learning Hub"
           description={t('eslHomeDescription')}
-          features={['Science', 'Language Arts', 'Performance Arts', 'Social Studies']}
           cta={`${t('exploreEslHub')} →`}
           desktopImage={premiumAssets.cards.esl}
           imageAlt="Globe and subject learning materials for ESL"

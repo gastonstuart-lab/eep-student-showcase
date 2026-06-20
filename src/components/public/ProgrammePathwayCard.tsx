@@ -4,7 +4,6 @@ export function ProgrammePathwayCard({
   to,
   title,
   description,
-  features,
   cta,
   desktopImage,
   mobileImage,
@@ -15,7 +14,6 @@ export function ProgrammePathwayCard({
   to: string
   title: string
   description: string
-  features: string[]
   cta: string
   desktopImage: string
   mobileImage?: string
@@ -33,11 +31,6 @@ export function ProgrammePathwayCard({
         <span className="programme-kicker">{kicker}</span>
         <h2>{title}</h2>
         <p>{description}</p>
-        <div className="programme-badges">
-          {features.map((feature) => (
-            <span key={feature}>{feature}</span>
-          ))}
-        </div>
       </div>
       <span className="premium-card-cta">{cta}</span>
     </Link>

@@ -50,7 +50,7 @@ export const translations = {
   eepProgramme: { en: 'EEP Programme', zh: 'EEP 課程' },
   eslProgramme: { en: 'ESL Programme', zh: 'ESL 課程' },
   eepHomeDescription: {
-    en: 'Explore stories, books, language activities, creative work, class challenges, and student projects from across EEP.',
+    en: 'Explore stories, books, language activities, creative work, class challenges, and student projects.',
     zh: '探索 EEP 的故事與書籍、語言活動、創意作品、班級挑戰與學生專題。',
   },
   eslHomeDescription: {
@@ -61,8 +61,8 @@ export const translations = {
   eepFeatureReadingVocab: { en: 'Reading & Vocabulary', zh: '閱讀與字彙' },
   eepFeatureCreativeWork: { en: 'Creative Work', zh: '創意作品' },
   eepFeatureProjectsShowcases: { en: 'Projects & Showcases', zh: '專題與成果展示' },
-  exploreEepHub: { en: 'Explore the EEP Hub', zh: '探索 EEP 學習中心' },
-  exploreEslHub: { en: 'Explore the ESL Hub', zh: '探索 ESL 學習中心' },
+  exploreEepHub: { en: 'Explore EEP', zh: '探索 EEP 學習中心' },
+  exploreEslHub: { en: 'Explore ESL', zh: '探索 ESL 學習中心' },
   openContentLink: { en: 'Open link', zh: '開啟連結' },
 
   firebaseNotice: {
