@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth'
 import { createContentItem, deleteContentItem, saveHubPage, updateContentItem } from '../../data'
 import type { HubConfig } from '../../hubs'
@@ -29,6 +29,7 @@ import {
   canPublishContentForAdmin,
 } from '../../utils/authorization'
 import { contentTypes, type ContentItem, type ContentItemInput, type ContentStatus, type ContentType, type HubPage, type HubPageInput } from '../../types'
+import { parseWorkspaceContentView, workspaceContentViewLabels, workspaceContentViewStatus } from './workspaceRouting'
 
 const contentTypeLabels: Record<ContentType, string> = {
   announcement: 'Announcement',
@@ -159,10 +160,14 @@ export function HubContentLibrary({
   userEmail: string
 }) {
   const { adminUser, canManageHubSettings } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeView = parseWorkspaceContentView(searchParams.get('view'))
+  const viewStatus = workspaceContentViewStatus[activeView]
   const canCreateContent = (sectionId: string) => canCreateContentForAdmin(adminUser, sectionId)
   const canEditContent = (sectionId: string) => canEditContentForAdmin(adminUser, sectionId)
   const canPublishContent = (sectionId: string) => canPublishContentForAdmin(adminUser, sectionId)
   const canDeleteContent = (sectionId: string) => canDeleteContentForAdmin(adminUser, sectionId)
+  const canCreateThisSection = canCreateContentForAdmin(adminUser, config.sectionId)
   const [hubDraft, setHubDraft] = useState<HubPageInput>(() => ({
     sectionId: hubPage.sectionId,
     title: hubPage.title,
@@ -180,7 +185,7 @@ export function HubContentLibrary({
     featured: hubPage.featured,
   }))
   const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<'all' | ContentStatus>('all')
+  const status: 'all' | ContentStatus = viewStatus ?? 'all'
   const [type, setType] = useState<'all' | ContentType>('all')
   const [style, setStyle] = useState<'all' | ContentItemInput['displayStyle']>('all')
   const [sort, setSort] = useState('updated')
@@ -189,6 +194,14 @@ export function HubContentLibrary({
   const [studioOpen, setStudioOpen] = useState(false)
   const [draft, setDraft] = useState<ContentItemInput>(() => emptyDraftFor(config, userEmail))
   const editingItem = contentItems.find((item) => item.id === editingId)
+
+  useEffect(() => {
+    const rawView = searchParams.get('view')
+    const parsedView = parseWorkspaceContentView(rawView)
+    if (rawView && rawView !== parsedView) {
+      setSearchParams({ view: parsedView }, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const filteredItems = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -209,12 +222,17 @@ export function HubContentLibrary({
     })
   }, [contentItems, query, sort, status, style, type])
 
-  const openNew = () => {
+  const openNew = useCallback(() => {
     setEditingId(null)
     setDraft(emptyDraftFor(config, userEmail))
     setStudioOpen(true)
     setMessage('')
-  }
+  }, [config, userEmail])
+
+  useEffect(() => {
+    if (activeView !== 'create' || !canCreateThisSection || studioOpen) return
+    queueMicrotask(openNew)
+  }, [activeView, canCreateThisSection, openNew, studioOpen])
 
   const openEdit = (item: ContentItem) => {
     setEditingId(item.id)
@@ -245,6 +263,29 @@ export function HubContentLibrary({
     setMessage('Hub settings saved.')
   }
 
+  const openCreateView = () => {
+    setSearchParams({ view: 'create' })
+  }
+
+  const closeStudio = () => {
+    setStudioOpen(false)
+    if (activeView === 'create') {
+      setSearchParams({ view: 'library' }, { replace: true })
+    }
+  }
+
+  const updateStatusFilter = (nextStatus: 'all' | ContentStatus) => {
+    if (nextStatus === 'draft') {
+      setSearchParams({ view: 'drafts' })
+    } else if (nextStatus === 'scheduled') {
+      setSearchParams({ view: 'scheduled' })
+    } else if (nextStatus === 'published') {
+      setSearchParams({ view: 'published' })
+    } else {
+      setSearchParams({ view: 'library' })
+    }
+  }
+
   return (
     <section className="admin-page teacher-content-page">
       <ContentStudioHeader config={config} />
@@ -259,14 +300,14 @@ export function HubContentLibrary({
       <ContentHelpPanel />
       <div className="library-toolbar">
         <div>
-          <h2>Content Library</h2>
-          <p>{contentItems.length} items in {config.sectionName}</p>
+          <h2>{workspaceContentViewLabels[activeView]}</h2>
+          <p>{filteredItems.length} of {contentItems.length} items in {config.sectionName}</p>
         </div>
-        {canCreateContent(config.sectionId) && <button className="primary-button blue" type="button" onClick={openNew}>Create new content</button>}
+        {canCreateThisSection && <button className="primary-button blue" type="button" onClick={openCreateView}>Create new content</button>}
       </div>
       <div className="library-controls" aria-label="Content filters">
         <label>Search<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, summary, badge, or type" /></label>
-        <label>Status<select value={status} onChange={(event) => setStatus(event.target.value as 'all' | ContentStatus)}><option value="all">All</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Status<select value={status} onChange={(event) => updateStatusFilter(event.target.value as 'all' | ContentStatus)}><option value="all">All</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>Type<select value={type} onChange={(event) => setType(event.target.value as 'all' | ContentType)}><option value="all">All types</option>{contentTypes.map((value) => <option key={value} value={value}>{contentTypeLabels[value]}</option>)}</select></label>
         <label>Display<select value={style} onChange={(event) => setStyle(event.target.value as 'all' | ContentItemInput['displayStyle'])}><option value="all">All styles</option>{Object.entries(contentDisplayStyleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>Sort<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="updated">Most recently updated</option><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="title">Title A-Z</option><option value="publish">Publish date</option></select></label>
@@ -317,7 +358,7 @@ export function HubContentLibrary({
           draft={draft}
           editingId={editingId}
           editingItem={editingItem}
-          onClose={() => setStudioOpen(false)}
+          onClose={closeStudio}
           onDraftChange={setDraft}
           onMessage={setMessage}
           userEmail={userEmail}

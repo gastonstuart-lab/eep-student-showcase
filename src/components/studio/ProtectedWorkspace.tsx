@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { EffectiveAdmin } from '../../auth'
 import { useAuth } from '../../auth'
 import { hubConfigs } from '../../hubs'
-import { buildWorkspaceContextOptions, buildWorkspaceNav, getAccessibleHubConfigs, type WorkspaceNavItem } from './workspaceModel'
+import { useFocusTrap } from './focusTrap'
+import { buildWorkspaceContextOptions, buildWorkspaceNav, firstContentSection, resolveWorkspaceContext, type WorkspaceNavItem } from './workspaceModel'
+import { parseWorkspaceContentView, workspaceContentViewLabels } from './workspaceRouting'
 
 const roleLabels: Record<EffectiveAdmin['role'], string> = {
   superAdmin: 'Super Administrator',
@@ -11,38 +13,43 @@ const roleLabels: Record<EffectiveAdmin['role'], string> = {
   editor: 'Editor',
 }
 
-function firstContentSection(admin: EffectiveAdmin | null, configs = hubConfigs) {
-  return getAccessibleHubConfigs(admin, configs).find((config) => config.sectionId !== 'ied') ?? getAccessibleHubConfigs(admin, configs)[0]
-}
-
-function currentContextLabel(pathname: string, admin: EffectiveAdmin | null) {
-  const matchedHub = hubConfigs.find((config) => pathname.includes(`/admin/hubs/${config.sectionId}`))
-
-  if (matchedHub) {
-    return `${matchedHub.sectionName} Hub · ${admin ? roleLabels[admin.role] : 'Staff'}`
-  }
-
-  if (pathname.includes('/admin/pending') || pathname.includes('/admin/approved')) {
-    return `EEP Hub · ${admin ? roleLabels[admin.role] : 'Staff'}`
-  }
-
-  return admin?.role === 'superAdmin'
-    ? 'All Hubs · Super Administrator'
-    : `${firstContentSection(admin)?.sectionName ?? 'Assigned Hubs'} Hub · ${admin ? roleLabels[admin.role] : 'Staff'}`
-}
-
-function currentContextId(pathname: string, admin: EffectiveAdmin | null) {
-  const matchedHub = hubConfigs.find((config) => pathname.includes(`/admin/hubs/${config.sectionId}`))
+function activeContextIdForPath(pathname: string, admin: EffectiveAdmin | null) {
+  const hubMatch = pathname.match(/^\/admin\/hubs\/([^/]+)/)
+  const matchedHub = hubMatch ? hubConfigs.find((config) => config.sectionId === decodeURIComponent(hubMatch[1])) : null
   if (matchedHub) return matchedHub.sectionId
   if (pathname.includes('/admin/pending') || pathname.includes('/admin/approved')) return 'eep'
   return admin?.role === 'superAdmin' ? 'all' : firstContentSection(admin)?.sectionId ?? ''
+}
+
+function currentContextLabel(pathname: string, admin: EffectiveAdmin | null) {
+  const activeContext = resolveWorkspaceContext(admin, activeContextIdForPath(pathname, admin))
+  const roleLabel = admin ? roleLabels[admin.role] : 'Staff'
+  if (activeContext?.section) return `${activeContext.section.sectionName} Hub - ${roleLabel}`
+  return admin?.role === 'superAdmin' ? 'All Hubs - Super Administrator' : `Assigned Hubs - ${roleLabel}`
+}
+
+function currentContextId(pathname: string, admin: EffectiveAdmin | null) {
+  return activeContextIdForPath(pathname, admin)
+}
+
+function currentWorkspaceHeading(pathname: string, search: string) {
+  if (pathname === '/admin') return 'Overview'
+  if (pathname === '/admin/hubs') return 'Manage Hubs'
+  if (pathname === '/admin/pending') return 'Pending Submissions'
+  if (pathname === '/admin/approved') return 'Approved Projects'
+  if (pathname === '/admin/users') return 'Staff Access'
+  if (pathname === '/admin/audit') return 'Activity / Audit'
+  if (pathname.startsWith('/admin/hubs/')) {
+    return workspaceContentViewLabels[parseWorkspaceContentView(new URLSearchParams(search).get('view'))]
+  }
+  return 'Workspace'
 }
 
 export function RoleBadge({ admin }: { admin: EffectiveAdmin }) {
   return (
     <span className={`workspace-role-badge workspace-role-badge--${admin.role}`}>
       {roleLabels[admin.role]}
-      {admin.protectedOwner ? ' · Protected Owner' : ''}
+      {admin.protectedOwner ? ' - Protected Owner' : ''}
     </span>
   )
 }
@@ -92,15 +99,54 @@ export function SuccessState({ children }: { children: ReactNode }) {
   return <div className="workspace-state workspace-state--success">{children}</div>
 }
 
-export function ConfirmDialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+export function ConfirmDialog({
+  title,
+  children,
+  onClose,
+  description,
+  cancelLabel = 'Cancel',
+}: {
+  title: string
+  children: ReactNode
+  onClose: () => void
+  description?: string
+  cancelLabel?: string
+}) {
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(typeof document === 'undefined' ? null : document.activeElement as HTMLElement | null)
+
+  useFocusTrap({
+    active: true,
+    containerRef: dialogRef,
+    initialFocusRef: closeButtonRef,
+    returnFocusRef,
+    onEscape: onClose,
+  })
+
   return (
-    <div className="workspace-dialog-backdrop" role="presentation">
-      <div className="workspace-dialog" role="dialog" aria-modal="true" aria-labelledby="workspace-dialog-title">
+    <div className="workspace-dialog-backdrop" role="presentation" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        className="workspace-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="workspace-dialog-header">
-          <h2 id="workspace-dialog-title">{title}</h2>
-          <button className="workspace-icon-button" type="button" onClick={onClose} aria-label="Close dialog">×</button>
+          <h2 id={titleId}>{title}</h2>
+          <button ref={closeButtonRef} className="workspace-icon-button" type="button" onClick={onClose} aria-label="Close dialog">x</button>
         </div>
+        {description && <p className="workspace-dialog-description" id={descriptionId}>{description}</p>}
         {children}
+        <div className="workspace-dialog-actions">
+          <button className="secondary-button" type="button" onClick={onClose}>{cancelLabel}</button>
+        </div>
       </div>
     </div>
   )
@@ -150,7 +196,7 @@ function ContextSwitcher({ admin }: { admin: EffectiveAdmin }) {
       >
         {options.map((option) => (
           <option key={option.id} value={option.id}>
-            {option.label} · {option.detail}
+            {option.label} - {option.detail}
           </option>
         ))}
       </select>
@@ -159,7 +205,9 @@ function ContextSwitcher({ admin }: { admin: EffectiveAdmin }) {
 }
 
 function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate?: () => void }) {
-  const navItems = useMemo(() => buildWorkspaceNav(admin), [admin])
+  const location = useLocation()
+  const activeContextId = currentContextId(location.pathname, admin)
+  const navItems = useMemo(() => buildWorkspaceNav(admin, activeContextId), [activeContextId, admin])
   const groups: Array<{ id: WorkspaceNavItem['group']; label: string }> = [
     { id: 'core', label: 'Core' },
     { id: 'projects', label: 'Projects' },
@@ -226,14 +274,14 @@ function WorkspaceHeader({ admin }: { admin: EffectiveAdmin }) {
     <div className="workspace-header">
       <div>
         <p>{currentContextLabel(location.pathname, admin)}</p>
-        <h2>{location.pathname === '/admin' ? 'Overview' : 'Workspace'}</h2>
+        <h2>{currentWorkspaceHeading(location.pathname, location.search)}</h2>
       </div>
       <ContextSwitcher admin={admin} />
     </div>
   )
 }
 
-function MobileWorkspaceDrawer({
+export function MobileWorkspaceDrawer({
   admin,
   open,
   onClose,
@@ -244,39 +292,35 @@ function MobileWorkspaceDrawer({
   onClose: () => void
   returnFocusRef: RefObject<HTMLButtonElement | null>
 }) {
+  const drawerRef = useRef<HTMLElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
 
-  useEffect(() => {
-    if (!open) return undefined
-    closeButtonRef.current?.focus()
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-        returnFocusRef.current?.focus()
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, open, returnFocusRef])
+  useFocusTrap({
+    active: open,
+    containerRef: drawerRef,
+    initialFocusRef: closeButtonRef,
+    returnFocusRef,
+    onEscape: onClose,
+    lockScroll: true,
+  })
 
   if (!open) return null
 
   return (
     <div className="workspace-drawer-backdrop" role="presentation" onClick={onClose}>
       <aside
+        ref={drawerRef}
         className="workspace-mobile-drawer"
         id="workspace-mobile-drawer"
         aria-label="Teacher workspace navigation"
+        aria-modal="true"
+        role="dialog"
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="workspace-drawer-header">
           <RoleBadge admin={admin} />
-          <button ref={closeButtonRef} className="workspace-icon-button" type="button" onClick={() => {
-            onClose()
-            returnFocusRef.current?.focus()
-          }} aria-label="Close navigation">×</button>
+          <button ref={closeButtonRef} className="workspace-icon-button" type="button" onClick={onClose} aria-label="Close navigation">x</button>
         </div>
         <ContextSwitcher admin={admin} />
         <WorkspaceNav admin={admin} onNavigate={onClose} />
@@ -298,12 +342,12 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
     <div className="workspace-shell">
       <WorkspaceTopbar admin={adminUser} drawerOpen={drawerOpen} menuButtonRef={menuButtonRef} onOpenDrawer={() => setDrawerOpen(true)} />
       <div className="workspace-body">
-        <aside className="workspace-sidebar">
+        <aside className="workspace-sidebar" aria-hidden={drawerOpen ? true : undefined}>
           <RoleBadge admin={adminUser} />
           <ContextSwitcher admin={adminUser} />
           <WorkspaceNav admin={adminUser} />
         </aside>
-        <div className="workspace-main">
+        <div className="workspace-main" aria-hidden={drawerOpen ? true : undefined}>
           <WorkspaceHeader admin={adminUser} />
           {children}
         </div>

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { EffectiveAdmin } from '../auth'
 import { hubConfigs } from '../hubs'
-import { emptyStaffPermissions, fullStaffPermissions } from '../utils/authorization'
-import { buildWorkspaceContextOptions, buildWorkspaceNav, getAccessibleHubConfigs } from '../components/studio/workspaceModel'
+import { emptyStaffPermissions, fullStaffPermissions, staffPermissionLabels } from '../utils/authorization'
+import { parseWorkspaceContentView, workspaceContentViewStatus } from '../components/studio/workspaceRouting'
+import { buildWorkspaceContextOptions, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from '../components/studio/workspaceModel'
 
 function staff(patch: Partial<EffectiveAdmin>): EffectiveAdmin {
   return {
@@ -58,6 +59,62 @@ describe('workspace permission model', () => {
     expect(buildWorkspaceNav(editor).map((item) => item.label)).not.toContain('Published')
   })
 
+  it('builds task routes from the active Science context', () => {
+    const editor = staff({
+      allowedSectionIds: ['esl-science', 'esl-language-arts'],
+      permissions: { ...emptyStaffPermissions, createContent: true, editContent: true, publishContent: true },
+    })
+    const nav = buildWorkspaceNav(editor, 'esl-science')
+
+    expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/esl-science?view=create')
+    expect(nav.find((item) => item.label === 'Content Library')?.to).toBe('/admin/hubs/esl-science?view=library')
+    expect(nav.find((item) => item.label === 'Drafts')?.to).toBe('/admin/hubs/esl-science?view=drafts')
+    expect(nav.find((item) => item.label === 'Scheduled')?.to).toBe('/admin/hubs/esl-science?view=scheduled')
+    expect(nav.find((item) => item.label === 'Published')?.to).toBe('/admin/hubs/esl-science?view=published')
+  })
+
+  it('builds task routes from the active Language Arts context', () => {
+    const editor = staff({
+      allowedSectionIds: ['esl-science', 'esl-language-arts'],
+      permissions: { ...emptyStaffPermissions, createContent: true, editContent: true, publishContent: true },
+    })
+    const nav = buildWorkspaceNav(editor, 'esl-language-arts')
+
+    expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/esl-language-arts?view=create')
+    expect(nav.find((item) => item.label === 'Drafts')?.to).toBe('/admin/hubs/esl-language-arts?view=drafts')
+  })
+
+  it('rejects unauthorized active context values safely', () => {
+    const editor = staff({
+      allowedSectionIds: ['esl-science'],
+      permissions: { ...emptyStaffPermissions, createContent: true, editContent: true, publishContent: true },
+    })
+    const nav = buildWorkspaceNav(editor, 'esl-language-arts')
+
+    expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/esl-science?view=create')
+    expect(nav.map((item) => item.to).join(' ')).not.toContain('esl-language-arts')
+  })
+
+  it('shows Create Content if any permitted all-hubs destination allows creation', () => {
+    const owner = staff({
+      role: 'superAdmin',
+      allowedSectionIds: ['*'],
+      permissions: fullStaffPermissions,
+    })
+    const nav = buildWorkspaceNav(owner, 'all')
+
+    expect(nav.find((item) => item.label === 'Create Content')?.to).toContain('?view=create')
+  })
+
+  it('hides Create Content in a hub context without creation permission', () => {
+    const editor = staff({
+      allowedSectionIds: ['esl-science'],
+      permissions: { ...emptyStaffPermissions, editContent: true, createContent: false },
+    })
+
+    expect(buildWorkspaceNav(editor, 'esl-science').map((item) => item.label)).not.toContain('Create Content')
+  })
+
   it('shows project tools and staff access only when an administrator has matching permissions', () => {
     const admin = staff({
       role: 'admin',
@@ -75,6 +132,7 @@ describe('workspace permission model', () => {
 
     expect(labels).toContain('Pending Submissions')
     expect(labels).toContain('Approved Projects')
+    expect(labels).not.toContain('Publishing Queue')
     expect(labels).toContain('Staff Access')
     expect(labels).toContain('Published')
   })
@@ -102,5 +160,32 @@ describe('workspace permission model', () => {
     expect(getAccessibleHubConfigs(inactive)).toEqual([])
     expect(buildWorkspaceContextOptions(inactive)).toEqual([])
     expect(buildWorkspaceNav(inactive)).toEqual([])
+  })
+
+  it('maps workspace route views to honest filters and falls back safely', () => {
+    expect(workspaceContentViewStatus.drafts).toBe('draft')
+    expect(workspaceContentViewStatus.scheduled).toBe('scheduled')
+    expect(workspaceContentViewStatus.published).toBe('published')
+    expect(parseWorkspaceContentView('unknown')).toBe('library')
+    expect(parseWorkspaceContentView(null)).toBe('library')
+  })
+
+  it('keeps sample seeding hidden outside development and emulator modes', () => {
+    expect(canShowSeedSampleDataAction({ firebaseConfigured: true, emulatorMode: false, developmentFlag: false })).toBe(false)
+    expect(canShowSeedSampleDataAction({ firebaseConfigured: false, emulatorMode: false, developmentFlag: false })).toBe(true)
+    expect(canShowSeedSampleDataAction({ firebaseConfigured: true, emulatorMode: true, developmentFlag: false })).toBe(true)
+    expect(canShowSeedSampleDataAction({ firebaseConfigured: true, emulatorMode: false, developmentFlag: true })).toBe(true)
+  })
+
+  it('excludes unrelated EEP project summaries from subject-editor contexts', () => {
+    expect(shouldShowProjectSummary(true, ['esl-science'], 'esl-science')).toBe(false)
+    expect(shouldShowProjectSummary(true, ['eep'], 'eep')).toBe(true)
+    expect(shouldShowProjectSummary(true, ['ied', 'eep', 'esl-science'], 'all')).toBe(true)
+  })
+
+  it('uses staff-facing permission labels instead of raw permission keys', () => {
+    expect(staffPermissionLabels.manageUsers).toBe('Manage staff access')
+    expect(staffPermissionLabels.createContent).toBe('Create content')
+    expect(staffPermissionLabels.deleteContent).toBe('Delete or archive content')
   })
 })

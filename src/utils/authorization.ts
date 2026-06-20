@@ -19,6 +19,17 @@ export const staffPermissionKeys = [
   'viewAuditLog',
 ] as const satisfies readonly (keyof StaffPermissions)[]
 
+export const staffPermissionLabels: Record<keyof StaffPermissions, string> = {
+  manageUsers: 'Manage staff access',
+  manageProjects: 'Manage student projects',
+  manageHubSettings: 'Manage hub settings',
+  createContent: 'Create content',
+  editContent: 'Edit content',
+  publishContent: 'Publish content',
+  deleteContent: 'Delete or archive content',
+  viewAuditLog: 'View activity history',
+}
+
 export const emptyStaffPermissions: StaffPermissions = {
   manageUsers: false,
   manageProjects: false,

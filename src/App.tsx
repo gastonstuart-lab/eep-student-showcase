@@ -20,7 +20,8 @@ import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import { HubContentLibrary } from './components/studio/HubContentLibrary'
 import { EmptyState, PrimaryActionCard, ProtectedAppShell, SummaryCard } from './components/studio/ProtectedWorkspace'
-import { buildWorkspaceNav, getAccessibleHubConfigs } from './components/studio/workspaceModel'
+import { buildWorkspaceContentStatusCounts, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from './components/studio/workspaceModel'
+import { workspaceHubViewUrl } from './components/studio/workspaceRouting'
 import { ContentLayout } from './components/public/ContentLayout'
 import {
   createProject,
@@ -30,7 +31,7 @@ import {
   watchAdminUsers,
   watchAuditLogs,
 } from './data'
-import { isFirebaseConfigured } from './firebase'
+import { isFirebaseConfigured, useFirebaseEmulators } from './firebase'
 import { hubConfigById, hubConfigs } from './hubs'
 import { LanguageProvider, LanguageToggle, UiText, useLanguage } from './i18n/LanguageContext'
 import { categoryTranslationKeys, statusTranslationKeys, type TranslationKey } from './i18n/translations'
@@ -47,7 +48,7 @@ import {
   resetStaffPassword,
   updateStaffAccess,
 } from './staffFunctions'
-import { canCreateContentForAdmin, emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys } from './utils/authorization'
+import { canCreateContentForAdmin, emptyStaffPermissions, fullStaffPermissions, staffPermissionKeys, staffPermissionLabels } from './utils/authorization'
 import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername, staffUsernameToAuthEmail, validateStaffUsername } from './utils/staffAuth'
 import { projectFieldLimits, projectSubmissionFingerprint, validateProjectSubmission } from './utils/validation'
 import {
@@ -2122,26 +2123,56 @@ function FirebaseMissingPanel() {
 
 function AdminDashboard() {
   const { adminUser, canManageProjects } = useAuth()
-  const { projects, loading, error } = useProjects(undefined, canManageProjects)
+  const { projects, loading: projectsLoading, error: projectsError } = useProjects(undefined, canManageProjects)
   const { t } = useLanguage()
   const [seedMessage, setSeedMessage] = useState('')
   const accessibleHubs = useMemo(() => getAccessibleHubConfigs(adminUser), [adminUser])
-  const navItems = useMemo(() => buildWorkspaceNav(adminUser), [adminUser])
   const defaultWorkspaceHub = accessibleHubs.find((config) => config.sectionId !== 'ied') ?? accessibleHubs[0]
+  const dashboardContextId = adminUser?.role === 'superAdmin' ? 'all' : defaultWorkspaceHub?.sectionId
+  const navItems = useMemo(() => buildWorkspaceNav(adminUser, dashboardContextId), [adminUser, dashboardContextId])
+  const contextHubs = dashboardContextId === 'all'
+    ? accessibleHubs
+    : accessibleHubs.filter((config) => config.sectionId === dashboardContextId)
   const firstCreatableHub = accessibleHubs.find((config) => config.sectionId !== 'ied' && canCreateContentForAdmin(adminUser, config.sectionId))
     ?? accessibleHubs.find((config) => canCreateContentForAdmin(adminUser, config.sectionId))
+  const hasAccessTo = (sectionId: string) => accessibleHubs.some((config) => config.sectionId === sectionId)
+  const iedContent = useContentItems('ied', undefined, hasAccessTo('ied'))
+  const eepContent = useContentItems('eep', undefined, hasAccessTo('eep'))
+  const eslContent = useContentItems('esl', undefined, hasAccessTo('esl'))
+  const scienceContent = useContentItems('esl-science', undefined, hasAccessTo('esl-science'))
+  const languageArtsContent = useContentItems('esl-language-arts', undefined, hasAccessTo('esl-language-arts'))
+  const performanceArtsContent = useContentItems('esl-performance-arts', undefined, hasAccessTo('esl-performance-arts'))
+  const socialStudiesContent = useContentItems('esl-social-studies', undefined, hasAccessTo('esl-social-studies'))
+  const contentBySection: Record<string, ReturnType<typeof useContentItems>> = {
+    ied: iedContent,
+    eep: eepContent,
+    esl: eslContent,
+    'esl-science': scienceContent,
+    'esl-language-arts': languageArtsContent,
+    'esl-performance-arts': performanceArtsContent,
+    'esl-social-studies': socialStudiesContent,
+  }
+  const scopedContentItems = contextHubs.flatMap((config) => contentBySection[config.sectionId]?.contentItems ?? [])
+  const contentLoading = contextHubs.some((config) => contentBySection[config.sectionId]?.loading)
+  const contentError = contextHubs.map((config) => contentBySection[config.sectionId]?.error).find(Boolean)
+  const showProjectSummary = shouldShowProjectSummary(canManageProjects, contextHubs.map((config) => config.sectionId), dashboardContextId)
+  const showSeedAction = canManageProjects && canShowSeedSampleDataAction({
+    firebaseConfigured: isFirebaseConfigured,
+    emulatorMode: useFirebaseEmulators,
+    developmentFlag: import.meta.env.VITE_SHOW_SAMPLE_DATA_ACTION === 'true',
+  })
   const primaryActions = [
-    ...(firstCreatableHub ? [{
-      title: `Create for ${firstCreatableHub.sectionName}`,
-      body: 'Start a draft, update, resource, event, link, or student-work story.',
-      to: `/admin/hubs/${firstCreatableHub.sectionId}`,
-      label: 'Create Content',
-    }] : []),
     ...(defaultWorkspaceHub ? [{
       title: `${defaultWorkspaceHub.sectionName} library`,
       body: 'Review drafts, scheduled posts, published updates, and reusable resources.',
-      to: `/admin/hubs/${defaultWorkspaceHub.sectionId}`,
+      to: workspaceHubViewUrl(defaultWorkspaceHub.sectionId, 'library'),
       label: 'Open Library',
+    }] : []),
+    ...(firstCreatableHub ? [{
+      title: `Create for ${firstCreatableHub.sectionName}`,
+      body: 'Start a draft, update, resource, event, link, or student-work story.',
+      to: workspaceHubViewUrl(firstCreatableHub.sectionId, 'create'),
+      label: 'Create Content',
     }] : []),
     ...(canManageProjects ? [{
       title: 'Review EEP submissions',
@@ -2157,7 +2188,11 @@ function AdminDashboard() {
     }] : []),
   ].slice(0, 4)
 
-  const stats = {
+  const contentStats = buildWorkspaceContentStatusCounts(scopedContentItems)
+  const recentContent = [...scopedContentItems]
+    .sort((a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0))
+    .slice(0, 3)
+  const projectStats = {
     pending: projects.filter((project) => project.status === 'pending').length,
     approved: projects.filter((project) => project.status === 'approved').length,
     featured: projects.filter((project) => project.featured).length,
@@ -2206,16 +2241,34 @@ function AdminDashboard() {
       )}
 
       {seedMessage && <p className="form-message">{seedMessage}</p>}
-      {loading && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
-      {error && <PageMessage title={t('couldNotLoadDashboard')} body={error} />}
-      {(canManageProjects && (stats.pending > 0 || stats.approved > 0 || stats.featured > 0)) && (
-        <div className="workspace-summary-grid" aria-label="EEP project summary">
-          {stats.pending > 0 && <SummaryCard label={t(statLabelKeys.pending)} value={stats.pending} tone="warning" />}
-          {stats.approved > 0 && <SummaryCard label={t(statLabelKeys.approved)} value={stats.approved} tone="good" />}
-          {stats.featured > 0 && <SummaryCard label={t(statLabelKeys.featured)} value={stats.featured} />}
+      {contentLoading && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
+      {contentError && <PageMessage title="Could not load content summary" body={contentError} />}
+      {projectsLoading && showProjectSummary && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
+      {projectsError && showProjectSummary && <PageMessage title={t('couldNotLoadDashboard')} body={projectsError} />}
+      <div className="workspace-summary-grid" aria-label="Content publishing summary">
+        <SummaryCard label="Draft content" value={contentStats.draft} tone={contentStats.draft ? 'warning' : 'neutral'} />
+        <SummaryCard label="Scheduled content" value={contentStats.scheduled} />
+        <SummaryCard label="Published content" value={contentStats.published} tone="good" />
+      </div>
+      {recentContent.length > 0 && (
+        <div className="workspace-recent-list" aria-label="Recent content">
+          <h2>Recent content</h2>
+          {recentContent.map((item) => (
+            <Link key={item.id} to={workspaceHubViewUrl(item.sectionId, 'library')}>
+              <strong>{item.title || 'Untitled draft'}</strong>
+              <span>{item.sectionName} - {item.status}</span>
+            </Link>
+          ))}
         </div>
       )}
-      {canManageProjects && (
+      {(showProjectSummary && (projectStats.pending > 0 || projectStats.approved > 0 || projectStats.featured > 0)) && (
+        <div className="workspace-summary-grid" aria-label="EEP project summary">
+          {projectStats.pending > 0 && <SummaryCard label={t(statLabelKeys.pending)} value={projectStats.pending} tone="warning" />}
+          {projectStats.approved > 0 && <SummaryCard label={t(statLabelKeys.approved)} value={projectStats.approved} tone="good" />}
+          {projectStats.featured > 0 && <SummaryCard label={t(statLabelKeys.featured)} value={projectStats.featured} />}
+        </div>
+      )}
+      {showSeedAction && (
         <div className="workspace-utility-row">
           <button className="workspace-text-button" type="button" onClick={() => void runSeed()}>
             {t('seedSampleData')}
@@ -2598,7 +2651,7 @@ function AdminUsersPage() {
                   <div className="staff-permission-row" aria-label={`Permissions for ${item.username}`}>
                     {staffPermissionKeys.filter((permission) => item.permissions[permission]).length
                       ? staffPermissionKeys.filter((permission) => item.permissions[permission]).map((permission) => (
-                        <span key={permission}>{permission}</span>
+                        <span key={permission}>{staffPermissionLabels[permission]}</span>
                       ))
                       : <span>Permissions not granted</span>}
                   </div>
@@ -2746,7 +2799,7 @@ function AdminUserForm({
                 type="checkbox"
               />
               <span>
-                {config.sectionName} <small>({config.sectionId})</small>
+                {config.sectionName}
               </span>
             </label>
           ))}
@@ -2762,7 +2815,7 @@ function AdminUserForm({
               onChange={() => togglePermission(permission)}
               type="checkbox"
             />
-            <span>{permission}</span>
+            <span>{staffPermissionLabels[permission]}</span>
           </label>
         ))}
       </fieldset>
