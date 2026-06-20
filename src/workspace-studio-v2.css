@@ -1,0 +1,77 @@
+/* Structural second pass for protected routes. */
+.app-shell:has(.workspace-shell) > .topbar,
+.app-shell:has(.workspace-shell) > main.route-main > .back-link { display: none; }
+.app-shell:has(.workspace-shell) > main.route-main { margin: 0; max-width: none; min-height: 100vh; padding: 0; width: 100%; }
+
+.workspace-shell { min-height: 100vh; }
+.workspace-shell .workspace-topbar { min-height: 72px; position: sticky; top: 0; z-index: 50; }
+.workspace-shell .workspace-topbar > div:first-of-type { align-items: center; display: flex; gap: 12px; }
+.workspace-shell .workspace-topbar > div:first-of-type::before {
+  align-items: center; background: linear-gradient(145deg,#1769d2,#58a9ff); border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(23,105,210,.22); color: white; content: 'IED'; display: inline-flex;
+  font-size: .68rem; font-weight: 900; height: 38px; justify-content: center; letter-spacing: .08em; width: 38px;
+}
+.workspace-shell .workspace-topbar > div:first-of-type h1 { font-size: 0; }
+.workspace-shell .workspace-topbar > div:first-of-type h1::before { color:#10243f; content:'IED Studio'; display:block; font-size:1rem; font-weight:900; }
+.workspace-shell .workspace-topbar > div:first-of-type h1::after { color:#65768d; content:'Publishing & access workspace'; display:block; font-size:.68rem; font-weight:650; margin-top:2px; }
+
+.workspace-shell .workspace-body { grid-template-columns: 236px minmax(0,1fr); min-height: calc(100vh - 72px); }
+.workspace-shell .workspace-sidebar {
+  background: radial-gradient(circle at 12% -2%,rgba(56,135,238,.28),transparent 28%),linear-gradient(180deg,#0b213c,#061629);
+  padding: 26px 16px 24px;
+}
+.workspace-shell .workspace-sidebar::before { color:rgba(255,255,255,.48); content:'WORKSPACE'; display:block; font-size:.64rem; font-weight:900; letter-spacing:.16em; margin:2px 10px 18px; }
+.workspace-shell .workspace-sidebar > .workspace-role-badge { margin:0 8px 24px; }
+.workspace-shell .workspace-nav a { gap:10px; min-height:40px; }
+.workspace-shell .workspace-nav a::before { background:rgba(255,255,255,.12); border-radius:7px; color:rgba(255,255,255,.84); content:'•'; display:grid; flex:0 0 24px; height:24px; place-items:center; width:24px; }
+.workspace-shell .workspace-nav a.active::before,
+.workspace-shell .workspace-nav a[aria-current='page']::before { background:#1769d2; color:white; }
+
+.workspace-shell .workspace-main { background:radial-gradient(circle at 100% 0%,rgba(47,127,228,.08),transparent 27%),linear-gradient(180deg,#f8fafc,#eef2f7 58%); padding:0 30px 58px; }
+.workspace-shell .workspace-dashboard-hero {
+  background: linear-gradient(105deg,rgba(6,22,41,.98),rgba(12,45,81,.96) 58%,rgba(23,105,210,.9)),url('/images/ied-campus.png') center 48%/cover;
+  border-radius:22px; box-shadow:0 24px 56px rgba(7,27,52,.23); min-height:278px; padding:clamp(32px,4.5vw,58px);
+}
+.workspace-shell .workspace-dashboard-hero h1 { font-size:clamp(2.4rem,4.8vw,4.35rem); letter-spacing:-.065em; line-height:.93; }
+.workspace-shell .workspace-dashboard-context { border-radius:18px; padding:24px; }
+.workspace-shell .workspace-dashboard-context::before { align-items:center; background:rgba(255,255,255,.13); border-radius:10px; color:#aee9df; content:'LIVE'; display:flex; font-size:.6rem; font-weight:900; height:28px; justify-content:center; letter-spacing:.12em; width:50px; }
+
+.workspace-shell .workspace-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.workspace-shell .workspace-action-card:nth-child(2) {
+  background:radial-gradient(circle at 86% 18%,rgba(255,255,255,.18),transparent 24%),linear-gradient(135deg,#1769d2,#2f8cf0 68%,#62b3ff);
+  border:0; box-shadow:0 22px 46px rgba(23,105,210,.25); grid-column:1/-1; min-height:218px; order:-1; padding:clamp(27px,3vw,38px);
+}
+.workspace-shell .workspace-action-card:nth-child(2)::after { border:1px solid rgba(255,255,255,.22); border-radius:50%; content:'+'; display:grid; font-size:2.7rem; font-weight:300; height:96px; place-items:center; position:absolute; right:34px; top:50%; transform:translateY(-50%); width:96px; }
+.workspace-shell .workspace-action-card:nth-child(2) > span { background:rgba(255,255,255,.16); color:white; }
+.workspace-shell .workspace-action-card:nth-child(2) strong { color:white; font-size:clamp(1.65rem,2.7vw,2.35rem); letter-spacing:-.035em; max-width:calc(100% - 140px); }
+.workspace-shell .workspace-action-card:nth-child(2) small { color:rgba(255,255,255,.82); font-size:.94rem; max-width:min(650px,calc(100% - 140px)); }
+
+.workspace-shell .workspace-summary-grid { background:#dce5ef; border:1px solid #dce5ef; border-radius:17px; gap:1px; overflow:hidden; }
+.workspace-shell .workspace-summary-card { border-radius:0; box-shadow:none; }
+.workspace-shell .workspace-recent-list,
+.workspace-shell .workspace-panel,
+.workspace-shell .workspace-empty-state,
+.workspace-shell .content-wizard-card,
+.workspace-shell .access-wizard-page .content-wizard-card,
+.workspace-shell .workspace-wizard-shell { border-color:transparent; border-radius:19px; box-shadow:0 14px 38px rgba(16,36,63,.075); }
+.workspace-shell .workspace-step-indicator { background:white; border:1px solid #dce5ef; border-radius:15px; box-shadow:0 8px 25px rgba(16,36,63,.05); padding:12px; }
+
+@media (max-width:900px) {
+  .workspace-shell .workspace-body { display:block; }
+  .workspace-shell .workspace-sidebar { display:none; }
+  .workspace-shell .workspace-main { padding-inline:18px; }
+}
+@media (max-width:640px) {
+  .workspace-shell .workspace-topbar > div:first-of-type h1::after,
+  .workspace-shell .workspace-account .workspace-role-badge,
+  .workspace-shell .workspace-account > span { display:none; }
+  .workspace-shell .workspace-main { padding-inline:11px; }
+  .workspace-shell .workspace-dashboard-hero { border-radius:17px; padding:28px 21px; }
+  .workspace-shell .workspace-dashboard-hero h1 { font-size:2.45rem; }
+  .workspace-shell .workspace-action-grid,
+  .workspace-shell .workspace-summary-grid { grid-template-columns:1fr; }
+  .workspace-shell .workspace-action-card:nth-child(2) { min-height:224px; padding:24px 20px; }
+  .workspace-shell .workspace-action-card:nth-child(2)::after { bottom:18px; height:54px; right:18px; top:auto; transform:none; width:54px; }
+  .workspace-shell .workspace-action-card:nth-child(2) strong,
+  .workspace-shell .workspace-action-card:nth-child(2) small { max-width:100%; }
+}
