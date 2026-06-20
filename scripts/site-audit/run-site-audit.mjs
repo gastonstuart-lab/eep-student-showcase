@@ -481,7 +481,10 @@ async function auditLinks(browser, routes) {
   for (const route of routes) {
     if (seen.has(route)) continue
     seen.add(route)
-    const response = await page.goto(`${args.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch((error) => ({ error }))
+    const isStaticDocument = /\.[a-z0-9]{2,5}(?:$|\?)/i.test(route) && !/\.html?(?:$|\?)/i.test(route)
+    const response = isStaticDocument
+      ? await context.request.get(`${args.baseUrl}${route}`, { timeout: 15000 }).catch((error) => ({ error }))
+      : await page.goto(`${args.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch((error) => ({ error }))
     report.links.push({
       href: route,
       internal: true,

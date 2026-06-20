@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth'
 import { createContentItem, deleteContentItem, saveHubPage, updateContentItem } from '../../data'
 import type { HubConfig } from '../../hubs'
 import { ContentCard } from '../public/ContentCard'
 import { ContentLayout } from '../public/ContentLayout'
+import { ContentWizard } from './contentWizard/ContentWizard'
 import {
   contentAccentStyleLabels,
   contentAppearanceDefaults,
@@ -60,48 +61,7 @@ const templateDefaults: Array<{
   { id: 'event', title: 'Event', icon: 'E', help: 'Date-forward information for performances and activities.', patch: { type: 'event', displayStyle: 'eventCard', contentWidth: 'medium', badgeText: 'Event' } },
   { id: 'resource', title: 'Resource', icon: 'R', help: 'Useful class materials and downloads.', patch: { type: 'resource', displayStyle: 'quickLink', contentWidth: 'small', layoutColumns: 'three', actionLabel: 'Download Resource' } },
   { id: 'video', title: 'Video', icon: 'V', help: 'Best for performances, explainers, and media links.', patch: { type: 'video', displayStyle: 'media', contentWidth: 'wide', imagePlacement: 'top', actionLabel: 'Watch Video' } },
-  { id: 'deadline', title: 'Deadline', icon: 'D', help: 'Short, clear reminders that do not take over the page.', patch: { type: 'announcement', displayStyle: 'compact', contentWidth: 'small', badgeText: 'Deadline', contentDensity: 'compact' } },
-  { id: 'celebration', title: 'Celebration', icon: '*', help: 'Warm spotlight for wins and milestones.', patch: { type: 'studentWork', displayStyle: 'quote', contentWidth: 'medium', accentStyle: 'warm', badgeText: 'Celebration' } },
-  { id: 'photoStory', title: 'Photo Story', icon: 'P', help: 'A visual story with space for a short narrative.', patch: { type: 'studentWork', displayStyle: 'photoStory', imageRatio: 'square', contentWidth: 'wide', imagePlacement: 'fullBleed' } },
-  { id: 'quickLink', title: 'Quick Link', icon: 'Q', help: 'Small and efficient for websites or resources.', patch: { type: 'link', displayStyle: 'quickLink', contentWidth: 'small', layoutColumns: 'three', actionLabel: 'Visit Website' } },
-  { id: 'featured', title: 'Featured Story', icon: 'F', help: 'A stronger card for major stories.', patch: { type: 'studentWork', displayStyle: 'featured', contentWidth: 'wide', contentDensity: 'spacious', badgeText: 'Featured' } },
 ]
-
-function emptyDraftFor(config: HubConfig, userEmail: string): ContentItemInput {
-  return {
-    title: '',
-    summary: '',
-    body: '',
-    type: 'announcement',
-    department: config.department,
-    sectionId: config.sectionId,
-    sectionName: config.sectionName,
-    status: 'draft',
-    featured: false,
-    mediaUrl: '',
-    linkUrl: '',
-    eventDate: '',
-    imageUrl: '',
-    ...contentAppearanceDefaults,
-    badgeText: '',
-    createdBy: userEmail,
-    sortOrder: undefined,
-    publishDate: '',
-    expiryDate: '',
-    actionLabel: '',
-    actionUrl: '',
-    actionStyle: 'primary',
-    actionNewTab: true,
-    secondaryActionLabel: '',
-    secondaryActionUrl: '',
-    secondaryActionStyle: 'secondary',
-    secondaryActionNewTab: true,
-    imageAlt: '',
-    thumbnailUrl: '',
-    hideImage: false,
-    pinned: false,
-  }
-}
 
 function draftFromItem(item: ContentItem, userEmail: string): ContentItemInput {
   return {
@@ -190,10 +150,7 @@ export function HubContentLibrary({
   const [style, setStyle] = useState<'all' | ContentItemInput['displayStyle']>('all')
   const [sort, setSort] = useState('updated')
   const [message, setMessage] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [studioOpen, setStudioOpen] = useState(false)
-  const [draft, setDraft] = useState<ContentItemInput>(() => emptyDraftFor(config, userEmail))
-  const editingItem = contentItems.find((item) => item.id === editingId)
+  const editingId = searchParams.get('edit')
 
   useEffect(() => {
     const rawView = searchParams.get('view')
@@ -222,22 +179,8 @@ export function HubContentLibrary({
     })
   }, [contentItems, query, sort, status, style, type])
 
-  const openNew = useCallback(() => {
-    setEditingId(null)
-    setDraft(emptyDraftFor(config, userEmail))
-    setStudioOpen(true)
-    setMessage('')
-  }, [config, userEmail])
-
-  useEffect(() => {
-    if (activeView !== 'create' || !canCreateThisSection || studioOpen) return
-    queueMicrotask(openNew)
-  }, [activeView, canCreateThisSection, openNew, studioOpen])
-
   const openEdit = (item: ContentItem) => {
-    setEditingId(item.id)
-    setDraft(draftFromItem(item, userEmail))
-    setStudioOpen(true)
+    setSearchParams({ view: 'create', edit: item.id })
     setMessage('')
   }
 
@@ -267,13 +210,6 @@ export function HubContentLibrary({
     setSearchParams({ view: 'create' })
   }
 
-  const closeStudio = () => {
-    setStudioOpen(false)
-    if (activeView === 'create') {
-      setSearchParams({ view: 'library' }, { replace: true })
-    }
-  }
-
   const updateStatusFilter = (nextStatus: 'all' | ContentStatus) => {
     if (nextStatus === 'draft') {
       setSearchParams({ view: 'drafts' })
@@ -297,6 +233,20 @@ export function HubContentLibrary({
       {message && <p className="form-message" aria-live="polite">{message}</p>}
       {loading && <p className="module-note quiet">Loading content items...</p>}
       {error && <p className="form-message">{error}</p>}
+      {activeView === 'create' ? (
+        editingId && loading ? (
+          <p className="module-note quiet">Loading content item...</p>
+        ) : (
+          <ContentWizard
+            config={config}
+            contentCount={contentItems.length}
+            contentItems={contentItems}
+            editingId={editingId}
+            userEmail={userEmail}
+          />
+        )
+      ) : (
+        <>
       <ContentHelpPanel />
       <div className="library-toolbar">
         <div>
@@ -351,18 +301,7 @@ export function HubContentLibrary({
           </form>
         </details>
       )}
-      {studioOpen && (
-        <HubContentStudio
-          config={config}
-          contentCount={contentItems.length}
-          draft={draft}
-          editingId={editingId}
-          editingItem={editingItem}
-          onClose={closeStudio}
-          onDraftChange={setDraft}
-          onMessage={setMessage}
-          userEmail={userEmail}
-        />
+        </>
       )}
     </section>
   )
@@ -392,7 +331,7 @@ function ContentHelpPanel() {
   )
 }
 
-function HubContentStudio({
+export function HubContentStudio({
   config,
   contentCount,
   draft,
