@@ -21,7 +21,7 @@ import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import { StaffAccessPage } from './components/studio/accessWizard/AccessWizard'
 import { HubContentLibrary } from './components/studio/HubContentLibrary'
 import { EmptyState, ProtectedAppShell } from './components/studio/ProtectedWorkspace'
-import { buildWorkspaceContentStatusCounts, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from './components/studio/workspaceModel'
+import { buildWorkspaceContentStatusCounts, buildWorkspaceContextOptions, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from './components/studio/workspaceModel'
 import { workspaceHubViewUrl } from './components/studio/workspaceRouting'
 import { ContentLayout } from './components/public/ContentLayout'
 import {
@@ -2104,6 +2104,7 @@ function FirebaseMissingPanel() {
 
 function AdminDashboard() {
   const { adminUser, canManageProjects } = useAuth()
+  const navigate = useNavigate()
   const { projects, loading: projectsLoading, error: projectsError } = useProjects(undefined, canManageProjects)
   const { t } = useLanguage()
   const [seedMessage, setSeedMessage] = useState('')
@@ -2111,6 +2112,7 @@ function AdminDashboard() {
   const defaultWorkspaceHub = accessibleHubs.find((config) => config.sectionId !== 'ied') ?? accessibleHubs[0]
   const dashboardContextId = adminUser?.role === 'superAdmin' ? 'all' : defaultWorkspaceHub?.sectionId
   const navItems = useMemo(() => buildWorkspaceNav(adminUser, dashboardContextId), [adminUser, dashboardContextId])
+  const contextOptions = useMemo(() => buildWorkspaceContextOptions(adminUser), [adminUser])
   const contextHubs = dashboardContextId === 'all'
     ? accessibleHubs
     : accessibleHubs.filter((config) => config.sectionId === dashboardContextId)
@@ -2195,16 +2197,27 @@ function AdminDashboard() {
     <section className="admin-page workspace-dashboard">
       <div className="overview-topline">
         <div>
-          <p className="eyebrow">Overview</p>
           <h1>Good to see you, {adminUser?.displayName || adminUser?.username || 'there'}.</h1>
           <p>{workspaceLine}</p>
         </div>
+        <label className="overview-context-select">
+          <span>Working context</span>
+          <select
+            aria-label="Working context"
+            value={dashboardContextId ?? contextOptions[0]?.id ?? ''}
+            onChange={(event) => {
+              const option = contextOptions.find((item) => item.id === event.target.value)
+              if (option) navigate(option.route)
+            }}
+          >
+            {contextOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </label>
       </div>
 
       {firstCreatableHub ? (
         <section className="overview-create-panel" aria-labelledby="overview-create-heading">
           <div>
-            <p className="eyebrow">Primary action</p>
             <h2 id="overview-create-heading">Create content for {firstCreatableHub.sectionName}</h2>
             <p>Draft a hub update, resource, event, link, media item, or student-work story using the protected content workflow.</p>
             <Link className="primary-button blue" to={workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>

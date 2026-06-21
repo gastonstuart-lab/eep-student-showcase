@@ -388,6 +388,9 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const { adminUser } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const moreButtonRef = useRef<HTMLButtonElement | null>(null)
+  const location = useLocation()
+  const isCreateContentRoute = location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) === 'create'
+  const isOverviewRoute = location.pathname === '/admin'
 
   if (!adminUser) {
     return <>{children}</>
@@ -406,7 +409,7 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
           <WorkspaceSidebarUtility admin={adminUser} />
         </aside>
         <div className="workspace-main" aria-hidden={drawerOpen ? true : undefined}>
-          <WorkspaceHeader admin={adminUser} />
+          {!isCreateContentRoute && !isOverviewRoute && <WorkspaceHeader admin={adminUser} />}
           {children}
         </div>
       </div>

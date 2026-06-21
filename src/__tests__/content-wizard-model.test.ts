@@ -65,9 +65,10 @@ function contentItem(patch: Partial<ContentItem> = {}): ContentItem {
 }
 
 describe('content creator wizard model', () => {
-  it('defines the six approved steps and content types', () => {
+  it('defines the internal steps and approved visible content types', () => {
     expect(contentWizardSteps).toEqual(['type', 'essentials', 'media', 'publishing', 'review', 'success'])
-    expect(contentTypeOptions.map((option) => option.type)).toEqual(['announcement', 'event', 'resource', 'video', 'studentWork', 'link'])
+    expect(contentTypeOptions.map((option) => option.title)).toEqual(['Announcement', 'Event', 'Student Achievement', 'Gallery', 'Page / Resource', 'News / Article'])
+    expect(contentTypeOptions.map((option) => option.type).sort()).toEqual(['announcement', 'event', 'link', 'resource', 'studentWork', 'video'])
   })
 
   it('applies type-specific defaults without changing entered text', () => {

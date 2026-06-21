@@ -7,7 +7,7 @@ import type { ContentItem, ContentItemInput, ContentType } from '../../../types'
 import { canCreateContentForAdmin } from '../../../utils/authorization'
 import { contentItemPreviewFromInput, sanitizeContentItemInput, validateContentAppearance } from '../../../utils/contentAppearance'
 import { ContentCard } from '../../public/ContentCard'
-import { ConfirmDialog, EmptyState, StepIndicator } from '../ProtectedWorkspace'
+import { ConfirmDialog, EmptyState } from '../ProtectedWorkspace'
 import { workspaceHubViewUrl } from '../workspaceRouting'
 import {
   applyTypeDefaults,
@@ -43,6 +43,14 @@ function stepNumber(step: ContentWizardStep) {
 
 function fieldId(name: string) {
   return `content-wizard-${name}`
+}
+
+const visibleStages = ['Choose type', 'Create content', 'Review and publish'] as const
+
+function visibleStageIndex(step: ContentWizardStep) {
+  if (step === 'type') return 0
+  if (step === 'review' || step === 'success') return 2
+  return 1
 }
 
 function fieldLabel(type: ContentType, field: 'title' | 'summary' | 'body') {
@@ -301,17 +309,26 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
     <section className="content-wizard-page" aria-labelledby="content-wizard-heading">
       <div className="content-wizard-topline">
         <div>
-          <p className="eyebrow">{isEditing ? 'Editing content' : 'Create content'}</p>
+          <p className="eyebrow">{selectedDestination.sectionName}</p>
           <h1 ref={headingRef} id="content-wizard-heading" tabIndex={-1}>
-            {contentWizardStepLabels[step]}
+            {isEditing ? 'Edit Content' : 'Create Content'}
           </h1>
-          <p>{isEditing ? 'Update this item while keeping its existing permissions and destination clear.' : `Create a polished item for ${config.sectionName}.`}</p>
+          <p>{step === 'type' ? 'Choose the best format, then add only the fields this content needs.' : contentWizardStepLabels[step]}</p>
         </div>
-        <Link className="secondary-button" to={workspaceHubViewUrl(config.sectionId, 'library')}>View Content Library</Link>
+        <div className="content-wizard-topline-actions">
+          <Link className="secondary-button" to={workspaceHubViewUrl(config.sectionId, 'library')}>Content Library</Link>
+          <Link className="small-button" to={selectedDestination.route}>Public Hub</Link>
+        </div>
       </div>
 
-      <StepIndicator steps={contentWizardSteps.map((item) => contentWizardStepLabels[item])} currentStep={Math.min(stepNumber(step), 5)} />
-      <div className="wizard-step-status" aria-live="polite">Step {stepNumber(step) + 1} of {contentWizardSteps.length}: {contentWizardStepLabels[step]}</div>
+      <ol className="content-stage-indicator" aria-label="Content creation progress">
+        {visibleStages.map((stage, index) => (
+          <li className={index === visibleStageIndex(step) ? 'is-current' : index < visibleStageIndex(step) ? 'is-complete' : ''} key={stage} aria-current={index === visibleStageIndex(step) ? 'step' : undefined}>
+            <span>{index + 1}</span>{stage}
+          </li>
+        ))}
+      </ol>
+      <div className="wizard-step-status" aria-live="polite">Stage {visibleStageIndex(step) + 1} of 3: {visibleStages[visibleStageIndex(step)]}</div>
 
       {recoveredDraft && (
         <div className="wizard-recovery" role="alert">
@@ -326,11 +343,11 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
 
       <ErrorSummary errors={errors} />
 
-      <div className="content-wizard-layout">
+      <div className={step === 'type' ? 'content-wizard-layout content-wizard-layout--type' : 'content-wizard-layout'}>
         <main className="content-wizard-card">
           {step === 'type' && (
             <fieldset className="wizard-type-grid">
-              <legend>Choose one content type</legend>
+              <legend>Choose content type</legend>
               {contentTypeOptions.map((option) => (
                 <label className={draft.type === option.type ? 'wizard-type-card is-selected' : 'wizard-type-card'} key={option.type}>
                   <input
@@ -481,7 +498,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
           )}
         </main>
 
-        {step !== 'success' && (
+        {step !== 'success' && step !== 'type' && (
           <aside className="content-wizard-preview" aria-label="Public card preview">
             <p className="eyebrow">Preview</p>
             <ContentCard item={previewItem} />

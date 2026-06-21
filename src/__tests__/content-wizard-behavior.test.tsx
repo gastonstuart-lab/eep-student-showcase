@@ -74,7 +74,7 @@ describe('content creator wizard behavior', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    expect(screen.getByRole('heading', { name: 'Essentials' })).toBeInTheDocument()
+    expect(screen.getByText('Stage 2 of 3: Create content')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('Add a title')
     expect(createContentItem).not.toHaveBeenCalled()
   })
@@ -92,7 +92,7 @@ describe('content creator wizard behavior', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
     expect(screen.getByLabelText(/video title/i)).toHaveValue('Class performance clip')
-    expect(screen.getByRole('heading', { name: 'Essentials' })).toHaveFocus()
+    expect(screen.getByRole('heading', { name: 'Create Content' })).toHaveFocus()
   })
 
   it('saves a draft and shows the success state', async () => {

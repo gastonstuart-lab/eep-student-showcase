@@ -223,13 +223,17 @@ export function HubContentLibrary({
   }
 
   return (
-    <section className="admin-page teacher-content-page">
-      <ContentStudioHeader config={config} />
-      <div className="studio-breadcrumb">
-        <Link to="/admin/hubs">All hubs</Link>
-        <span>/</span>
-        <strong>{config.sectionName}</strong>
-      </div>
+    <section className={`admin-page teacher-content-page${activeView === 'create' ? ' teacher-content-page--create' : ''}`}>
+      {activeView !== 'create' && (
+        <>
+          <ContentStudioHeader config={config} />
+          <div className="studio-breadcrumb">
+            <Link to="/admin/hubs">All hubs</Link>
+            <span>/</span>
+            <strong>{config.sectionName}</strong>
+          </div>
+        </>
+      )}
       {message && <p className="form-message" aria-live="polite">{message}</p>}
       {loading && <p className="module-note quiet">Loading content items...</p>}
       {error && <p className="form-message">{error}</p>}

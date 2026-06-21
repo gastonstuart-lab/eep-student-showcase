@@ -22,12 +22,12 @@ export const contentTypeOptions: Array<{
   title: string
   help: string
 }> = [
-  { type: 'announcement', icon: '!', title: 'Announcement', help: 'Share important news, reminders, or programme updates.' },
-  { type: 'event', icon: 'D', title: 'Event', help: 'Promote an upcoming activity, performance, deadline, or school event.' },
-  { type: 'resource', icon: 'R', title: 'Resource', help: 'Share a useful document, worksheet, guide, or learning resource.' },
-  { type: 'video', icon: 'V', title: 'Video', help: 'Feature a lesson, performance, demonstration, or student video.' },
-  { type: 'studentWork', icon: 'S', title: 'Student Work', help: 'Celebrate a project, performance, publication, or learning achievement.' },
-  { type: 'link', icon: 'L', title: 'External Link', help: 'Direct visitors to another trusted website or online resource.' },
+  { type: 'announcement', icon: 'A', title: 'Announcement', help: 'Share reminders, notices, or programme updates.' },
+  { type: 'event', icon: 'E', title: 'Event', help: 'Promote an upcoming activity, deadline, or school event.' },
+  { type: 'studentWork', icon: 'S', title: 'Student Achievement', help: 'Celebrate a project, publication, performance, or learning win.' },
+  { type: 'video', icon: 'G', title: 'Gallery', help: 'Feature a media-led story, video, or visual collection.' },
+  { type: 'resource', icon: 'P', title: 'Page / Resource', help: 'Share a guide, worksheet, page, or learning resource.' },
+  { type: 'link', icon: 'N', title: 'News / Article', help: 'Link visitors to a longer story or trusted article.' },
 ]
 
 export const contentTypeLabels = Object.fromEntries(contentTypeOptions.map((option) => [option.type, option.title])) as Record<ContentType, string>

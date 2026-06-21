@@ -37,7 +37,7 @@
 .workspace-body {
   display: grid;
   grid-template-columns: 14.5rem minmax(0, 1fr);
-  min-height: calc(100vh - 4.25rem);
+  min-height: calc(100vh - 3.6rem);
 }
 
 .workspace-sidebar {
@@ -47,7 +47,7 @@
   height: 100vh;
   flex-direction: column;
   gap: 1.1rem;
-  padding: 1rem 0.8rem;
+  padding: 0.75rem 0.7rem;
   border: 0;
   border-radius: 0;
   background: linear-gradient(180deg, var(--workspace-navy-2), var(--workspace-navy));
@@ -61,7 +61,7 @@
   gap: 0.65rem;
   align-items: center;
   min-height: 3rem;
-  padding: 0.35rem 0.45rem;
+  padding: 0.25rem 0.4rem;
   color: #fff;
   text-decoration: none;
 }
@@ -89,11 +89,11 @@
   top: 0;
   z-index: 50;
   display: flex;
-  min-height: 4.25rem;
+  min-height: 3.55rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.65rem 1.4rem;
+  padding: 0.48rem 1.25rem;
   border: 0;
   border-bottom: 1px solid rgba(16, 36, 63, 0.08);
   border-radius: 0;
@@ -139,15 +139,6 @@
   line-height: 1.1;
 }
 
-.workspace-topbar h1::after {
-  display: block;
-  margin-top: 0.12rem;
-  color: var(--workspace-muted);
-  content: 'Protected workspace';
-  font-size: 0.68rem;
-  font-weight: 750;
-}
-
 .workspace-account,
 .workspace-sidebar-utility {
   display: flex;
@@ -164,7 +155,7 @@
 
 .workspace-main {
   min-width: 0;
-  padding: 0 1.6rem 3rem;
+  padding: 0.9rem 1.4rem 2.4rem;
   background: var(--workspace-canvas);
 }
 
@@ -228,7 +219,7 @@
 
 .workspace-nav {
   display: grid;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .workspace-nav-group {
@@ -247,7 +238,7 @@
 
 .workspace-nav a {
   display: flex;
-  min-height: 2.35rem;
+  min-height: 2.15rem;
   align-items: center;
   border-radius: 0.55rem;
   padding: 0.5rem 0.62rem;
@@ -273,7 +264,7 @@
   flex-direction: column;
   align-items: stretch;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.85rem 0.35rem 0;
+  padding: 0.7rem 0.3rem 0;
 }
 
 .workspace-sidebar-utility div {
@@ -351,16 +342,40 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: end;
-  margin-bottom: 1rem;
+  align-items: center;
+  margin-bottom: 0.7rem;
 }
 
 .overview-topline h1 {
   max-width: 42rem;
-  margin: 0.2rem 0 0.35rem;
+  margin: 0 0 0.2rem;
   color: var(--workspace-ink);
-  font-size: clamp(1.65rem, 2.4vw, 2.25rem);
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
   line-height: 1.08;
+}
+
+.overview-context-select {
+  display: grid;
+  gap: 0.25rem;
+  min-width: min(18rem, 100%);
+  color: var(--workspace-blue);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.overview-context-select select {
+  min-height: 2.35rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.7rem;
+  background: #fff;
+  color: var(--workspace-ink);
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .overview-topline p:last-child,
@@ -385,42 +400,43 @@
   gap: 1rem;
   align-items: stretch;
   overflow: hidden;
-  margin-bottom: 1rem;
+  min-height: 9.5rem;
+  margin-bottom: 0.8rem;
 }
 
 .overview-create-panel > div {
-  padding: clamp(1rem, 2vw, 1.35rem);
+  padding: 1rem 1.15rem;
 }
 
 .overview-create-panel h2 {
-  margin: 0.2rem 0 0.45rem;
+  margin: 0 0 0.35rem;
   color: var(--workspace-ink);
-  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
   line-height: 1.12;
 }
 
 .overview-create-panel p {
   max-width: 42rem;
-  margin: 0 0 1rem;
-  line-height: 1.55;
+  margin: 0 0 0.75rem;
+  line-height: 1.45;
 }
 
 .overview-create-panel img {
   width: 100%;
   height: 100%;
-  min-height: 11rem;
+  min-height: 9.5rem;
   object-fit: cover;
 }
 
 .overview-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
-  gap: 1rem;
+  gap: 0.8rem;
   align-items: start;
 }
 
 .overview-panel {
-  padding: 1rem;
+  padding: 0.85rem;
 }
 
 .overview-panel--quiet {
@@ -433,7 +449,7 @@
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.55rem;
 }
 
 .overview-panel-heading h2 {
@@ -610,6 +626,184 @@
   background: #fff7f6;
 }
 
+.teacher-content-page--create {
+  padding-bottom: 5rem;
+}
+
+.teacher-content-page--create .content-wizard-page {
+  gap: 0.65rem;
+}
+
+.teacher-content-page--create .content-wizard-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 10px 26px rgba(16, 36, 63, 0.07);
+}
+
+.teacher-content-page--create .content-wizard-topline h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+  line-height: 1.08;
+}
+
+.teacher-content-page--create .content-wizard-topline h1:focus-visible {
+  outline: none;
+}
+
+.teacher-content-page--create .content-wizard-topline p {
+  margin: 0.12rem 0 0;
+  color: var(--workspace-muted);
+  line-height: 1.35;
+}
+
+.teacher-content-page--create .content-wizard-topline .eyebrow {
+  margin: 0 0 0.1rem;
+  color: var(--workspace-blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.content-wizard-topline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.content-stage-indicator {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.content-stage-indicator li {
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #47657d;
+  padding: 0.42rem 0.55rem;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.content-stage-indicator span {
+  display: inline-grid;
+  flex: 0 0 1.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #edf4fb;
+  color: #31516b;
+  font-size: 0.75rem;
+}
+
+.content-stage-indicator .is-current {
+  border-color: #bdd7f0;
+  color: var(--workspace-blue);
+  background: var(--workspace-soft);
+}
+
+.content-stage-indicator .is-current span,
+.content-stage-indicator .is-complete span {
+  background: var(--workspace-blue);
+  color: #fff;
+}
+
+.teacher-content-page--create .wizard-step-status {
+  margin-top: -0.25rem;
+  color: var(--workspace-muted);
+  font-size: 0.82rem;
+}
+
+.teacher-content-page--create .content-wizard-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.32fr);
+  gap: 0.75rem;
+}
+
+.teacher-content-page--create .content-wizard-layout--type {
+  grid-template-columns: 1fr;
+}
+
+.teacher-content-page--create .content-wizard-card,
+.teacher-content-page--create .content-wizard-preview {
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  box-shadow: 0 10px 26px rgba(16, 36, 63, 0.07);
+}
+
+.teacher-content-page--create .content-wizard-preview {
+  top: 4.25rem;
+}
+
+.teacher-content-page--create .wizard-type-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.teacher-content-page--create .wizard-type-grid legend {
+  margin-bottom: 0.45rem;
+}
+
+.teacher-content-page--create .wizard-type-card {
+  min-height: 7.4rem;
+  gap: 0.28rem;
+  border-radius: 0.68rem;
+  padding: 0.75rem;
+}
+
+.teacher-content-page--create .wizard-type-card span {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.52rem;
+}
+
+.teacher-content-page--create .wizard-type-card small {
+  line-height: 1.32;
+}
+
+.teacher-content-page--create .wizard-form-grid {
+  gap: 0.7rem;
+}
+
+.teacher-content-page--create .wizard-field {
+  gap: 0.28rem;
+}
+
+.teacher-content-page--create .wizard-field input,
+.teacher-content-page--create .wizard-field select,
+.teacher-content-page--create .wizard-field textarea {
+  min-height: 2.45rem;
+  border-radius: 0.58rem;
+  padding: 0.52rem 0.65rem;
+}
+
+.teacher-content-page--create .wizard-field textarea {
+  min-height: 5.6rem;
+}
+
+.teacher-content-page--create .content-wizard-actions {
+  position: sticky;
+  bottom: 0.5rem;
+  justify-content: flex-end;
+  border-radius: 0.75rem;
+  padding: 0.55rem;
+  box-shadow: 0 10px 28px rgba(16, 36, 63, 0.1);
+}
+
 @media (max-width: 1040px) {
   .workspace-body {
     grid-template-columns: 12.75rem minmax(0, 1fr);
@@ -635,7 +829,7 @@
   }
 
   .workspace-main {
-    padding: 0 1rem 5.5rem;
+    padding: 0.75rem 1rem 5.5rem;
   }
 
   .workspace-header,
@@ -649,6 +843,14 @@
 
   .overview-quick-links {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-content-page--create .content-wizard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-content-page--create .content-wizard-preview {
+    position: static;
   }
 
   .workspace-bottom-nav {
@@ -692,7 +894,8 @@
 
 @media (max-width: 560px) {
   .workspace-topbar {
-    padding: 0.55rem 0.8rem;
+    min-height: 3.25rem;
+    padding: 0.42rem 0.8rem;
   }
 
   .workspace-account {
@@ -711,10 +914,11 @@
   .overview-topline {
     align-items: flex-start;
     flex-direction: column;
+    gap: 0.55rem;
   }
 
   .overview-topline h1 {
-    font-size: 1.62rem;
+    font-size: 1.42rem;
   }
 
   .overview-create-panel > div,
@@ -730,6 +934,39 @@
 
   .overview-action-list a {
     grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .teacher-content-page--create {
+    padding-bottom: 5.25rem;
+  }
+
+  .teacher-content-page--create .content-wizard-topline,
+  .teacher-content-page--create .content-wizard-topline-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .content-stage-indicator {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-content-page--create .wizard-type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-content-page--create .wizard-type-card {
+    min-height: 0;
+    padding: 0.65rem;
+  }
+
+  .teacher-content-page--create .content-wizard-actions {
+    position: static;
+  }
+
+  .teacher-content-page--create .content-wizard-actions button,
+  .teacher-content-page--create .content-wizard-actions a {
+    width: 100%;
+    justify-content: center;
   }
 }
 
