@@ -11,6 +11,7 @@ const updated = source
   .replaceAll('Manage Learning Hubs', 'Manage Hubs')
   .replaceAll('Teacher Content Studio', 'Content Library')
   .replaceAll("document.querySelector('.topbar')?.getBoundingClientRect().bottom", "document.querySelector('.topbar, .workspace-topbar')?.getBoundingClientRect().bottom")
+  .replaceAll("document.querySelector('main h1, main h2')", "document.querySelector('main .workspace-main h1, main .workspace-main h2, main > h1, main > h2')")
 
 if (updated === source) {
   throw new Error('The route-scroll compatibility replacements no longer match the source test. Update the test runner intentionally.')
