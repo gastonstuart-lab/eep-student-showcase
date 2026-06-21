@@ -110,6 +110,6 @@ describe('protected workspace accessibility primitives', () => {
   it('keeps subject drawer navigation on the exact active hub route', () => {
     render(<MobileDrawerHarness />)
 
-    expect(screen.getByRole('link', { name: 'Drafts' })).toHaveAttribute('href', '/admin/hubs/esl-science?view=drafts')
+    expect(screen.getByRole('link', { name: 'Content Library' })).toHaveAttribute('href', '/admin/hubs/esl-science?view=library')
   })
 })

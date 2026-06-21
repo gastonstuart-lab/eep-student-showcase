@@ -46,17 +46,20 @@ describe('workspace permission model', () => {
     expect(labels).toContain('Create Content')
     expect(labels).toContain('Content Library')
     expect(labels).not.toContain('Staff Access')
-    expect(labels).not.toContain('Pending Submissions')
+    expect(labels).not.toContain('Submissions')
     expect(labels).not.toContain('Approved Projects')
   })
 
-  it('hides publishing navigation when publishContent is not granted', () => {
+  it('keeps scheduled and published views out of Phase 1 primary navigation', () => {
     const editor = staff({
       allowedSectionIds: ['eep'],
       permissions: { ...emptyStaffPermissions, createContent: true, editContent: true, publishContent: false },
     })
 
-    expect(buildWorkspaceNav(editor).map((item) => item.label)).not.toContain('Published')
+    const labels = buildWorkspaceNav(editor).map((item) => item.label)
+
+    expect(labels).not.toContain('Scheduled')
+    expect(labels).not.toContain('Published')
   })
 
   it('builds task routes from the active Science context', () => {
@@ -68,9 +71,7 @@ describe('workspace permission model', () => {
 
     expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/esl-science?view=create')
     expect(nav.find((item) => item.label === 'Content Library')?.to).toBe('/admin/hubs/esl-science?view=library')
-    expect(nav.find((item) => item.label === 'Drafts')?.to).toBe('/admin/hubs/esl-science?view=drafts')
-    expect(nav.find((item) => item.label === 'Scheduled')?.to).toBe('/admin/hubs/esl-science?view=scheduled')
-    expect(nav.find((item) => item.label === 'Published')?.to).toBe('/admin/hubs/esl-science?view=published')
+    expect(nav.map((item) => item.label)).not.toContain('Drafts')
   })
 
   it('builds task routes from the active Language Arts context', () => {
@@ -81,7 +82,7 @@ describe('workspace permission model', () => {
     const nav = buildWorkspaceNav(editor, 'esl-language-arts')
 
     expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/esl-language-arts?view=create')
-    expect(nav.find((item) => item.label === 'Drafts')?.to).toBe('/admin/hubs/esl-language-arts?view=drafts')
+    expect(nav.find((item) => item.label === 'Content Library')?.to).toBe('/admin/hubs/esl-language-arts?view=library')
   })
 
   it('rejects unauthorized active context values safely', () => {
@@ -130,11 +131,11 @@ describe('workspace permission model', () => {
     })
     const labels = buildWorkspaceNav(admin).map((item) => item.label)
 
-    expect(labels).toContain('Pending Submissions')
-    expect(labels).toContain('Approved Projects')
+    expect(labels).toContain('Submissions')
+    expect(labels).not.toContain('Approved Projects')
     expect(labels).not.toContain('Publishing Queue')
     expect(labels).toContain('Staff Access')
-    expect(labels).toContain('Published')
+    expect(labels).not.toContain('Published')
   })
 
   it('gives super administrators every hub plus platform tools', () => {
@@ -149,9 +150,10 @@ describe('workspace permission model', () => {
 
     expect(getAccessibleHubConfigs(owner).map((config) => config.sectionId)).toEqual(hubConfigs.map((config) => config.sectionId))
     expect(buildWorkspaceContextOptions(owner).map((option) => option.id)[0]).toBe('all')
-    expect(labels).toContain('Platform Overview')
+    expect(labels).toContain('Overview')
     expect(labels).toContain('Staff Access')
-    expect(labels).toContain('Activity / Audit')
+    expect(labels).toContain('Manage Hubs')
+    expect(labels).toContain('Audit & Activity')
   })
 
   it('returns no protected workspace options for inactive users', () => {

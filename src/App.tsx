@@ -20,7 +20,7 @@ import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import { StaffAccessPage } from './components/studio/accessWizard/AccessWizard'
 import { HubContentLibrary } from './components/studio/HubContentLibrary'
-import { EmptyState, PrimaryActionCard, ProtectedAppShell, SummaryCard } from './components/studio/ProtectedWorkspace'
+import { EmptyState, ProtectedAppShell } from './components/studio/ProtectedWorkspace'
 import { buildWorkspaceContentStatusCounts, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from './components/studio/workspaceModel'
 import { workspaceHubViewUrl } from './components/studio/workspaceRouting'
 import { ContentLayout } from './components/public/ContentLayout'
@@ -77,15 +77,6 @@ const categoryIcons: Record<ProjectCategory | 'All Projects', string> = {
   'Student Help': 'Help',
   Campaigns: 'Cause',
   'Creative Projects': 'Art',
-}
-
-const statLabelKeys: Record<string, TranslationKey> = {
-  total: 'statTotal',
-  pending: 'statPending',
-  approved: 'statApproved',
-  rejected: 'statRejected',
-  hidden: 'statHidden',
-  featured: 'statFeatured',
 }
 
 const defaultPageDescription =
@@ -2151,42 +2142,44 @@ function AdminDashboard() {
     emulatorMode: useFirebaseEmulators,
     developmentFlag: import.meta.env.VITE_SHOW_SAMPLE_DATA_ACTION === 'true',
   })
-  const primaryActions = [
-    ...(defaultWorkspaceHub ? [{
-      title: `${defaultWorkspaceHub.sectionName} library`,
-      body: 'Review drafts, scheduled posts, published updates, and reusable resources.',
-      to: workspaceHubViewUrl(defaultWorkspaceHub.sectionId, 'library'),
-      label: 'Open Library',
-    }] : []),
-    ...(firstCreatableHub ? [{
-      title: `Create for ${firstCreatableHub.sectionName}`,
-      body: 'Start a draft, update, resource, event, link, or student-work story.',
-      to: workspaceHubViewUrl(firstCreatableHub.sectionId, 'create'),
-      label: 'Create Content',
-    }] : []),
-    ...(canManageProjects ? [{
-      title: 'Review EEP submissions',
-      body: 'Approve student website submissions and manage the public showcase queue.',
-      to: '/admin/pending',
-      label: 'Review Queue',
-    }] : []),
-    ...(navItems.some((item) => item.to === '/admin/users') ? [{
-      title: 'Manage staff access',
-      body: 'Provision staff accounts, assign sections, and keep protected-owner controls safe.',
-      to: '/admin/users',
-      label: 'Staff Access',
-    }] : []),
-  ].slice(0, 4)
-
   const contentStats = buildWorkspaceContentStatusCounts(scopedContentItems)
   const recentContent = [...scopedContentItems]
     .sort((a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0))
-    .slice(0, 3)
+    .slice(0, 5)
   const projectStats = {
     pending: projects.filter((project) => project.status === 'pending').length,
     approved: projects.filter((project) => project.status === 'approved').length,
     featured: projects.filter((project) => project.featured).length,
   }
+  const needsAttention = [
+    ...(showProjectSummary && projectStats.pending > 0 ? [{
+      label: 'Pending submissions',
+      count: projectStats.pending,
+      to: '/admin/pending',
+      helper: 'Student projects waiting for review.',
+    }] : []),
+    ...(contentStats.draft > 0 && defaultWorkspaceHub ? [{
+      label: 'Draft content',
+      count: contentStats.draft,
+      to: workspaceHubViewUrl(defaultWorkspaceHub.sectionId, 'drafts'),
+      helper: 'Unpublished items that may need finishing.',
+    }] : []),
+    ...(contentStats.scheduled > 0 && defaultWorkspaceHub ? [{
+      label: 'Scheduled content',
+      count: contentStats.scheduled,
+      to: workspaceHubViewUrl(defaultWorkspaceHub.sectionId, 'scheduled'),
+      helper: 'Upcoming posts queued for publication.',
+    }] : []),
+  ]
+  const quickLinks = [
+    ...(navItems.some((item) => item.to === '/admin/users') ? [{ label: 'Staff Access', to: '/admin/users' }] : []),
+    ...(navItems.some((item) => item.to === '/admin/hubs') ? [{ label: 'Manage Hubs', to: '/admin/hubs' }] : []),
+    ...(navItems.some((item) => item.to === '/admin/audit') ? [{ label: 'Audit & Activity', to: '/admin/audit' }] : []),
+    ...(defaultWorkspaceHub ? [{ label: 'Public Hub', to: defaultWorkspaceHub.route }] : []),
+  ]
+  const workspaceLine = accessibleHubs.length
+    ? `Working across ${dashboardContextId === 'all' ? 'all assigned hubs' : contextHubs.map((config) => config.sectionName).join(', ')}.`
+    : 'No hubs are assigned to this account yet.'
 
   const runSeed = async () => {
     setSeedMessage(t('seedingSamples'))
@@ -2200,33 +2193,28 @@ function AdminDashboard() {
 
   return (
     <section className="admin-page workspace-dashboard">
-      <div className="workspace-dashboard-hero">
+      <div className="overview-topline">
         <div>
-          <p className="eyebrow">{adminUser?.role === 'superAdmin' ? 'Platform Overview' : 'Teacher Workspace'}</p>
-          <h1>{adminUser?.role === 'editor' ? 'Your publishing workspace' : t('adminTitle')}</h1>
-          <p>
-            {adminUser?.role === 'superAdmin'
-              ? 'Monitor every hub, staff access, submissions, and platform activity from one calm workspace.'
-              : `Work only in ${accessibleHubs.map((config) => config.sectionName).join(', ') || 'your assigned hubs'}. Tools appear when your account has permission to use them.`}
-          </p>
-        </div>
-        <div className="workspace-dashboard-context" aria-label="Current access summary">
-          <span>{adminUser?.displayName || adminUser?.username}</span>
-          <strong>{accessibleHubs.length ? accessibleHubs.map((config) => config.sectionName).join(' · ') : 'No assigned hubs'}</strong>
-          <small>{adminUser?.protectedOwner ? 'Protected owner safeguards active' : 'Role-aware permissions active'}</small>
+          <p className="eyebrow">Overview</p>
+          <h1>Good to see you, {adminUser?.displayName || adminUser?.username || 'there'}.</h1>
+          <p>{workspaceLine}</p>
         </div>
       </div>
 
-      {primaryActions.length ? (
-        <div className="workspace-action-grid" aria-label="Primary workspace actions">
-          {primaryActions.map((action) => (
-            <PrimaryActionCard key={`${action.label}:${action.to}`} {...action} />
-          ))}
-        </div>
+      {firstCreatableHub ? (
+        <section className="overview-create-panel" aria-labelledby="overview-create-heading">
+          <div>
+            <p className="eyebrow">Primary action</p>
+            <h2 id="overview-create-heading">Create content for {firstCreatableHub.sectionName}</h2>
+            <p>Draft a hub update, resource, event, link, media item, or student-work story using the protected content workflow.</p>
+            <Link className="primary-button blue" to={workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>
+          </div>
+          <img src="/images/ied-campus.png" alt="" />
+        </section>
       ) : (
         <EmptyState
-          title="No workspace actions are available yet."
-          body="This account is active, but it has no assigned publishing tools. Ask a super administrator to review section access and permissions."
+          title="No publishing action is available yet."
+          body="This account is active, but it does not currently have permission to create hub content."
         />
       )}
 
@@ -2235,27 +2223,64 @@ function AdminDashboard() {
       {contentError && <PageMessage title="Could not load content summary" body={contentError} />}
       {projectsLoading && showProjectSummary && <PageMessage title={t('loadingDashboardTitle')} body={t('loadingDashboardBody')} />}
       {projectsError && showProjectSummary && <PageMessage title={t('couldNotLoadDashboard')} body={projectsError} />}
-      <div className="workspace-summary-grid" aria-label="Content publishing summary">
-        <SummaryCard label="Draft content" value={contentStats.draft} tone={contentStats.draft ? 'warning' : 'neutral'} />
-        <SummaryCard label="Scheduled content" value={contentStats.scheduled} />
-        <SummaryCard label="Published content" value={contentStats.published} tone="good" />
+
+      <div className="overview-grid">
+        <section className="overview-panel" aria-labelledby="needs-attention-heading">
+          <div className="overview-panel-heading">
+            <h2 id="needs-attention-heading">Needs attention</h2>
+            <span>{needsAttention.length ? `${needsAttention.length} active` : 'Clear'}</span>
+          </div>
+          {needsAttention.length ? (
+            <div className="overview-action-list">
+              {needsAttention.map((item) => (
+                <Link to={item.to} key={item.label}>
+                  <span>{item.count}</span>
+                  <strong>{item.label}</strong>
+                  <small>{item.helper}</small>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="overview-empty-note">No drafts, scheduled posts, or permitted submissions need attention right now.</p>
+          )}
+        </section>
+
+        <section className="overview-panel" aria-labelledby="recent-activity-heading">
+          <div className="overview-panel-heading">
+            <h2 id="recent-activity-heading">Recent activity</h2>
+            {defaultWorkspaceHub && <Link to={workspaceHubViewUrl(defaultWorkspaceHub.sectionId, 'library')}>View library</Link>}
+          </div>
+          {recentContent.length ? (
+            <div className="overview-recent-list">
+              {recentContent.map((item) => (
+                <Link key={item.id} to={workspaceHubViewUrl(item.sectionId, 'library')}>
+                  <span>
+                    <strong>{item.title || 'Untitled draft'}</strong>
+                    <small>{item.sectionName} / {item.status} / {formatDashboardTime(item.updatedAt ?? item.createdAt)}</small>
+                  </span>
+                  <em>Open</em>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="overview-empty-note">Recent content updates will appear here after the first draft or publication.</p>
+          )}
+        </section>
+
+        <section className="overview-panel overview-panel--quiet" aria-labelledby="quick-access-heading">
+          <div className="overview-panel-heading">
+            <h2 id="quick-access-heading">Quick access</h2>
+          </div>
+          <div className="overview-quick-links">
+            {quickLinks.map((item) => <Link to={item.to} key={item.label}>{item.label}</Link>)}
+          </div>
+        </section>
       </div>
-      {recentContent.length > 0 && (
-        <div className="workspace-recent-list" aria-label="Recent content">
-          <h2>Recent content</h2>
-          {recentContent.map((item) => (
-            <Link key={item.id} to={workspaceHubViewUrl(item.sectionId, 'library')}>
-              <strong>{item.title || 'Untitled draft'}</strong>
-              <span>{item.sectionName} - {item.status}</span>
-            </Link>
-          ))}
-        </div>
-      )}
-      {(showProjectSummary && (projectStats.pending > 0 || projectStats.approved > 0 || projectStats.featured > 0)) && (
-        <div className="workspace-summary-grid" aria-label="EEP project summary">
-          {projectStats.pending > 0 && <SummaryCard label={t(statLabelKeys.pending)} value={projectStats.pending} tone="warning" />}
-          {projectStats.approved > 0 && <SummaryCard label={t(statLabelKeys.approved)} value={projectStats.approved} tone="good" />}
-          {projectStats.featured > 0 && <SummaryCard label={t(statLabelKeys.featured)} value={projectStats.featured} />}
+
+      {showProjectSummary && (projectStats.approved > 0 || projectStats.featured > 0) && (
+        <div className="overview-footnote">
+          <span>{projectStats.approved} approved projects</span>
+          <span>{projectStats.featured} featured</span>
         </div>
       )}
       {showSeedAction && (
@@ -2267,6 +2292,11 @@ function AdminDashboard() {
       )}
     </section>
   )
+}
+
+function formatDashboardTime(stamp?: ContentItem['updatedAt']) {
+  if (!stamp?.toDate) return 'Not saved yet'
+  return stamp.toDate().toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
 function HubAdminListPage() {

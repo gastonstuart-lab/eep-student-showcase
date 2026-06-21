@@ -23,9 +23,8 @@ function activeContextIdForPath(pathname: string, admin: EffectiveAdmin | null) 
 
 function currentContextLabel(pathname: string, admin: EffectiveAdmin | null) {
   const activeContext = resolveWorkspaceContext(admin, activeContextIdForPath(pathname, admin))
-  const roleLabel = admin ? roleLabels[admin.role] : 'Staff'
-  if (activeContext?.section) return `${activeContext.section.sectionName} Hub - ${roleLabel}`
-  return admin?.role === 'superAdmin' ? 'All Hubs - Super Administrator' : `Assigned Hubs - ${roleLabel}`
+  if (activeContext?.section) return `${activeContext.section.sectionName} Hub`
+  return admin?.role === 'superAdmin' ? 'All Hubs' : 'Assigned Hubs'
 }
 
 function currentContextId(pathname: string, admin: EffectiveAdmin | null) {
@@ -35,10 +34,10 @@ function currentContextId(pathname: string, admin: EffectiveAdmin | null) {
 function currentWorkspaceHeading(pathname: string, search: string) {
   if (pathname === '/admin') return 'Overview'
   if (pathname === '/admin/hubs') return 'Manage Hubs'
-  if (pathname === '/admin/pending') return 'Pending Submissions'
+  if (pathname === '/admin/pending') return 'Submissions'
   if (pathname === '/admin/approved') return 'Approved Projects'
   if (pathname === '/admin/users') return 'Staff Access'
-  if (pathname === '/admin/audit') return 'Activity / Audit'
+  if (pathname === '/admin/audit') return 'Audit & Activity'
   if (pathname.startsWith('/admin/hubs/')) {
     return workspaceContentViewLabels[parseWorkspaceContentView(new URLSearchParams(search).get('view'))]
   }
@@ -209,10 +208,16 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
   const activeContextId = currentContextId(location.pathname, admin)
   const navItems = useMemo(() => buildWorkspaceNav(admin, activeContextId), [activeContextId, admin])
   const groups: Array<{ id: WorkspaceNavItem['group']; label: string }> = [
-    { id: 'core', label: 'Core' },
-    { id: 'projects', label: 'Projects' },
+    { id: 'primary', label: 'Primary' },
     { id: 'admin', label: 'Administration' },
   ]
+  const isActive = (item: WorkspaceNavItem) => {
+    if (item.activeMatch === 'exact') return location.pathname === item.to
+    if (item.activeMatch === 'content-create') return location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) === 'create'
+    if (item.activeMatch === 'content-library') return location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) !== 'create'
+    if (item.activeMatch === 'submissions') return location.pathname === '/admin/pending' || location.pathname === '/admin/approved'
+    return location.pathname === item.to
+  }
 
   return (
     <nav className="workspace-nav" aria-label="Teacher workspace">
@@ -224,7 +229,13 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
           <div className="workspace-nav-group" key={group.id}>
             <span>{group.label}</span>
             {items.map((item) => (
-              <NavLink key={`${item.label}:${item.to}`} to={item.to} onClick={onNavigate}>
+              <NavLink
+                key={`${item.label}:${item.to}`}
+                to={item.to}
+                onClick={onNavigate}
+                className={({ isActive: routerActive }) => (routerActive || isActive(item) ? 'active' : undefined)}
+                aria-current={isActive(item) ? 'page' : undefined}
+              >
                 {item.label}
               </NavLink>
             ))}
@@ -237,29 +248,19 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
 
 function WorkspaceTopbar({
   admin,
-  drawerOpen,
-  menuButtonRef,
-  onOpenDrawer,
 }: {
   admin: EffectiveAdmin
-  drawerOpen: boolean
-  menuButtonRef: RefObject<HTMLButtonElement | null>
-  onOpenDrawer: () => void
 }) {
   const { logout } = useAuth()
   const location = useLocation()
 
   return (
     <header className="workspace-topbar">
-      <button ref={menuButtonRef} className="workspace-menu-button" type="button" aria-controls="workspace-mobile-drawer" aria-expanded={drawerOpen} onClick={onOpenDrawer}>
-        Menu
-      </button>
       <div>
         <p>{currentContextLabel(location.pathname, admin)}</p>
-        <h1>Teacher Workspace</h1>
+        <h1>IED Studio</h1>
       </div>
       <div className="workspace-account">
-        <RoleBadge admin={admin} />
         <span>{admin.displayName || admin.username}</span>
         <button className="workspace-text-button" type="button" onClick={() => void logout()}>Sign out</button>
       </div>
@@ -278,6 +279,57 @@ function WorkspaceHeader({ admin }: { admin: EffectiveAdmin }) {
       </div>
       <ContextSwitcher admin={admin} />
     </div>
+  )
+}
+
+function currentPublicHubRoute(pathname: string, admin: EffectiveAdmin | null) {
+  const activeContext = resolveWorkspaceContext(admin, activeContextIdForPath(pathname, admin))
+  return activeContext?.section?.route ?? firstContentSection(admin)?.route ?? '/'
+}
+
+function WorkspaceSidebarUtility({ admin }: { admin: EffectiveAdmin }) {
+  const { logout } = useAuth()
+  const location = useLocation()
+
+  return (
+    <div className="workspace-sidebar-utility">
+      <div>
+        <span>{admin.displayName || admin.username}</span>
+        <small>{roleLabels[admin.role]}</small>
+      </div>
+      <Link to={currentPublicHubRoute(location.pathname, admin)}>View Public Hub</Link>
+      <button type="button" onClick={() => void logout()}>Sign Out</button>
+    </div>
+  )
+}
+
+function WorkspaceMobileBottomNav({
+  admin,
+  moreButtonRef,
+  drawerOpen,
+  onOpenMore,
+}: {
+  admin: EffectiveAdmin
+  moreButtonRef: RefObject<HTMLButtonElement | null>
+  drawerOpen: boolean
+  onOpenMore: () => void
+}) {
+  const location = useLocation()
+  const activeContextId = currentContextId(location.pathname, admin)
+  const navItems = useMemo(() => buildWorkspaceNav(admin, activeContextId), [activeContextId, admin])
+  const overview = navItems.find((item) => item.label === 'Overview')
+  const create = navItems.find((item) => item.label === 'Create Content')
+  const library = navItems.find((item) => item.label === 'Content Library')
+  const isCreate = location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) === 'create'
+  const isLibrary = location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) !== 'create'
+
+  return (
+    <nav className="workspace-bottom-nav" aria-label="Primary workspace shortcuts">
+      {overview && <NavLink to={overview.to} end>Overview</NavLink>}
+      {create && <Link className={isCreate ? 'active' : undefined} aria-current={isCreate ? 'page' : undefined} to={create.to}>Create</Link>}
+      {library && <Link className={isLibrary ? 'active' : undefined} aria-current={isLibrary ? 'page' : undefined} to={library.to}>Library</Link>}
+      <button ref={moreButtonRef} type="button" onClick={onOpenMore} aria-controls="workspace-mobile-drawer" aria-expanded={drawerOpen} aria-haspopup="dialog">More</button>
+    </nav>
   )
 }
 
@@ -319,7 +371,10 @@ export function MobileWorkspaceDrawer({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="workspace-drawer-header">
-          <RoleBadge admin={admin} />
+          <div>
+            <strong>IED Studio</strong>
+            <span>{admin.displayName || admin.username}</span>
+          </div>
           <button ref={closeButtonRef} className="workspace-icon-button" type="button" onClick={onClose} aria-label="Close navigation">x</button>
         </div>
         <ContextSwitcher admin={admin} />
@@ -332,7 +387,7 @@ export function MobileWorkspaceDrawer({
 export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const { adminUser } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const menuButtonRef = useRef<HTMLButtonElement | null>(null)
+  const moreButtonRef = useRef<HTMLButtonElement | null>(null)
 
   if (!adminUser) {
     return <>{children}</>
@@ -340,19 +395,23 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="workspace-shell">
-      <WorkspaceTopbar admin={adminUser} drawerOpen={drawerOpen} menuButtonRef={menuButtonRef} onOpenDrawer={() => setDrawerOpen(true)} />
+      <WorkspaceTopbar admin={adminUser} />
       <div className="workspace-body">
         <aside className="workspace-sidebar" aria-hidden={drawerOpen ? true : undefined}>
-          <RoleBadge admin={adminUser} />
-          <ContextSwitcher admin={adminUser} />
+          <Link className="workspace-sidebar-brand" to="/admin">
+            <span>IED</span>
+            <strong>IED Hub</strong>
+          </Link>
           <WorkspaceNav admin={adminUser} />
+          <WorkspaceSidebarUtility admin={adminUser} />
         </aside>
         <div className="workspace-main" aria-hidden={drawerOpen ? true : undefined}>
           <WorkspaceHeader admin={adminUser} />
           {children}
         </div>
       </div>
-      <MobileWorkspaceDrawer admin={adminUser} open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusRef={menuButtonRef} />
+      <WorkspaceMobileBottomNav admin={adminUser} moreButtonRef={moreButtonRef} drawerOpen={drawerOpen} onOpenMore={() => setDrawerOpen(true)} />
+      <MobileWorkspaceDrawer admin={adminUser} open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusRef={moreButtonRef} />
     </div>
   )
 }

@@ -1,13 +1,14 @@
 import type { EffectiveAdmin } from '../../auth'
 import { hubConfigs, type HubConfig } from '../../hubs'
 import type { ContentItem, ContentStatus } from '../../types'
-import { canCreateContentForAdmin, canManageProjectsForAdmin, canManageUsersForAdmin, canPublishContentForAdmin, canViewAuditLogForAdmin, hasSectionAccess } from '../../utils/authorization'
+import { canCreateContentForAdmin, canManageProjectsForAdmin, canManageUsersForAdmin, canViewAuditLogForAdmin, hasSectionAccess } from '../../utils/authorization'
 import { workspaceHubViewUrl } from './workspaceRouting'
 
 export interface WorkspaceNavItem {
   label: string
   to: string
-  group: 'core' | 'projects' | 'admin'
+  group: 'primary' | 'admin'
+  activeMatch?: 'exact' | 'content-library' | 'content-create' | 'submissions'
 }
 
 export interface WorkspaceContextOption {
@@ -44,7 +45,7 @@ export function buildWorkspaceContextOptions(admin: EffectiveAdmin | null, confi
 
   if (admin?.role === 'superAdmin') {
     return [
-      { id: 'all', label: 'All Hubs', detail: 'Super Administrator', route: '/admin' },
+      { id: 'all', label: 'All Hubs', detail: 'Workspace', route: '/admin' },
       ...options,
     ]
   }
@@ -93,43 +94,31 @@ export function buildWorkspaceNav(admin: EffectiveAdmin | null, activeContextId?
   const isAllContext = context?.type === 'all'
   const creatableSection = isAllContext ? firstCreatableSection(admin, accessible) : activeSection
   const canCreate = Boolean(creatableSection && canCreateContentForAdmin(admin, creatableSection.sectionId))
-  const canPublish = isAllContext
-    ? accessible.some((config) => canPublishContentForAdmin(admin, config.sectionId))
-    : Boolean(activeSection && canPublishContentForAdmin(admin, activeSection.sectionId))
   const items: WorkspaceNavItem[] = [
-    { label: admin.role === 'superAdmin' ? 'Platform Overview' : 'Overview', to: '/admin', group: 'core' },
+    { label: 'Overview', to: '/admin', group: 'primary', activeMatch: 'exact' },
   ]
 
   if (activeSection) {
-    items.push({ label: 'Content Library', to: workspaceHubViewUrl(activeSection.sectionId, 'library'), group: 'core' })
     if (canCreate) {
-      items.push({ label: 'Create Content', to: workspaceHubViewUrl((creatableSection ?? activeSection).sectionId, 'create'), group: 'core' })
+      items.push({ label: 'Create Content', to: workspaceHubViewUrl((creatableSection ?? activeSection).sectionId, 'create'), group: 'primary', activeMatch: 'content-create' })
     }
-    items.push({ label: 'Drafts', to: workspaceHubViewUrl(activeSection.sectionId, 'drafts'), group: 'core' })
-    items.push({ label: 'Scheduled', to: workspaceHubViewUrl(activeSection.sectionId, 'scheduled'), group: 'core' })
-    if (canPublish) {
-      items.push({ label: 'Published', to: workspaceHubViewUrl(activeSection.sectionId, 'published'), group: 'core' })
-    }
-    items.push({ label: 'Open Public Hub', to: activeSection.route, group: 'core' })
+    items.push({ label: 'Content Library', to: workspaceHubViewUrl(activeSection.sectionId, 'library'), group: 'primary', activeMatch: 'content-library' })
   }
 
   if (canManageProjectsForAdmin(admin)) {
-    items.push(
-      { label: 'Pending Submissions', to: '/admin/pending', group: 'projects' },
-      { label: 'Approved Projects', to: '/admin/approved', group: 'projects' },
-    )
-  }
-
-  if (accessible.length > 1 || admin.role === 'superAdmin') {
-    items.push({ label: 'All Hubs', to: '/admin/hubs', group: 'admin' })
+    items.push({ label: 'Submissions', to: '/admin/pending', group: 'primary', activeMatch: 'submissions' })
   }
 
   if (canManageUsersForAdmin(admin)) {
-    items.push({ label: 'Staff Access', to: '/admin/users', group: 'admin' })
+    items.push({ label: 'Staff Access', to: '/admin/users', group: 'primary' })
+  }
+
+  if (accessible.length > 1 || admin.role === 'superAdmin') {
+    items.push({ label: 'Manage Hubs', to: '/admin/hubs', group: 'admin' })
   }
 
   if (canViewAuditLogForAdmin(admin)) {
-    items.push({ label: 'Activity / Audit', to: '/admin/audit', group: 'admin' })
+    items.push({ label: 'Audit & Activity', to: '/admin/audit', group: 'admin' })
   }
 
   return items
