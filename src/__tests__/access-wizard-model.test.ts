@@ -73,6 +73,17 @@ describe('access wizard model', () => {
     expect(permissionPresets.map((item) => item.title)).toContain('Staff Administrator')
   })
 
+  it('keeps the Staff Administrator preset limited to staff management', () => {
+    const draft = emptyAccessDraft('admin@example.com')
+    const staffManager = applyPermissionPreset(draft, 'staffAdmin', superAdmin)
+    expect(staffManager.permissions.manageUsers).toBe(true)
+    expect(staffManager.permissions.publishContent).toBe(false)
+    expect(staffManager.permissions.deleteContent).toBe(false)
+    expect(staffManager.permissions.manageProjects).toBe(false)
+    expect(staffManager.permissions.manageHubSettings).toBe(false)
+    expect(staffManager.permissions.viewAuditLog).toBe(false)
+  })
+
   it('constrains custom permissions to the current administrator authority', () => {
     const draft = emptyAccessDraft('admin@example.com')
     const withAuditPermission = togglePermission(draft, 'viewAuditLog', staffAdmin)

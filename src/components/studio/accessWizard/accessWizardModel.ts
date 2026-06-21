@@ -70,7 +70,7 @@ export const permissionPresets: Array<{
     id: 'staffAdmin',
     title: 'Staff Administrator',
     help: 'Can manage staff access and view activity history.',
-    permissions: { ...fullStaffPermissions, viewAuditLog: true },
+    permissions: { ...emptyStaffPermissions, manageUsers: true },
     requiresSuperAdmin: true,
   },
   {

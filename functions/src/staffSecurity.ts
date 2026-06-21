@@ -32,6 +32,7 @@ export interface StaffActor {
   role: AdminRole
   protectedOwner: boolean
   active: boolean
+  allowedSectionIds: string[]
   permissions: StaffPermissions
 }
 
@@ -48,6 +49,18 @@ export const protectedOwnerUsername = 'stuart'
 export const internalStaffAuthDomain = 'staff.eep-student-showcase.local'
 
 const reservedUsernames = new Set(['admin', 'administrator', 'root', 'system', 'support', 'firebase'])
+
+export const validSectionIds = [
+  'ied',
+  'eep',
+  'esl',
+  'esl-science',
+  'esl-language-arts',
+  'esl-performance-arts',
+  'esl-social-studies',
+] as const
+
+export const validSectionIdSet = new Set<string>(validSectionIds)
 
 export const permissionKeys = [
   'manageUsers',
@@ -149,6 +162,61 @@ export function assertCanAssignRole(caller: StaffActor, role: AdminRole) {
   if (role === 'superAdmin' && !caller.protectedOwner) {
     throw new HttpsError('permission-denied', 'Only the protected owner can create or change super administrators.')
   }
+}
+
+export function assertValidSections(sectionIds: string[]) {
+  if (!sectionIds.length) {
+    throw new HttpsError('invalid-argument', 'Choose at least one valid section.')
+  }
+
+  const seen = new Set<string>()
+  for (const sectionId of sectionIds) {
+    if (sectionId === '*') {
+      continue
+    }
+    if (!validSectionIdSet.has(sectionId)) {
+      throw new HttpsError('invalid-argument', 'Choose valid IED Hub sections.')
+    }
+    if (seen.has(sectionId)) {
+      throw new HttpsError('invalid-argument', 'Section access cannot include duplicates.')
+    }
+    seen.add(sectionId)
+  }
+}
+
+export function assertPermissionSubset(caller: StaffActor, requestedPermissions: StaffPermissions) {
+  if (caller.protectedOwner) return
+
+  const exceededPermission = permissionKeys.find((key) => requestedPermissions[key] && !caller.permissions[key])
+  if (exceededPermission) {
+    throw new HttpsError('permission-denied', 'Staff administrators can only grant permissions they already hold.')
+  }
+}
+
+export function assertSectionSubset(caller: StaffActor, requestedSectionIds: string[]) {
+  assertValidSections(requestedSectionIds)
+
+  if (requestedSectionIds.includes('*')) {
+    if (!caller.protectedOwner || requestedSectionIds.length !== 1) {
+      throw new HttpsError('permission-denied', 'Only the protected owner can assign global section access.')
+    }
+    return
+  }
+
+  if (caller.protectedOwner || caller.allowedSectionIds.includes('*')) {
+    return
+  }
+
+  const callerSections = new Set(caller.allowedSectionIds)
+  if (requestedSectionIds.some((sectionId) => !callerSections.has(sectionId))) {
+    throw new HttpsError('permission-denied', 'Staff administrators can only assign sections they already hold.')
+  }
+}
+
+export function assertCanAssignAccess(caller: StaffActor, payload: { role: AdminRole; allowedSectionIds: string[]; permissions: StaffPermissions }) {
+  assertCanAssignRole(caller, payload.role)
+  assertSectionSubset(caller, payload.allowedSectionIds)
+  assertPermissionSubset(caller, payload.permissions)
 }
 
 export function assertCanManageTarget(

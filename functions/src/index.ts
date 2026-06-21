@@ -5,7 +5,7 @@ import { beforeUserCreated } from 'firebase-functions/v2/identity'
 import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import {
   assertAuthenticated,
-  assertCanAssignRole,
+  assertCanAssignAccess,
   assertCanManageTarget,
   assertCanManageUsers,
   assertPassword,
@@ -70,7 +70,7 @@ function assertStaffPayload(data: unknown, requirePassword: boolean) {
     role: payload.role,
     active: Boolean(payload.active),
     mustChangePassword: Boolean(payload.mustChangePassword),
-    allowedSectionIds: payload.role === 'superAdmin' ? ['*'] : payload.allowedSectionIds.filter((section) => section !== '*'),
+    allowedSectionIds: payload.allowedSectionIds,
     permissions: normalizePermissions(payload.role, payload.permissions ?? {}),
   }
 }
@@ -83,6 +83,7 @@ function ownerActor(uid: string): StaffActor {
     role: 'superAdmin',
     protectedOwner: true,
     active: true,
+    allowedSectionIds: ['*'],
     permissions: fullPermissions,
   }
 }
@@ -108,6 +109,7 @@ async function getCaller(uid: string, email?: string): Promise<StaffActor> {
     role,
     protectedOwner: Boolean(data.protectedOwner),
     active: Boolean(data.active),
+    allowedSectionIds: Array.isArray(data.allowedSectionIds) ? data.allowedSectionIds.filter((section) => typeof section === 'string') : [],
     permissions: normalizePermissions(role, data.permissions ?? {}),
   }
 }
@@ -249,7 +251,7 @@ export const createStaffUser = onCall(async (request) => {
     throw new HttpsError('already-exists', 'The protected owner username is reserved.')
   }
 
-  assertCanAssignRole(caller, payload.role)
+  assertCanAssignAccess(caller, payload)
 
   const db = getFirestore()
   const usernameRef = db.doc(`staffUsernames/${payload.username}`)
@@ -336,6 +338,8 @@ export const updateStaffAccess = onCall(async (request) => {
   if (payload.username !== target.normalizedUsername) {
     throw new HttpsError('failed-precondition', 'Staff usernames cannot be changed after account creation.')
   }
+
+  assertCanAssignAccess(caller, payload)
 
   await getFirestore().doc(`adminUsers/${uid}`).set({
     contactEmail: payload.contactEmail,
@@ -464,13 +468,17 @@ export const blockUnprovisionedStaffSignup = beforeUserCreated(() => rejectClien
 
 export {
   assertAuthenticated,
+  assertCanAssignAccess,
   assertCanAssignRole,
   assertCanManageTarget,
   assertCanManageUsers,
+  assertPermissionSubset,
   assertPassword,
   assertProtectedOwnerPayload,
   assertRecentAuthentication,
+  assertSectionSubset,
   assertUsernameAvailable,
+  assertValidSections,
   assertValidUid,
   buildStaffDocument,
   fullPermissions,
@@ -484,6 +492,7 @@ export {
   rejectClientSignup,
   staffAuthEmail,
   validateUsername,
+  validSectionIds,
 } from './staffSecurity.js'
 
 export type { AdminRole, StaffActor, StaffPayload, StaffPermissions, StaffTarget } from './staffSecurity.js'

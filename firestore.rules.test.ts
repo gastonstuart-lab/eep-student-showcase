@@ -13,6 +13,7 @@ let testEnv: RulesTestEnvironment
 const projectId = 'eep-student-showcase-rules-test'
 const bootstrapUid = 'bootstrap-owner'
 const editorUid = 'science-editor'
+const publisherUid = 'science-publisher'
 const disabledEditorUid = 'disabled-editor'
 const recordSuperAdminUid = 'record-super-admin'
 const wrongBootstrapEmailUid = 'wrong-bootstrap'
@@ -23,6 +24,10 @@ const bootstrapAuth = {
 }
 const editorAuth = {
   email: 'science.editor@example.com',
+  email_verified: true,
+}
+const publisherAuth = {
+  email: 'science.publisher@example.com',
   email_verified: true,
 }
 const disabledEditorAuth = {
@@ -139,6 +144,25 @@ async function seedAdminUsers() {
       role: 'editor',
       active: false,
       allowedSectionIds: ['esl-science'],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    await setDoc(doc(db, 'adminUsers', publisherUid), {
+      email: publisherAuth.email,
+      displayName: 'Science Publisher',
+      role: 'editor',
+      active: true,
+      allowedSectionIds: ['esl-science'],
+      permissions: {
+        manageUsers: false,
+        manageProjects: false,
+        manageHubSettings: false,
+        createContent: true,
+        editContent: true,
+        publishContent: true,
+        deleteContent: false,
+        viewAuditLog: false,
+      },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
@@ -399,6 +423,70 @@ describe('Firestore security rules', () => {
       role: 'superAdmin',
       active: true,
       allowedSectionIds: ['*'],
+    }))
+  })
+
+  it('requires publish permission for scheduled and published content states', async () => {
+    await seedAdminUsers()
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore()
+      await setDoc(doc(db, 'contentItems', 'editor-draft'), validContentItem)
+      await setDoc(doc(db, 'contentItems', 'publisher-draft'), {
+        ...validContentItem,
+        title: 'Publisher Draft',
+        createdBy: publisherAuth.email,
+      })
+      await setDoc(doc(db, 'contentItems', 'publisher-scheduled'), {
+        ...validContentItem,
+        title: 'Publisher Scheduled',
+        status: 'scheduled',
+        createdBy: publisherAuth.email,
+      })
+    })
+
+    const editorDb = testEnv.authenticatedContext(editorUid, editorAuth).firestore()
+    await assertSucceeds(setDoc(doc(editorDb, 'contentItems', 'editor-new-draft'), {
+      ...validContentItem,
+      title: 'Editor New Draft',
+    }))
+    await assertFails(setDoc(doc(editorDb, 'contentItems', 'editor-new-scheduled'), {
+      ...validContentItem,
+      title: 'Editor New Scheduled',
+      status: 'scheduled',
+    }))
+    await assertFails(setDoc(doc(editorDb, 'contentItems', 'editor-new-published'), {
+      ...validContentItem,
+      title: 'Editor New Published',
+      status: 'published',
+    }))
+    await assertSucceeds(updateDoc(doc(editorDb, 'contentItems', 'editor-draft'), {
+      title: 'Edited Draft',
+    }))
+    await assertFails(updateDoc(doc(editorDb, 'contentItems', 'editor-draft'), {
+      status: 'scheduled',
+    }))
+    await assertFails(updateDoc(doc(editorDb, 'contentItems', 'editor-draft'), {
+      status: 'published',
+    }))
+
+    const publisherDb = testEnv.authenticatedContext(publisherUid, publisherAuth).firestore()
+    await assertSucceeds(setDoc(doc(publisherDb, 'contentItems', 'publisher-new-scheduled'), {
+      ...validContentItem,
+      title: 'Publisher New Scheduled',
+      status: 'scheduled',
+      createdBy: publisherAuth.email,
+    }))
+    await assertSucceeds(setDoc(doc(publisherDb, 'contentItems', 'publisher-new-published'), {
+      ...validContentItem,
+      title: 'Publisher New Published',
+      status: 'published',
+      createdBy: publisherAuth.email,
+    }))
+    await assertSucceeds(updateDoc(doc(publisherDb, 'contentItems', 'publisher-draft'), {
+      status: 'scheduled',
+    }))
+    await assertSucceeds(updateDoc(doc(publisherDb, 'contentItems', 'publisher-scheduled'), {
+      status: 'published',
     }))
   })
 

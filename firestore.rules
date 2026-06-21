@@ -112,6 +112,52 @@ service cloud.firestore {
         );
     }
 
+    function canCreateAndPublishContent(sectionId) {
+      return isSuperAdmin()
+        || (
+          isAdmin()
+          && (
+            sectionId in adminRecord().allowedSectionIds
+            || '*' in adminRecord().allowedSectionIds
+          )
+          && (
+            (
+              hasStaffPermissions()
+              && adminRecord().permissions.createContent == true
+              && adminRecord().permissions.publishContent == true
+            )
+            || (
+              !hasStaffPermissions()
+              && adminRecord().role == 'editor'
+              && sectionId in adminRecord().allowedSectionIds
+            )
+          )
+        );
+    }
+
+    function canEditAndPublishContent(sectionId) {
+      return isSuperAdmin()
+        || (
+          isAdmin()
+          && (
+            sectionId in adminRecord().allowedSectionIds
+            || '*' in adminRecord().allowedSectionIds
+          )
+          && (
+            (
+              hasStaffPermissions()
+              && adminRecord().permissions.editContent == true
+              && adminRecord().permissions.publishContent == true
+            )
+            || (
+              !hasStaffPermissions()
+              && adminRecord().role == 'editor'
+              && sectionId in adminRecord().allowedSectionIds
+            )
+          )
+        );
+    }
+
     function canDeleteContent(sectionId) {
       return hasSectionAccess(sectionId)
         && (
@@ -128,12 +174,25 @@ service cloud.firestore {
       return resource.data.status != request.resource.data.status;
     }
 
-    function publishingStatusDidChange() {
+    function contentSectionDidChange() {
+      return resource.data.sectionId != request.resource.data.sectionId;
+    }
+
+    function isPublishControlledStatus(status) {
+      return status == 'scheduled'
+        || status == 'published'
+        || status == 'hidden';
+    }
+
+    function requestedStatusRequiresPublish() {
+      return isPublishControlledStatus(request.resource.data.status);
+    }
+
+    function publishControlledStatusDidChange() {
       return contentStatusDidChange()
         && (
-          request.resource.data.status == 'published'
-          || resource.data.status == 'published'
-          || request.resource.data.status == 'hidden'
+          isPublishControlledStatus(resource.data.status)
+          || isPublishControlledStatus(request.resource.data.status)
         );
     }
 
@@ -297,20 +356,34 @@ service cloud.firestore {
 
     match /contentItems/{contentItemId} {
       allow read: if resource.data.status == 'published' || canManageSection(resource.data.sectionId);
-      allow create: if canCreateContent(request.resource.data.sectionId)
-        && isValidContentItem()
+      allow create: if isValidContentItem()
         && (
-          request.resource.data.status != 'published'
-          || canPublishContent(request.resource.data.sectionId)
-        );
-      allow update: if canEditContent(resource.data.sectionId)
-        && isValidContentItem()
-        && canEditContent(request.resource.data.sectionId)
-        && (
-          !publishingStatusDidChange()
+          (
+            !requestedStatusRequiresPublish()
+            && canCreateContent(request.resource.data.sectionId)
+          )
           || (
-            canPublishContent(resource.data.sectionId)
-            && canPublishContent(request.resource.data.sectionId)
+            requestedStatusRequiresPublish()
+            && canCreateAndPublishContent(request.resource.data.sectionId)
+          )
+        );
+      allow update: if isValidContentItem()
+        && (
+          (
+            !publishControlledStatusDidChange()
+            && canEditContent(resource.data.sectionId)
+            && (
+              !contentSectionDidChange()
+              || canEditContent(request.resource.data.sectionId)
+            )
+          )
+          || (
+            publishControlledStatusDidChange()
+            && canEditAndPublishContent(resource.data.sectionId)
+            && (
+              !contentSectionDidChange()
+              || canEditAndPublishContent(request.resource.data.sectionId)
+            )
           )
         );
       allow delete: if canDeleteContent(resource.data.sectionId);

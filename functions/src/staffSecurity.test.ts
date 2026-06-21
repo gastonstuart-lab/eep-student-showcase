@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
   assertAuthenticated,
+  assertCanAssignAccess,
   assertCanAssignRole,
   assertCanManageTarget,
   assertCanManageUsers,
+  assertPermissionSubset,
   assertProtectedOwnerPayload,
   assertRecentAuthentication,
+  assertSectionSubset,
   assertUsernameAvailable,
+  assertValidSections,
   assertValidUid,
   buildStaffDocument,
   fullPermissions,
@@ -18,21 +22,23 @@ import {
   rejectClientSignup,
   staffAuthEmail,
   validateUsername,
+  validSectionIds,
+  type StaffPermissions,
   type StaffActor,
   type StaffTarget,
 } from './staffSecurity.js'
 
 const owner: StaffActor = {
   uid: 'owner_uid_123', username: 'stuart', displayName: 'Stuart', role: 'superAdmin',
-  protectedOwner: true, active: true, permissions: fullPermissions,
+  protectedOwner: true, active: true, allowedSectionIds: ['*'], permissions: fullPermissions,
 }
 const manager: StaffActor = {
   uid: 'manager_uid_123', username: 'manager', displayName: 'Manager', role: 'admin',
-  protectedOwner: false, active: true, permissions: fullPermissions,
+  protectedOwner: false, active: true, allowedSectionIds: ['ied', 'eep', 'esl-science'], permissions: fullPermissions,
 }
 const editor: StaffActor = {
   uid: 'editor_uid_123', username: 'editor', displayName: 'Editor', role: 'editor',
-  protectedOwner: false, active: true, permissions: normalizePermissions('editor', { editContent: true }),
+  protectedOwner: false, active: true, allowedSectionIds: ['esl-science'], permissions: normalizePermissions('editor', { editContent: true }),
 }
 const ownerTarget: StaffTarget = {
   uid: owner.uid, normalizedUsername: 'stuart', role: 'superAdmin', protectedOwner: true, active: true,
@@ -56,6 +62,100 @@ describe('staff identity mapping', () => {
     expect(() => validateUsername('root')).toThrow()
     expect(() => validateUsername('a')).toThrow()
     expect(() => validateUsername('science jones')).toThrow()
+  })
+})
+
+describe('staff access assignment enforcement', () => {
+  const limitedStaffManager: StaffActor = {
+    ...manager,
+    permissions: normalizePermissions('admin', {
+      manageUsers: true,
+      createContent: true,
+      editContent: true,
+    }),
+  }
+  const requestedWithinScope: StaffPermissions = normalizePermissions('admin', {
+    manageUsers: true,
+    createContent: true,
+  })
+
+  it('keeps the backend section allowlist aligned with the app hub IDs', () => {
+    expect(validSectionIds).toEqual([
+      'ied',
+      'eep',
+      'esl',
+      'esl-science',
+      'esl-language-arts',
+      'esl-performance-arts',
+      'esl-social-studies',
+    ])
+  })
+
+  it('allows requested permissions within the caller scope', () => {
+    expect(() => assertPermissionSubset(limitedStaffManager, requestedWithinScope)).not.toThrow()
+  })
+
+  it('rejects each requested permission outside the caller scope', () => {
+    for (const permission of ['publishContent', 'deleteContent', 'viewAuditLog', 'manageProjects', 'manageHubSettings'] as const) {
+      expect(() => assertPermissionSubset(limitedStaffManager, {
+        ...requestedWithinScope,
+        [permission]: true,
+      })).toThrow(/only grant permissions/i)
+    }
+  })
+
+  it('allows requested sections within the caller scope', () => {
+    expect(() => assertSectionSubset(manager, ['eep', 'esl-science'])).not.toThrow()
+  })
+
+  it('rejects requested sections outside the caller scope', () => {
+    expect(() => assertSectionSubset({ ...manager, allowedSectionIds: ['eep'] }, ['esl-science'])).toThrow(/only assign sections/i)
+    expect(() => assertSectionSubset({ ...manager, allowedSectionIds: ['esl-science'] }, ['esl-social-studies'])).toThrow(/only assign sections/i)
+  })
+
+  it('rejects unknown sections instead of silently accepting them', () => {
+    expect(() => assertValidSections(['unknown-section'])).toThrow(/valid IED Hub sections/i)
+  })
+
+  it('rejects global section assignment for non-protected callers', () => {
+    expect(() => assertSectionSubset(manager, ['*'])).toThrow(/protected owner/i)
+  })
+
+  it('allows the protected owner to assign valid global access', () => {
+    expect(() => assertSectionSubset(owner, ['*'])).not.toThrow()
+    expect(() => assertPermissionSubset(owner, fullPermissions)).not.toThrow()
+  })
+
+  it('enforces permission and section checks for create-style access payloads', () => {
+    expect(() => assertCanAssignAccess(limitedStaffManager, {
+      role: 'admin',
+      allowedSectionIds: ['eep'],
+      permissions: requestedWithinScope,
+    })).not.toThrow()
+    expect(() => assertCanAssignAccess(limitedStaffManager, {
+      role: 'admin',
+      allowedSectionIds: ['eep'],
+      permissions: { ...requestedWithinScope, publishContent: true },
+    })).toThrow(/only grant permissions/i)
+    expect(() => assertCanAssignAccess(limitedStaffManager, {
+      role: 'admin',
+      allowedSectionIds: ['esl-social-studies'],
+      permissions: requestedWithinScope,
+    })).toThrow(/only assign sections/i)
+  })
+
+  it('enforces permission and section checks for update-style access payloads', () => {
+    const updatePayload = {
+      role: 'editor' as const,
+      allowedSectionIds: ['esl-science'],
+      permissions: normalizePermissions('editor', { createContent: true, editContent: true }),
+    }
+    expect(() => assertCanAssignAccess(limitedStaffManager, updatePayload)).not.toThrow()
+    expect(() => assertCanAssignAccess(limitedStaffManager, {
+      ...updatePayload,
+      allowedSectionIds: ['*'],
+    })).toThrow(/protected owner/i)
+    expect(() => assertCanAssignAccess({ ...limitedStaffManager, permissions: normalizePermissions('admin', { createContent: true }) }, updatePayload)).toThrow(/only grant permissions/i)
   })
 })
 
