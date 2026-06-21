@@ -170,10 +170,6 @@ service cloud.firestore {
       return hasPermission('viewAuditLog');
     }
 
-    function contentStatusDidChange() {
-      return resource.data.status != request.resource.data.status;
-    }
-
     function contentSectionDidChange() {
       return resource.data.sectionId != request.resource.data.sectionId;
     }
@@ -188,12 +184,9 @@ service cloud.firestore {
       return isPublishControlledStatus(request.resource.data.status);
     }
 
-    function publishControlledStatusDidChange() {
-      return contentStatusDidChange()
-        && (
-          isPublishControlledStatus(resource.data.status)
-          || isPublishControlledStatus(request.resource.data.status)
-        );
+    function updateRequiresPublish() {
+      return isPublishControlledStatus(resource.data.status)
+        || isPublishControlledStatus(request.resource.data.status);
     }
 
     function isShortString(value, maxLength) {
@@ -370,7 +363,7 @@ service cloud.firestore {
       allow update: if isValidContentItem()
         && (
           (
-            !publishControlledStatusDidChange()
+            !updateRequiresPublish()
             && canEditContent(resource.data.sectionId)
             && (
               !contentSectionDidChange()
@@ -378,7 +371,7 @@ service cloud.firestore {
             )
           )
           || (
-            publishControlledStatusDidChange()
+            updateRequiresPublish()
             && canEditAndPublishContent(resource.data.sectionId)
             && (
               !contentSectionDidChange()
