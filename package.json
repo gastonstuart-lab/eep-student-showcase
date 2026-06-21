@@ -11,7 +11,7 @@
     "test": "vitest run",
     "audit:site": "node scripts/site-audit/run-site-audit.mjs",
     "audit:site:preview": "node scripts/site-audit/run-site-audit.mjs --mode preview --base-url https://ied-hub--final-review-0w7hj3l0.web.app",
-    "test:route-scroll": "node scripts/run-route-scroll-test-v3.mjs",
+    "test:route-scroll": "node scripts/run-route-scroll-test-v4.mjs",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "emulators:start": "firebase emulators:start --only auth,firestore,functions",
     "emulators:seed-owner": "npm.cmd --prefix functions run seed:owner:local",
