@@ -473,76 +473,80 @@ function Shell() {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [mobileMenuOpen])
 
+  const protectedWorkspaceRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/change-password'
+
   return (
-    <div className="app-shell">
+    <div className={protectedWorkspaceRoute ? 'app-shell app-shell--workspace' : 'app-shell'}>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <header className="topbar">
-        <Link className="brand" to="/">
-          <img className="brand-logo" src="/school-logo.svg" alt="" />
-          <span className="brand-text">
-            <strong>IED Hub</strong>
-            <small>Learning Showcase</small>
-          </span>
-        </Link>
-        <button
-          className="mobile-menu-button"
-          type="button"
-          aria-controls="topbar-actions"
-          aria-expanded={mobileMenuOpen}
-          onClick={() => setMobileMenuOpen((open) => !open)}
-        >
-          Menu
-        </button>
-        <nav className="main-nav" aria-label={t('primaryNavigation')}>
-          <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
-          <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
-          <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
-          <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
-        </nav>
-        <div id="topbar-actions" className={`topbar-actions${mobileMenuOpen ? ' is-open' : ''}`}>
-          <LanguageToggle />
-          {user ? (
-            <>
-              {isAdmin && (
-                <Link className="small-button" to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                  {chromeText('navAdmin')}
-                </Link>
-              )}
-              {isAdmin && (
-                <Link className="small-button admin-hubs-shortcut" to="/admin/hubs" onClick={() => setMobileMenuOpen(false)}>
-                  Hubs
-                </Link>
-              )}
-              {isSuperAdmin && (
-                <Link className="small-button" to="/admin/users" onClick={() => setMobileMenuOpen(false)}>
-                  Access
-                </Link>
-              )}
-              <button
-                className="small-button"
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  void logout()
-                }}
-              >
-                {chromeText('signOut')}
-              </button>
-            </>
-          ) : (
-            <Link className="small-button" to="/login" onClick={() => setMobileMenuOpen(false)}>
-              Login
-            </Link>
-          )}
-        </div>
-      </header>
+      {!protectedWorkspaceRoute && (
+        <header className="topbar">
+          <Link className="brand" to="/">
+            <img className="brand-logo" src="/school-logo.svg" alt="" />
+            <span className="brand-text">
+              <strong>IED Hub</strong>
+              <small>Learning Showcase</small>
+            </span>
+          </Link>
+          <button
+            className="mobile-menu-button"
+            type="button"
+            aria-controls="topbar-actions"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            Menu
+          </button>
+          <nav className="main-nav" aria-label={t('primaryNavigation')}>
+            <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
+            <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
+            <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
+            <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
+          </nav>
+          <div id="topbar-actions" className={`topbar-actions${mobileMenuOpen ? ' is-open' : ''}`}>
+            <LanguageToggle />
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Link className="small-button" to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                    {chromeText('navAdmin')}
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link className="small-button admin-hubs-shortcut" to="/admin/hubs" onClick={() => setMobileMenuOpen(false)}>
+                    Hubs
+                  </Link>
+                )}
+                {isSuperAdmin && (
+                  <Link className="small-button" to="/admin/users" onClick={() => setMobileMenuOpen(false)}>
+                    Access
+                  </Link>
+                )}
+                <button
+                  className="small-button"
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    void logout()
+                  }}
+                >
+                  {chromeText('signOut')}
+                </button>
+              </>
+            ) : (
+              <Link className="small-button" to="/login" onClick={() => setMobileMenuOpen(false)}>
+                Login
+              </Link>
+            )}
+          </div>
+        </header>
+      )}
 
       {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
 
-      <main className="page-transition route-main" id="main-content" key={location.pathname} tabIndex={-1}>
-        {location.pathname !== '/' && <BackNavigation />}
+      <main className={protectedWorkspaceRoute ? 'page-transition route-main route-main--workspace' : 'page-transition route-main'} id="main-content" key={location.pathname} tabIndex={-1}>
+        {!protectedWorkspaceRoute && location.pathname !== '/' && <BackNavigation />}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/ied" element={<Navigate to="/" replace />} />
