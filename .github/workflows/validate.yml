@@ -94,6 +94,22 @@ jobs:
           GCLOUD_PROJECT: eep-student-showcase
         run: npm --prefix functions run seed:owner:local
 
+      - name: Staff lifecycle emulator smoke
+        env:
+          LOCAL_OWNER_PASSWORD: TempStudio-${{ github.run_id }}-${{ github.run_attempt }}
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          FUNCTIONS_EMULATOR_HOST: 127.0.0.1:5001
+          GCLOUD_PROJECT: eep-student-showcase
+        run: npm --prefix functions run smoke:local
+
+      - name: Verify staff lifecycle and audit records
+        env:
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          GCLOUD_PROJECT: eep-student-showcase
+        run: node functions/scripts/verifyLocalStaffSmoke.mjs
+
       - name: Authenticated admin and studio browser checks
         env:
           ROUTE_SCROLL_ADMIN_USERNAME: stuart
