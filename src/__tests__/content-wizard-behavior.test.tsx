@@ -74,7 +74,7 @@ describe('content creator wizard behavior', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    expect(screen.getByText('Stage 2 of 3: Create content')).toBeInTheDocument()
+    expect(screen.getByText('Create content').closest('li')).toHaveAttribute('aria-current', 'step')
     expect(screen.getByRole('alert')).toHaveTextContent('Add a title')
     expect(createContentItem).not.toHaveBeenCalled()
   })

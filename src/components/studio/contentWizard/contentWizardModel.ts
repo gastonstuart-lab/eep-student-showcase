@@ -18,16 +18,15 @@ export const contentWizardStepLabels: Record<ContentWizardStep, string> = {
 
 export const contentTypeOptions: Array<{
   type: ContentType
-  icon: string
   title: string
   help: string
 }> = [
-  { type: 'announcement', icon: 'A', title: 'Announcement', help: 'Share reminders, notices, or programme updates.' },
-  { type: 'event', icon: 'E', title: 'Event', help: 'Promote an upcoming activity, deadline, or school event.' },
-  { type: 'studentWork', icon: 'S', title: 'Student Achievement', help: 'Celebrate a project, publication, performance, or learning win.' },
-  { type: 'video', icon: 'G', title: 'Gallery', help: 'Feature a media-led story, video, or visual collection.' },
-  { type: 'resource', icon: 'P', title: 'Page / Resource', help: 'Share a guide, worksheet, page, or learning resource.' },
-  { type: 'link', icon: 'N', title: 'News / Article', help: 'Link visitors to a longer story or trusted article.' },
+  { type: 'announcement', title: 'Announcement', help: 'Share reminders or programme updates.' },
+  { type: 'event', title: 'Event', help: 'Promote activities and deadlines.' },
+  { type: 'studentWork', title: 'Student Achievement', help: 'Celebrate projects or learning wins.' },
+  { type: 'video', title: 'Gallery', help: 'Feature video or visual collections.' },
+  { type: 'resource', title: 'Page / Resource', help: 'Share guides, worksheets, or pages.' },
+  { type: 'link', title: 'News / Article', help: 'Link to a longer story or article.' },
 ]
 
 export const contentTypeLabels = Object.fromEntries(contentTypeOptions.map((option) => [option.type, option.title])) as Record<ContentType, string>

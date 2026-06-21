@@ -229,15 +229,15 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
           <div className="workspace-nav-group" key={group.id}>
             <span>{group.label}</span>
             {items.map((item) => (
-              <NavLink
+              <Link
                 key={`${item.label}:${item.to}`}
                 to={item.to}
                 onClick={onNavigate}
-                className={({ isActive: routerActive }) => (routerActive || isActive(item) ? 'active' : undefined)}
+                className={isActive(item) ? 'active' : undefined}
                 aria-current={isActive(item) ? 'page' : undefined}
               >
                 {item.label}
-              </NavLink>
+              </Link>
             ))}
           </div>
         )
@@ -391,6 +391,7 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
   const isCreateContentRoute = location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) === 'create'
   const isOverviewRoute = location.pathname === '/admin'
+  const isStaffAccessRoute = location.pathname === '/admin/users'
 
   if (!adminUser) {
     return <>{children}</>
@@ -409,7 +410,7 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
           <WorkspaceSidebarUtility admin={adminUser} />
         </aside>
         <div className="workspace-main" aria-hidden={drawerOpen ? true : undefined}>
-          {!isCreateContentRoute && !isOverviewRoute && <WorkspaceHeader admin={adminUser} />}
+          {!isCreateContentRoute && !isOverviewRoute && !isStaffAccessRoute && <WorkspaceHeader admin={adminUser} />}
           {children}
         </div>
       </div>

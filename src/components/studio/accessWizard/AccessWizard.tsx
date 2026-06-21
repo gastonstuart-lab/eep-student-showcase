@@ -17,7 +17,7 @@ import {
 } from '../../../staffFunctions'
 import type { AdminRole, AdminUser, StaffPermissions } from '../../../types'
 import { canManageUsersForAdmin, staffPermissionKeys, staffPermissionLabels } from '../../../utils/authorization'
-import { normalizeStaffUsername, protectedOwnerEmail, protectedOwnerUsername } from '../../../utils/staffAuth'
+import { normalizeStaffUsername, protectedOwnerUsername } from '../../../utils/staffAuth'
 import { ConfirmDialog, EmptyState, StepIndicator } from '../ProtectedWorkspace'
 import {
   accessRecoveryKey,
@@ -45,6 +45,15 @@ import { hasAccessErrors, validateAccessWizardStep, type AccessWizardErrors } fr
 
 type ConfirmAction = 'enable' | 'disable' | 'archive' | 'save' | null
 
+function staffAccessErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message : String(error || '')
+  console.error('Staff access error:', error)
+  if (raw.toLowerCase().includes('backend') || raw.toLowerCase().includes('functions') || raw.toLowerCase().includes('internal')) {
+    return 'Staff accounts could not be loaded. Try again or check the local emulator connection.'
+  }
+  return 'Staff accounts could not be loaded. Try again or check your connection.'
+}
+
 export function StaffAccessPage() {
   const { adminUser, user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -69,7 +78,7 @@ export function StaffAccessPage() {
         setLoading(false)
       },
       (watchError) => {
-        setError(watchError.message)
+        setError(staffAccessErrorMessage(watchError))
         setLoading(false)
       },
     )
@@ -85,7 +94,8 @@ export function StaffAccessPage() {
       } catch (healthError) {
         if (!cancelled) {
           setBackendReady(false)
-          setMessage(healthError instanceof Error ? healthError.message : 'Staff management backend is unavailable. Start the Functions emulator and try again.')
+          setMessage('Staff actions are temporarily unavailable. Try again or check the local emulator connection.')
+          console.error('Staff backend health check failed:', healthError)
         }
       }
     }
@@ -94,9 +104,6 @@ export function StaffAccessPage() {
       cancelled = true
     }
   }, [])
-
-  const activeAdminCount = adminUsers.filter((item) => item.active).length
-  const editorCount = adminUsers.filter((item) => item.role === 'editor').length
 
   const openCreate = () => {
     setMessage('')
@@ -159,28 +166,21 @@ export function StaffAccessPage() {
 
   return (
     <section className="admin-page staff-access-page">
-      <div className="staff-access-hero">
+      <div className="staff-access-pagebar">
         <div>
-          <p className="eyebrow">Staff Access</p>
-          <h1>{isWizardRoute ? 'Guided staff setup' : 'Manage staff accounts'}</h1>
-          <p>Create secure staff accounts, assign clear responsibilities, and keep protected-owner controls safe.</p>
+          <h1>{isWizardRoute ? 'Guided staff setup' : 'Staff Access'}</h1>
+          <p>Create accounts, assign hub access, and keep staff responsibilities clear.</p>
         </div>
-        <div className="staff-access-metrics" aria-label="Staff access summary">
-          <article><span>{adminUsers.length}</span><p>Total accounts</p></article>
-          <article><span>{activeAdminCount}</span><p>Active</p></article>
-          <article><span>{editorCount}</span><p>Editors</p></article>
-        </div>
+        {!isWizardRoute && <button className="primary-button blue" type="button" onClick={openCreate}>Add Staff Member</button>}
       </div>
-      <p className="content-admin-context staff-owner-note">
-        Protected owner: <strong>{protectedOwnerUsername}</strong> ({protectedOwnerEmail}). This account cannot be disabled, archived, reset, or stripped of final platform access here.
-      </p>
       {adminUser?.source === 'bootstrap' && (
-        <p className="module-note quiet">
-          You are using the protected bootstrap owner path.
+        <details className="staff-diagnostics">
+          <summary>Admin diagnostics</summary>
+          <p>The protected owner path is active for <strong>{protectedOwnerUsername}</strong>.</p>
           <button className="small-button" type="button" disabled={busyAction === 'repair-owner'} onClick={() => void runProtectedOwnerRepair()}>
             Repair owner record
           </button>
-        </p>
+        </details>
       )}
       {message && <p className="form-message" aria-live="polite">{message}</p>}
       {error && <p className="form-message">{error}</p>}
@@ -205,8 +205,8 @@ export function StaffAccessPage() {
           admin={adminUser}
           adminUsers={adminUsers}
           backendReady={backendReady}
+          error={error}
           loading={loading}
-          onCreate={openCreate}
           onEdit={openEdit}
           onReset={setResetUser}
           onConfirmAction={(action, item) => setConfirmAction({ action, user: item })}
@@ -241,8 +241,8 @@ function StaffAccessList({
   admin,
   adminUsers,
   backendReady,
+  error,
   loading,
-  onCreate,
   onEdit,
   onReset,
   onConfirmAction,
@@ -250,8 +250,8 @@ function StaffAccessList({
   admin: EffectiveAdmin | null
   adminUsers: AdminUser[]
   backendReady: boolean
+  error: string
   loading: boolean
-  onCreate: () => void
   onEdit: (item: AdminUser) => void
   onReset: (item: AdminUser) => void
   onConfirmAction: (action: ConfirmAction, item: AdminUser) => void
@@ -274,41 +274,43 @@ function StaffAccessList({
 
   return (
     <div className="staff-access-list-view">
-      <div className="library-toolbar">
-        <div>
-          <h2>Staff access library</h2>
-          <p>{filtered.length} of {adminUsers.length} staff accounts</p>
-        </div>
-        <button className="primary-button blue" type="button" onClick={onCreate}>Add Staff Member</button>
-      </div>
-      <div className="library-controls" aria-label="Staff filters">
+      <div className="staff-access-toolbar" aria-label="Staff filters">
         <label>Search<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, username, or email" /></label>
         <label>Status<select value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="all">All</option><option value="active">Active</option><option value="disabled">Disabled</option></select></label>
         <label>Role<select value={role} onChange={(event) => setRole(event.target.value as typeof role)}><option value="all">All</option><option value="editor">Editor</option><option value="admin">Administrator</option><option value="superAdmin">Super administrator</option></select></label>
         <label>Hub<select value={hub} onChange={(event) => setHub(event.target.value)}><option value="all">All hubs</option>{assignableHubConfigs(admin).map((config) => <option key={config.sectionId} value={config.sectionId}>{config.sectionName}</option>)}</select></label>
       </div>
-      {!backendReady && <p className="module-note quiet">Staff-management actions are disabled because the backend is unavailable. Start the Functions emulator and refresh this page.</p>}
-      {loading && <p className="module-note quiet">Loading staff accounts...</p>}
-      <div className="staff-account-list">
+      <p className="staff-owner-inline">Protected owner safeguards active</p>
+      {!backendReady && <p className="staff-access-note">Staff actions are unavailable until the backend connection is restored.</p>}
+      {loading && <p className="staff-access-note">Loading staff accounts...</p>}
+      <div className="staff-directory" role="table" aria-label="Staff directory">
+        {filtered.length > 0 && (
+          <div className="staff-directory-head" role="row">
+            <span role="columnheader">Staff member</span>
+            <span role="columnheader">Status</span>
+            <span role="columnheader">Role</span>
+            <span role="columnheader">Hubs</span>
+            <span role="columnheader">Responsibilities</span>
+            <span role="columnheader">Actions</span>
+          </div>
+        )}
         {filtered.length ? filtered.map((item) => (
-          <article className="staff-account-card" key={item.id}>
-            <div className="staff-account-card-main">
-              <div className="staff-account-badges">
-                <span className={`status-badge ${item.active ? 'status-published' : 'status-hidden'}`}>{item.active ? 'Active' : 'Disabled'}</span>
-                <span className="badge">{roleLabel(item.role)}</span>
-                {item.protectedOwner && <span className="badge badge-owner">Protected owner</span>}
-              </div>
+          <article className="staff-directory-row" role="row" key={item.id}>
+            <div className="staff-directory-person" role="cell">
               <h3>{item.displayName || item.username}</h3>
               <p className="staff-account-identity"><span>@{item.username}</span>{item.contactEmail && <span>{item.contactEmail}</span>}</p>
-              <div className="staff-access-chip-group" aria-label={`Hub access for ${item.username}`}>
-                {(item.role === 'superAdmin' ? ['All hubs'] : item.allowedSectionIds.length ? item.allowedSectionIds.map((sectionId) => sectionLabelById[sectionId] ?? sectionId) : ['No hubs']).map((label) => (
-                  <span className="staff-access-chip" key={label}>{label}</span>
-                ))}
-              </div>
-              <p className="staff-responsibility-summary">{accessSummary(draftFromAdminUser(item, item.updatedBy))}</p>
+              {item.protectedOwner && <span className="staff-owner-chip">Protected owner</span>}
             </div>
-            <div className="admin-item-actions">
-              <button className="secondary-button" type="button" onClick={() => onEdit(item)}>View/Edit Access</button>
+            <div role="cell"><span className={`status-badge ${item.active ? 'status-published' : 'status-hidden'}`}>{item.active ? 'Active' : 'Disabled'}</span></div>
+            <div role="cell"><span className="badge">{roleLabel(item.role)}</span></div>
+            <div className="staff-access-chip-group" role="cell" aria-label={`Hub access for ${item.username}`}>
+              {(item.role === 'superAdmin' ? ['All hubs'] : item.allowedSectionIds.length ? item.allowedSectionIds.map((sectionId) => sectionLabelById[sectionId] ?? sectionId) : ['No hubs']).map((label) => (
+                <span className="staff-access-chip" key={label}>{label}</span>
+              ))}
+            </div>
+            <p className="staff-responsibility-summary" role="cell">{accessSummary(draftFromAdminUser(item, item.updatedBy))}</p>
+            <div className="staff-directory-actions" role="cell">
+              <button className="secondary-button" type="button" onClick={() => onEdit(item)}>Edit</button>
               {!item.protectedOwner && <button className="secondary-button" type="button" disabled={!backendReady} onClick={() => onReset(item)}>Reset Password</button>}
               {!item.protectedOwner && (item.active
                 ? <button className="secondary-button" type="button" disabled={!backendReady} onClick={() => onConfirmAction('disable', item)}>Disable</button>
@@ -317,7 +319,12 @@ function StaffAccessList({
             </div>
           </article>
         )) : (
-          !loading && <EmptyState title="No staff accounts found" body="Adjust the filters or add a staff member." />
+          !loading && (
+            <div className="staff-directory-empty">
+              <h2>{error ? 'Staff accounts could not be loaded' : adminUsers.length ? 'No staff match these filters' : 'No staff accounts yet'}</h2>
+              <p>{error || (adminUsers.length ? 'Adjust the filters to show more staff accounts.' : backendReady ? 'Add the first staff member to begin managing access.' : 'Check the local emulator connection and try again.')}</p>
+            </div>
+          )
         )}
       </div>
     </div>

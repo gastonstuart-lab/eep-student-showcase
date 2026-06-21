@@ -328,8 +328,6 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
           </li>
         ))}
       </ol>
-      <div className="wizard-step-status" aria-live="polite">Stage {visibleStageIndex(step) + 1} of 3: {visibleStages[visibleStageIndex(step)]}</div>
-
       {recoveredDraft && (
         <div className="wizard-recovery" role="alert">
           <div>
@@ -357,7 +355,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                     type="radio"
                     value={option.type}
                   />
-                  <span aria-hidden="true">{option.icon}</span>
+                  <span className={`content-type-icon content-type-icon--${option.type}`} aria-hidden="true" />
                   <strong>{option.title}</strong>
                   <small>{option.help}</small>
                 </label>
