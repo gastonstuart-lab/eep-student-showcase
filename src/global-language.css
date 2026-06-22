@@ -1,0 +1,46 @@
+.global-language-control {
+  position: fixed;
+  top: 0.85rem;
+  right: 1rem;
+  z-index: 1400;
+}
+
+.global-language-control .language-toggle-button {
+  min-height: 2.5rem;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 16%);
+}
+
+.topbar .language-toggle {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app-shell--workspace .global-language-control,
+.workspace-shell .global-language-control {
+  top: 0.75rem;
+  right: 8.5rem;
+}
+
+@media (max-width: 900px) {
+  .global-language-control {
+    top: 0.7rem;
+    right: 4.2rem;
+  }
+
+  .app-shell--workspace .global-language-control,
+  .workspace-shell .global-language-control {
+    right: 4.2rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .global-language-control {
+    top: 0.6rem;
+    right: 3.6rem;
+  }
+
+  .global-language-control .language-toggle-button {
+    min-height: 2.35rem;
+    padding-inline: 0.7rem;
+  }
+}
