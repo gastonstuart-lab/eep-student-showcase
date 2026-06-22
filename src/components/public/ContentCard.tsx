@@ -1,23 +1,34 @@
 import { type CSSProperties } from 'react'
 import { useLanguage } from '../../i18n/LanguageContext'
 import type { ContentItem, ContentType } from '../../types'
+import { localizedContentText } from '../../utils/contentLifecycle'
 
-const contentTypeLabels: Record<ContentType, string> = {
-  announcement: 'Announcement',
-  event: 'Event',
-  video: 'Video / Performance',
-  resource: 'Resource',
-  studentWork: 'Student Work',
-  link: 'Webpage / Link',
+const contentTypeLabels: Record<'en' | 'zh-Hant', Record<ContentType, string>> = {
+  en: {
+    announcement: 'Announcement',
+    event: 'Event',
+    video: 'Video / Performance',
+    resource: 'Resource',
+    studentWork: 'Student Work',
+    link: 'Webpage / Link',
+  },
+  'zh-Hant': {
+    announcement: '公告',
+    event: '活動',
+    video: '影片／表演',
+    resource: '學習資源',
+    studentWork: '學生作品',
+    link: '網頁／連結',
+  },
 }
 
-function formatContentDate(item: ContentItem) {
+function formatContentDate(item: ContentItem, locale: string) {
   if (item.eventDate) {
     const date = new Date(`${item.eventDate}T00:00:00`)
 
     return Number.isNaN(date.getTime())
       ? item.eventDate
-      : new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+      : new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
   }
 
   const stamp = item.updatedAt ?? item.createdAt
@@ -32,52 +43,30 @@ function formatContentDate(item: ContentItem) {
     return ''
   }
 
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
 function getThemeClass(accentStyle: ContentItem['accentStyle']) {
-  if (accentStyle === 'ied') {
-    return 'theme-ied'
-  }
-
-  if (accentStyle === 'eep') {
-    return 'theme-eep'
-  }
-
-  if (accentStyle === 'esl') {
-    return 'theme-esl'
-  }
-
-  if (accentStyle === 'warm') {
-    return 'theme-warm'
-  }
-
-  if (accentStyle === 'performance') {
-    return 'theme-performance'
-  }
-
-  if (accentStyle === 'science') {
-    return 'theme-science'
-  }
-
-  if (accentStyle === 'social') {
-    return 'theme-social'
-  }
-
-  if (accentStyle === 'dark') {
-    return 'theme-dark'
-  }
-
+  if (accentStyle === 'ied') return 'theme-ied'
+  if (accentStyle === 'eep') return 'theme-eep'
+  if (accentStyle === 'esl') return 'theme-esl'
+  if (accentStyle === 'warm') return 'theme-warm'
+  if (accentStyle === 'performance') return 'theme-performance'
+  if (accentStyle === 'science') return 'theme-science'
+  if (accentStyle === 'social') return 'theme-social'
+  if (accentStyle === 'dark') return 'theme-dark'
   return 'theme-neutral'
 }
 
 export function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
-  const { t } = useLanguage()
+  const { mode, t } = useLanguage()
+  const localized = localizedContentText(item, mode)
+  const locale = mode === 'zh-Hant' ? 'zh-TW' : 'en'
   const primaryUrl = item.actionUrl || item.linkUrl || item.mediaUrl
-  const primaryLabel = item.actionLabel || t('openContentLink')
+  const primaryLabel = localized.actionLabel || t('openContentLink')
   const primaryStyle = item.actionStyle ?? item.ctaStyle
   const secondaryUrl = item.secondaryActionUrl ?? ''
-  const secondaryLabel = item.secondaryActionLabel || 'Learn more'
+  const secondaryLabel = localized.secondaryActionLabel || (mode === 'zh-Hant' ? '了解更多' : 'Learn more')
   const secondaryStyle = item.secondaryActionStyle ?? 'secondary'
   const showPrimaryCta = primaryStyle !== 'hidden' && Boolean(primaryUrl)
   const showSecondaryCta = secondaryStyle !== 'hidden' && Boolean(secondaryUrl)
@@ -86,7 +75,7 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
   const effectiveImagePlacement = item.hideImage ? 'hidden' : item.imagePlacement
   const showImage = Boolean(item.imageUrl) && effectiveImagePlacement !== 'hidden'
   const showBody = displayStyle !== 'compact' && displayStyle !== 'banner' && displayStyle !== 'quickLink'
-  const badgeText = item.badgeText?.trim().slice(0, 24)
+  const badgeText = localized.badgeText?.trim().slice(0, 24)
   const primaryCtaClassName =
     primaryStyle === 'primary'
       ? 'primary-button blue content-card-cta'
@@ -102,11 +91,12 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
   const imageStyle = (effectiveImagePlacement === 'background' || item.backgroundStyle === 'image' || item.backgroundStyle === 'darkOverlay') && showImage
     ? ({ backgroundImage: `url(${item.imageUrl})` } as CSSProperties)
     : undefined
-  const imageAlt = item.imageAlt || `${item.title} visual`
+  const imageAlt = localized.imageAlt || `${localized.title} visual`
+  const formattedDate = formatContentDate(item, locale)
 
   return (
     <article
-      className={`content-card ${getThemeClass(item.accentStyle)} style-${displayStyle} width-${item.contentWidth} align-${item.textAlignment} image-${effectiveImagePlacement} shape-${item.cardShape ?? 'standard'} density-${item.contentDensity ?? 'comfortable'} ratio-${item.imageRatio ?? 'landscape'} badge-${item.badgeStyle ?? 'subtle'} background-${item.backgroundStyle ?? 'plain'}${showImage ? ' has-image' : ''}${showCta ? ' has-link' : ''}${badgeText ? ' has-badge' : ''}`}
+      className={`content-card ${getThemeClass(item.accentStyle)} style-${displayStyle} width-${item.contentWidth} align-${item.textAlignment} image-${effectiveImagePlacement} shape-${item.cardShape ?? 'standard'} density-${item.contentDensity ?? 'comfortable'} ratio-${item.imageRatio ?? 'landscape'} badge-${item.badgeStyle ?? 'subtle'} background-${item.backgroundStyle ?? 'plain'} template-${item.template ?? 'mediumCard'} placement-${item.placement ?? 'main'}${showImage ? ' has-image' : ''}${showCta ? ' has-link' : ''}${badgeText ? ' has-badge' : ''}`}
     >
       {(effectiveImagePlacement === 'background' || item.backgroundStyle === 'image' || item.backgroundStyle === 'darkOverlay') && showImage && (
         <div className="content-card-background" aria-hidden="true" style={imageStyle} />
@@ -118,13 +108,13 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
 
       <div className="content-card-body">
         <div className="content-card-badges">
-          <span className="badge">{contentTypeLabels[item.type]}</span>
+          <span className="badge">{contentTypeLabels[mode][item.type]}</span>
           {badgeText && <span className="content-card-badge">{badgeText}</span>}
         </div>
-        <h3>{item.title}</h3>
-        {formatContentDate(item) && <p className="meta">{formatContentDate(item)}</p>}
-        <p className="content-card-summary">{item.summary}</p>
-        {showBody && item.body && <p className="muted">{item.body}</p>}
+        <h3>{localized.title}</h3>
+        {formattedDate && <p className="meta">{formattedDate}</p>}
+        <p className="content-card-summary">{localized.summary}</p>
+        {showBody && localized.body && <p className="muted">{localized.body}</p>}
         {showCta && (
           <div className="content-card-actions">
             {showPrimaryCta && (
