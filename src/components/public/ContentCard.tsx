@@ -60,13 +60,14 @@ function getThemeClass(accentStyle: ContentItem['accentStyle']) {
 
 export function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
   const { mode, t } = useLanguage()
-  const localized = localizedContentText(item, mode)
-  const locale = mode === 'zh-Hant' ? 'zh-TW' : 'en'
+  const zhMode = mode === 'zh-Hant'
+  const localized = localizedContentText(item, zhMode ? 'zh-Hant' : 'en')
+  const locale = zhMode ? 'zh-TW' : 'en'
   const primaryUrl = item.actionUrl || item.linkUrl || item.mediaUrl
   const primaryLabel = localized.actionLabel || t('openContentLink')
   const primaryStyle = item.actionStyle ?? item.ctaStyle
   const secondaryUrl = item.secondaryActionUrl ?? ''
-  const secondaryLabel = localized.secondaryActionLabel || (mode === 'zh-Hant' ? '了解更多' : 'Learn more')
+  const secondaryLabel = localized.secondaryActionLabel || (zhMode ? '了解更多' : 'Learn more')
   const secondaryStyle = item.secondaryActionStyle ?? 'secondary'
   const showPrimaryCta = primaryStyle !== 'hidden' && Boolean(primaryUrl)
   const showSecondaryCta = secondaryStyle !== 'hidden' && Boolean(secondaryUrl)
@@ -108,7 +109,7 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
 
       <div className="content-card-body">
         <div className="content-card-badges">
-          <span className="badge">{contentTypeLabels[mode][item.type]}</span>
+          <span className="badge">{contentTypeLabels[zhMode ? 'zh-Hant' : 'en'][item.type]}</span>
           {badgeText && <span className="content-card-badge">{badgeText}</span>}
         </div>
         <h3>{localized.title}</h3>

@@ -81,12 +81,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <LanguageContext.Provider value={value}>
-      {children}
-      <div className="global-language-control" aria-label="Site language">
-        <LanguageToggle />
-      </div>
-    </LanguageContext.Provider>
+    <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
   )
 }
 
@@ -94,7 +89,15 @@ export const useLanguage = () => {
   const context = useContext(LanguageContext)
 
   if (!context) {
-    throw new Error('useLanguage must be used inside LanguageProvider')
+    return {
+      mode: 'en' as LanguageMode,
+      setMode: () => undefined,
+      text: (key: TranslationKey, values?: Record<string, string | number>) => ({
+        en: fill(translations[key].en, values),
+        zh: fill(translations[key].zh, values),
+      }),
+      t: (key: TranslationKey, values?: Record<string, string | number>) => fill(translations[key].en, values),
+    }
   }
 
   return context

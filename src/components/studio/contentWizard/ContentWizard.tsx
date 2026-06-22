@@ -6,7 +6,6 @@ import { hubConfigById, type HubConfig } from '../../../hubs'
 import type { ContentItem, ContentItemInput, ContentType } from '../../../types'
 import { canCreateContentForAdmin } from '../../../utils/authorization'
 import { contentItemPreviewFromInput, sanitizeContentItemInput, validateContentAppearance } from '../../../utils/contentAppearance'
-import { ContentCard } from '../../public/ContentCard'
 import { ConfirmDialog, EmptyState } from '../ProtectedWorkspace'
 import { workspaceHubViewUrl } from '../workspaceRouting'
 import {
@@ -27,6 +26,8 @@ import {
   type PublishingChoice,
   type WizardSaveResult,
 } from './contentWizardModel'
+import { ContentDesignControls } from './ContentDesignControls'
+import { ContentWizardPreview } from './ContentWizardPreview'
 import { hasErrors, validateWizardStep, type WizardErrors } from './contentWizardValidation'
 
 interface ContentWizardProps {
@@ -135,8 +136,11 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
   const previewItem = contentItemPreviewFromInput({
     ...draft,
     title: draft.title || 'A clear title for your update',
+    titleZh: draft.titleZh || '',
     summary: draft.summary || 'A concise summary will help visitors understand this item quickly.',
+    summaryZh: draft.summaryZh || '',
     body: draft.body || 'The full description appears here when the public card style supports it.',
+    bodyZh: draft.bodyZh || '',
   })
 
   useEffect(() => {
@@ -368,16 +372,36 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
               <WizardField id="title" label={fieldLabel(draft.type, 'title')} hint={`${draft.title.length}/120 required`} error={errors.title}>
                 <input id={fieldId('title')} value={draft.title} maxLength={120} onChange={(event) => updateDraft({ title: event.target.value })} placeholder="Science fair projects are ready to explore" />
               </WizardField>
+              <WizardField id="titleZh" label="Title (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                <input id={fieldId('titleZh')} value={draft.titleZh ?? ''} maxLength={120} onChange={(event) => updateDraft({ titleZh: event.target.value })} placeholder="科學展專題已準備好探索" />
+              </WizardField>
               <WizardField id="summary" label={fieldLabel(draft.type, 'summary')} hint={`${draft.summary.length}/220 required`} error={errors.summary}>
                 <textarea id={fieldId('summary')} value={draft.summary} maxLength={220} onChange={(event) => updateDraft({ summary: event.target.value })} placeholder="One or two friendly sentences that help visitors decide what to open." />
+              </WizardField>
+              <WizardField id="summaryZh" label="Summary (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                <textarea id={fieldId('summaryZh')} value={draft.summaryZh ?? ''} maxLength={220} onChange={(event) => updateDraft({ summaryZh: event.target.value })} placeholder="一到兩句精簡文字，讓訪客知道內容重點。" />
               </WizardField>
               {draft.type !== 'link' && (
                 <WizardField id="body" label={fieldLabel(draft.type, 'body')} hint={draft.type === 'resource' ? 'Optional context for the resource.' : 'Required'} error={errors.body}>
                   <textarea id={fieldId('body')} value={draft.body} onChange={(event) => updateDraft({ body: event.target.value })} placeholder="Add the useful details teachers, students, or families need." />
                 </WizardField>
               )}
+              {draft.type !== 'link' && (
+                <WizardField id="bodyZh" label="Details (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                  <textarea id={fieldId('bodyZh')} value={draft.bodyZh ?? ''} onChange={(event) => updateDraft({ bodyZh: event.target.value })} placeholder="提供師生或家長需要的完整資訊。" />
+                </WizardField>
+              )}
               <WizardField id="actionLabel" label="Button label" hint="Optional, shown when a URL is available.">
                 <input id={fieldId('actionLabel')} value={draft.actionLabel ?? ''} onChange={(event) => updateDraft({ actionLabel: event.target.value })} placeholder="Learn More" />
+              </WizardField>
+              <WizardField id="actionLabelZh" label="Button label (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                <input id={fieldId('actionLabelZh')} value={draft.actionLabelZh ?? ''} onChange={(event) => updateDraft({ actionLabelZh: event.target.value })} placeholder="了解更多" />
+              </WizardField>
+              <WizardField id="secondaryActionLabel" label="Secondary button label" hint="Optional secondary action label.">
+                <input id={fieldId('secondaryActionLabel')} value={draft.secondaryActionLabel ?? ''} onChange={(event) => updateDraft({ secondaryActionLabel: event.target.value })} placeholder="View details" />
+              </WizardField>
+              <WizardField id="secondaryActionLabelZh" label="Secondary label (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                <input id={fieldId('secondaryActionLabelZh')} value={draft.secondaryActionLabelZh ?? ''} onChange={(event) => updateDraft({ secondaryActionLabelZh: event.target.value })} placeholder="查看詳情" />
               </WizardField>
             </div>
           )}
@@ -395,6 +419,11 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                   <input id={fieldId('imageAlt')} value={draft.imageAlt ?? ''} onChange={(event) => updateDraft({ imageAlt: event.target.value })} placeholder="Describe the image for screen-reader users" />
                 </WizardField>
               )}
+              {draft.imageUrl && (
+                <WizardField id="imageAltZh" label="Image description (Traditional Chinese, optional)" hint="Falls back to English when left blank.">
+                  <input id={fieldId('imageAltZh')} value={draft.imageAltZh ?? ''} onChange={(event) => updateDraft({ imageAltZh: event.target.value })} placeholder="以繁體中文描述圖片內容" />
+                </WizardField>
+              )}
               {draft.type === 'video' && (
                 <WizardField id="mediaUrl" label="Video URL" hint="YouTube, Vimeo, Google Drive, or another trusted https link." error={errors.mediaUrl}>
                   <input id={fieldId('mediaUrl')} value={draft.mediaUrl} onChange={(event) => updateDraft({ mediaUrl: event.target.value, actionUrl: event.target.value })} placeholder="https://..." type="url" />
@@ -410,6 +439,9 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                   <input id={fieldId('actionUrl')} value={draft.actionUrl ?? ''} onChange={(event) => updateDraft({ actionUrl: event.target.value, linkUrl: event.target.value })} placeholder="https://..." type="url" />
                 </WizardField>
               )}
+              <WizardField id="secondaryActionUrl" label="Secondary button URL" hint="Optional second call-to-action.">
+                <input id={fieldId('secondaryActionUrl')} value={draft.secondaryActionUrl ?? ''} onChange={(event) => updateDraft({ secondaryActionUrl: event.target.value })} placeholder="https://..." type="url" />
+              </WizardField>
               <div className="wizard-media-preview">
                 {draft.imageUrl && !draft.hideImage ? <img src={draft.imageUrl} alt="" onError={(event) => { event.currentTarget.hidden = true }} /> : <p>No image preview yet. The public card will still render cleanly.</p>}
                 {draft.mediaUrl && <small>Video link ready. Preview will open safely from the public card.</small>}
@@ -450,15 +482,21 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                 {canPublish && (
                   <label>
                     <input checked={publishingChoice === 'scheduled'} name="publishing-choice" onChange={() => setPublishingChoice('scheduled')} type="radio" />
-                    <span><strong>Schedule</strong><small>Use a local date. Display follows stored scheduling behavior.</small></span>
+                    <span><strong>Schedule</strong><small>Choose an exact publish date and time.</small></span>
                   </label>
                 )}
               </fieldset>
               {publishingChoice === 'scheduled' && (
-                <WizardField id="publishDate" label="Schedule date" hint="Choose today or a future date." error={errors.publishDate}>
-                  <input id={fieldId('publishDate')} value={draft.publishDate ?? ''} onChange={(event) => updateDraft({ publishDate: event.target.value })} type="date" />
+                <WizardField id="publishDate" label="Schedule publish date and time" hint="Choose now or a future timestamp." error={errors.publishDate}>
+                  <input id={fieldId('publishDate')} value={draft.publishDate ?? ''} onChange={(event) => updateDraft({ publishDate: event.target.value })} type="datetime-local" />
                 </WizardField>
               )}
+              <WizardField id="expiryDate" label="Optional expiry date and time" hint="Leave blank to keep content active indefinitely.">
+                <input id={fieldId('expiryDate')} value={draft.expiryDate ?? ''} onChange={(event) => updateDraft({ expiryDate: event.target.value })} type="datetime-local" />
+              </WizardField>
+
+              <ContentDesignControls draft={draft} onChange={updateDraft} />
+
               {!canPublish && <p className="wizard-permission-note">This account can save drafts but cannot publish or schedule content.</p>}
             </div>
           )}
@@ -477,6 +515,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
               <ReviewGroup title="Placement and publishing" onEdit={() => goToStep('publishing')}>
                 <p>{selectedDestination.sectionName}</p>
                 <p>{publishingChoice === 'draft' ? 'Draft' : publishingChoice === 'published' ? 'Publish now' : `Scheduled for ${draft.publishDate}`}</p>
+                <p>{draft.expiryDate ? `Expires at ${draft.expiryDate} (${draft.expiryAction ?? 'hide'} after expiry)` : 'No expiry date set'}</p>
               </ReviewGroup>
             </div>
           )}
@@ -496,12 +535,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
           )}
         </main>
 
-        {step !== 'success' && step !== 'type' && (
-          <aside className="content-wizard-preview" aria-label="Public card preview">
-            <p className="eyebrow">Preview</p>
-            <ContentCard item={previewItem} />
-          </aside>
-        )}
+        {step !== 'success' && step !== 'type' && <ContentWizardPreview item={previewItem} />}
       </div>
 
       {step !== 'success' && (

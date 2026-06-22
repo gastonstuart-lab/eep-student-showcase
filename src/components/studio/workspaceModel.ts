@@ -142,7 +142,7 @@ export function buildWorkspaceContentStatusCounts(items: ContentItem[]) {
       ...counts,
       [item.status]: counts[item.status] + 1,
     }),
-    { draft: 0, scheduled: 0, published: 0, hidden: 0 },
+    { draft: 0, scheduled: 0, published: 0, hidden: 0, archived: 0 },
   )
 }
 

@@ -481,7 +481,7 @@ function Shell() {
   return (
     <div className={protectedWorkspaceRoute ? 'app-shell app-shell--workspace' : 'app-shell'}>
       <a className="skip-link" href="#main-content">
-        Skip to main content
+        {chromeText('skipToMain')}
       </a>
       {!protectedWorkspaceRoute && (
         <header className="topbar">
@@ -499,12 +499,12 @@ function Shell() {
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen((open) => !open)}
           >
-            Menu
+            {chromeText('menu')}
           </button>
           <nav className="main-nav" aria-label={t('primaryNavigation')}>
-            <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
-            <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
-            <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
+            <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>{chromeText('navIed')}</NavLink>
+            <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>{chromeText('navEep')}</NavLink>
+            <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>{chromeText('navEsl')}</NavLink>
             <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
           </nav>
           <div id="topbar-actions" className={`topbar-actions${mobileMenuOpen ? ' is-open' : ''}`}>
@@ -518,12 +518,12 @@ function Shell() {
                 )}
                 {isAdmin && (
                   <Link className="small-button admin-hubs-shortcut" to="/admin/hubs" onClick={() => setMobileMenuOpen(false)}>
-                    Hubs
+                    {chromeText('workspaceManageHubs')}
                   </Link>
                 )}
                 {isSuperAdmin && (
                   <Link className="small-button" to="/admin/users" onClick={() => setMobileMenuOpen(false)}>
-                    Access
+                    {chromeText('workspaceStaffAccess')}
                   </Link>
                 )}
                 <button
@@ -539,7 +539,7 @@ function Shell() {
               </>
             ) : (
               <Link className="small-button" to="/login" onClick={() => setMobileMenuOpen(false)}>
-                Login
+                {chromeText('teacherLogin')}
               </Link>
             )}
           </div>
@@ -2234,7 +2234,10 @@ function AdminDashboard() {
             <p>Draft a hub update, resource, event, link, media item, or student-work story using the protected content workflow.</p>
             <Link className="primary-button blue" to={workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>
           </div>
-          <img src="/images/ied-campus.png" alt="" />
+          <div className="overview-create-hero" aria-hidden="true">
+            <div className="overview-create-hero-media" />
+            <div className="overview-create-hero-overlay" />
+          </div>
         </section>
       ) : (
         <EmptyState

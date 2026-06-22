@@ -13,10 +13,20 @@ export function isValidUrl(value: string) {
   }
 }
 
+function parseDraftDate(value: string, endOfDay = false) {
+  if (!value) return null
+
+  const hasTime = value.includes('T')
+  const candidate = hasTime ? value : `${value}${endOfDay ? 'T23:59:59' : 'T00:00:00'}`
+  const date = new Date(candidate)
+
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 export function isPastDate(value: string, now = new Date()) {
   if (!value) return false
-  const date = new Date(`${value}T23:59:59`)
-  return Number.isNaN(date.getTime()) ? true : date < now
+  const date = parseDraftDate(value, true)
+  return date ? date < now : true
 }
 
 export function validateWizardStep(
@@ -70,6 +80,24 @@ export function validateWizardStep(
         errors.publishDate = 'Choose today or a future date.'
       }
     }
+
+    if (draft.expiryDate) {
+      const expiryAt = parseDraftDate(draft.expiryDate)
+      if (!expiryAt) {
+        errors.expiryDate = 'Use a valid expiry date and time.'
+      } else if (expiryAt < (options.now ?? new Date())) {
+        errors.expiryDate = 'Expiry must be in the future.'
+      }
+    }
+
+    if (draft.publishDate && draft.expiryDate) {
+      const publishAt = parseDraftDate(draft.publishDate)
+      const expiryAt = parseDraftDate(draft.expiryDate)
+      if (publishAt && expiryAt && expiryAt <= publishAt) {
+        errors.expiryDate = 'Expiry must be after the publish time.'
+      }
+    }
+
     if (draft.type === 'event' && draft.eventDate && isPastDate(draft.eventDate, options.now)) {
       errors.eventDate = 'Choose today or a future event date.'
     }

@@ -46,6 +46,7 @@ const statusLabels: Record<ContentStatus, string> = {
   scheduled: 'Scheduled',
   published: 'Published',
   hidden: 'Hidden',
+  archived: 'Archived',
 }
 
 const templateDefaults: Array<{

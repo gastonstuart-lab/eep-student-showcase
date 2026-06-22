@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { EffectiveAdmin } from '../../auth'
 import { useAuth } from '../../auth'
 import { hubConfigs } from '../../hubs'
+import { LanguageToggle, useLanguage } from '../../i18n/LanguageContext'
 import { useFocusTrap } from './focusTrap'
 import { buildWorkspaceContextOptions, buildWorkspaceNav, firstContentSection, resolveWorkspaceContext, type WorkspaceNavItem } from './workspaceModel'
 import { parseWorkspaceContentView, workspaceContentViewLabels } from './workspaceRouting'
@@ -177,6 +178,7 @@ export function WizardShell({ title, children }: { title: string; children: Reac
 }
 
 function ContextSwitcher({ admin }: { admin: EffectiveAdmin }) {
+  const { t } = useLanguage()
   const options = useMemo(() => buildWorkspaceContextOptions(admin), [admin])
   const location = useLocation()
   const navigate = useNavigate()
@@ -184,9 +186,9 @@ function ContextSwitcher({ admin }: { admin: EffectiveAdmin }) {
 
   return (
     <label className="workspace-context-switcher">
-      <span>Working context</span>
+      <span>{t('workspaceWorkingContext')}</span>
       <select
-        aria-label="Working context"
+        aria-label={t('workspaceWorkingContext')}
         value={options.some((option) => option.id === value) ? value : options[0]?.id ?? ''}
         onChange={(event) => {
           const option = options.find((item) => item.id === event.target.value)
@@ -204,12 +206,13 @@ function ContextSwitcher({ admin }: { admin: EffectiveAdmin }) {
 }
 
 function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate?: () => void }) {
+  const { t } = useLanguage()
   const location = useLocation()
   const activeContextId = currentContextId(location.pathname, admin)
   const navItems = useMemo(() => buildWorkspaceNav(admin, activeContextId), [activeContextId, admin])
   const groups: Array<{ id: WorkspaceNavItem['group']; label: string }> = [
-    { id: 'primary', label: 'Primary' },
-    { id: 'admin', label: 'Administration' },
+    { id: 'primary', label: t('workspaceNavPrimary') },
+    { id: 'admin', label: t('workspaceNavAdmin') },
   ]
   const isActive = (item: WorkspaceNavItem) => {
     if (item.activeMatch === 'exact') return location.pathname === item.to
@@ -220,7 +223,7 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
   }
 
   return (
-    <nav className="workspace-nav" aria-label="Teacher workspace">
+    <nav className="workspace-nav" aria-label={t('workspaceNavAria')}>
       {groups.map((group) => {
         const items = navItems.filter((item) => item.group === group.id)
         if (!items.length) return null
@@ -252,17 +255,19 @@ function WorkspaceTopbar({
   admin: EffectiveAdmin
 }) {
   const { logout } = useAuth()
+  const { t } = useLanguage()
   const location = useLocation()
 
   return (
     <header className="workspace-topbar">
       <div>
         <p>{currentContextLabel(location.pathname, admin)}</p>
-        <h1>IED Studio</h1>
+        <h1>{t('workspaceStudioTitle')}</h1>
       </div>
       <div className="workspace-account">
+        <LanguageToggle />
         <span>{admin.displayName || admin.username}</span>
-        <button className="workspace-text-button" type="button" onClick={() => void logout()}>Sign out</button>
+        <button className="workspace-text-button" type="button" onClick={() => void logout()}>{t('signOut')}</button>
       </div>
     </header>
   )
@@ -289,6 +294,7 @@ function currentPublicHubRoute(pathname: string, admin: EffectiveAdmin | null) {
 
 function WorkspaceSidebarUtility({ admin }: { admin: EffectiveAdmin }) {
   const { logout } = useAuth()
+  const { t } = useLanguage()
   const location = useLocation()
 
   return (
@@ -297,8 +303,8 @@ function WorkspaceSidebarUtility({ admin }: { admin: EffectiveAdmin }) {
         <span>{admin.displayName || admin.username}</span>
         <small>{roleLabels[admin.role]}</small>
       </div>
-      <Link to={currentPublicHubRoute(location.pathname, admin)}>View Public Hub</Link>
-      <button type="button" onClick={() => void logout()}>Sign Out</button>
+      <Link to={currentPublicHubRoute(location.pathname, admin)}>{t('workspaceViewPublicHub')}</Link>
+      <button type="button" onClick={() => void logout()}>{t('signOut')}</button>
     </div>
   )
 }
@@ -314,6 +320,7 @@ function WorkspaceMobileBottomNav({
   drawerOpen: boolean
   onOpenMore: () => void
 }) {
+  const { t } = useLanguage()
   const location = useLocation()
   const activeContextId = currentContextId(location.pathname, admin)
   const navItems = useMemo(() => buildWorkspaceNav(admin, activeContextId), [activeContextId, admin])
@@ -324,11 +331,11 @@ function WorkspaceMobileBottomNav({
   const isLibrary = location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) !== 'create'
 
   return (
-    <nav className="workspace-bottom-nav" aria-label="Primary workspace shortcuts">
-      {overview && <NavLink to={overview.to} end>Overview</NavLink>}
-      {create && <Link className={isCreate ? 'active' : undefined} aria-current={isCreate ? 'page' : undefined} to={create.to}>Create</Link>}
-      {library && <Link className={isLibrary ? 'active' : undefined} aria-current={isLibrary ? 'page' : undefined} to={library.to}>Library</Link>}
-      <button ref={moreButtonRef} type="button" onClick={onOpenMore} aria-controls="workspace-mobile-drawer" aria-expanded={drawerOpen} aria-haspopup="dialog">More</button>
+    <nav className="workspace-bottom-nav" aria-label={t('workspaceBottomNavAria')}>
+      {overview && <NavLink to={overview.to} end>{t('workspaceOverview')}</NavLink>}
+      {create && <Link className={isCreate ? 'active' : undefined} aria-current={isCreate ? 'page' : undefined} to={create.to}>{t('workspaceCreate')}</Link>}
+      {library && <Link className={isLibrary ? 'active' : undefined} aria-current={isLibrary ? 'page' : undefined} to={library.to}>{t('workspaceLibrary')}</Link>}
+      <button ref={moreButtonRef} type="button" onClick={onOpenMore} aria-controls="workspace-mobile-drawer" aria-expanded={drawerOpen} aria-haspopup="dialog">{t('workspaceMore')}</button>
     </nav>
   )
 }
@@ -344,6 +351,7 @@ export function MobileWorkspaceDrawer({
   onClose: () => void
   returnFocusRef: RefObject<HTMLButtonElement | null>
 }) {
+  const { t } = useLanguage()
   const drawerRef = useRef<HTMLElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
 
@@ -372,7 +380,7 @@ export function MobileWorkspaceDrawer({
       >
         <div className="workspace-drawer-header">
           <div>
-            <strong>IED Studio</strong>
+            <strong>{t('workspaceStudioTitle')}</strong>
             <span>{admin.displayName || admin.username}</span>
           </div>
           <button ref={closeButtonRef} className="workspace-icon-button" type="button" onClick={onClose} aria-label="Close navigation">x</button>
