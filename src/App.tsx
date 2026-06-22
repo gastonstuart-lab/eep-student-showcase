@@ -340,7 +340,19 @@ function scrollElementIntoRouteView(target: HTMLElement) {
   const scrollMarginTop = Number.parseFloat(targetStyles.scrollMarginTop) || 0
   const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop - scrollMarginTop)
 
+  scrollRouteWindowTo(top)
+}
+
+function scrollRouteWindowTo(top: number) {
+  const root = document.documentElement
+  const scrollTarget = document.scrollingElement ?? document.documentElement
+  const previousScrollBehavior = root.style.scrollBehavior
+
+  root.style.scrollBehavior = 'auto'
   window.scrollTo({ top, left: 0, behavior: 'auto' })
+  scrollTarget.scrollTop = top
+  scrollTarget.scrollLeft = 0
+  root.style.scrollBehavior = previousScrollBehavior
 }
 
 function useRouteScrollRestoration() {
@@ -384,12 +396,12 @@ function useRouteScrollRestoration() {
         if (target) {
           scrollElementIntoRouteView(target)
         } else {
-          window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+          scrollRouteWindowTo(0)
         }
       })
     }
 
-    return keepScrollPosition(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }))
+    return keepScrollPosition(() => scrollRouteWindowTo(0))
   }, [location.hash, location.pathname, location.search])
 }
 
