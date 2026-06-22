@@ -5,7 +5,29 @@ import { createContentItem, updateContentItem } from '../../../data'
 import { hubConfigById, type HubConfig } from '../../../hubs'
 import type { ContentItem, ContentItemInput, ContentType } from '../../../types'
 import { canCreateContentForAdmin } from '../../../utils/authorization'
-import { contentItemPreviewFromInput, sanitizeContentItemInput, validateContentAppearance } from '../../../utils/contentAppearance'
+import {
+  contentBackgroundStyleLabels,
+  contentBackgroundStyles,
+  contentBadgeStyleLabels,
+  contentBadgeStyles,
+  contentCardShapeLabels,
+  contentCardShapes,
+  contentCtaStyleLabels,
+  contentCtaStyles,
+  contentDensities,
+  contentDensityLabels,
+  contentDisplayStyleLabels,
+  contentDisplayStyles,
+  contentImageRatioLabels,
+  contentImageRatios,
+  contentItemPreviewFromInput,
+  contentLayoutColumnLabels,
+  contentLayoutColumnOptions,
+  contentWidthLabels,
+  contentWidthOptions,
+  sanitizeContentItemInput,
+  validateContentAppearance,
+} from '../../../utils/contentAppearance'
 import { ContentCard } from '../../public/ContentCard'
 import { ConfirmDialog, EmptyState } from '../ProtectedWorkspace'
 import { workspaceHubViewUrl } from '../workspaceRouting'
@@ -104,6 +126,103 @@ function WizardField({
       {children}
       {error && <em id={`${fieldId(id)}-error`}>{error}</em>}
     </label>
+  )
+}
+
+function ChoiceRow<T extends string>({
+  label,
+  help,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  help?: string
+  options: Array<{ value: T; label: string }>
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="wizard-choice-row">
+      <div className="wizard-choice-heading">
+        <strong>{label}</strong>
+        {help && <small>{help}</small>}
+      </div>
+      <div className="wizard-choice-grid" role="group" aria-label={label}>
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={value === option.value ? 'wizard-choice-chip is-active' : 'wizard-choice-chip'}
+            aria-pressed={value === option.value}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ChoiceToggle({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string
+  hint: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <label className={checked ? 'wizard-choice-toggle is-active' : 'wizard-choice-toggle'}>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span>{label}</span>
+      <small>{hint}</small>
+    </label>
+  )
+}
+
+function WizardLivePreview({
+  item,
+  draft,
+}: {
+  item: ContentItem
+  draft: ContentItemInput
+}) {
+  const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+
+  return (
+    <aside className="content-wizard-preview" aria-label="Live content preview">
+      <p className="eyebrow">Live preview</p>
+      <div className="wizard-preview-viewport-toggle" role="group" aria-label="Preview size">
+        {(['desktop', 'tablet', 'mobile'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={viewport === option ? 'wizard-choice-chip is-active' : 'wizard-choice-chip'}
+            aria-pressed={viewport === option}
+            onClick={() => setViewport(option)}
+          >
+            {option[0].toUpperCase() + option.slice(1)}
+          </button>
+        ))}
+      </div>
+      {(draft.featured || draft.pinned) && (
+        <p className="wizard-preview-flags">
+          {draft.featured ? 'Featured' : ''}
+          {draft.featured && draft.pinned ? ' / ' : ''}
+          {draft.pinned ? 'Pinned' : ''}
+        </p>
+      )}
+      <div className={`wizard-live-preview-frame wizard-live-preview-frame--${viewport}`}>
+        <div className="wizard-live-preview-card-shell">
+          <ContentCard item={item} />
+        </div>
+      </div>
+    </aside>
   )
 }
 
@@ -459,6 +578,98 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                   <input id={fieldId('publishDate')} value={draft.publishDate ?? ''} onChange={(event) => updateDraft({ publishDate: event.target.value })} type="date" />
                 </WizardField>
               )}
+
+              <section className="wizard-option-group" aria-label="Card appearance options">
+                <h3>Card appearance</h3>
+                <p>These options control how the public card looks. Preview updates instantly.</p>
+
+                <ChoiceRow
+                  label="Display style"
+                  help="Choose the overall card style."
+                  options={contentDisplayStyles.map((value) => ({ value, label: contentDisplayStyleLabels[value] }))}
+                  value={draft.displayStyle}
+                  onChange={(value) => updateDraft({ displayStyle: value })}
+                />
+
+                <ChoiceRow
+                  label="Layout columns"
+                  options={contentLayoutColumnOptions.map((value) => ({ value, label: contentLayoutColumnLabels[value] }))}
+                  value={draft.layoutColumns ?? 'auto'}
+                  onChange={(value) => updateDraft({ layoutColumns: value })}
+                />
+
+                <ChoiceRow
+                  label="Card width"
+                  options={contentWidthOptions.map((value) => ({ value, label: contentWidthLabels[value] }))}
+                  value={draft.contentWidth}
+                  onChange={(value) => updateDraft({ contentWidth: value })}
+                />
+
+                <ChoiceRow
+                  label="Card shape"
+                  options={contentCardShapes.map((value) => ({ value, label: contentCardShapeLabels[value] }))}
+                  value={draft.cardShape ?? 'standard'}
+                  onChange={(value) => updateDraft({ cardShape: value })}
+                />
+
+                <ChoiceRow
+                  label="Content density"
+                  options={contentDensities.map((value) => ({ value, label: contentDensityLabels[value] }))}
+                  value={draft.contentDensity ?? 'comfortable'}
+                  onChange={(value) => updateDraft({ contentDensity: value })}
+                />
+
+                <ChoiceRow
+                  label="Image ratio"
+                  options={contentImageRatios.map((value) => ({ value, label: contentImageRatioLabels[value] }))}
+                  value={draft.imageRatio ?? 'landscape'}
+                  onChange={(value) => updateDraft({ imageRatio: value })}
+                />
+
+                <ChoiceRow
+                  label="Badge style"
+                  options={contentBadgeStyles.map((value) => ({ value, label: contentBadgeStyleLabels[value] }))}
+                  value={draft.badgeStyle ?? 'subtle'}
+                  onChange={(value) => updateDraft({ badgeStyle: value })}
+                />
+
+                <ChoiceRow
+                  label="Background style"
+                  options={contentBackgroundStyles.map((value) => ({ value, label: contentBackgroundStyleLabels[value] }))}
+                  value={draft.backgroundStyle ?? 'plain'}
+                  onChange={(value) => updateDraft({ backgroundStyle: value })}
+                />
+
+                <ChoiceRow
+                  label="Primary button style"
+                  options={contentCtaStyles.map((value) => ({ value, label: contentCtaStyleLabels[value] }))}
+                  value={draft.actionStyle ?? 'primary'}
+                  onChange={(value) => updateDraft({ actionStyle: value })}
+                />
+
+                <ChoiceRow
+                  label="Secondary button style"
+                  options={contentCtaStyles.map((value) => ({ value, label: contentCtaStyleLabels[value] }))}
+                  value={draft.secondaryActionStyle ?? 'secondary'}
+                  onChange={(value) => updateDraft({ secondaryActionStyle: value })}
+                />
+
+                <div className="wizard-toggle-grid">
+                  <ChoiceToggle
+                    label="Featured"
+                    hint="Prioritize this content in highlighted areas when the hub layout supports it."
+                    checked={draft.featured}
+                    onChange={(checked) => updateDraft({ featured: checked })}
+                  />
+                  <ChoiceToggle
+                    label="Pinned"
+                    hint="Keep this card near the top in sorted views when applicable."
+                    checked={draft.pinned ?? false}
+                    onChange={(checked) => updateDraft({ pinned: checked })}
+                  />
+                </div>
+              </section>
+
               {!canPublish && <p className="wizard-permission-note">This account can save drafts but cannot publish or schedule content.</p>}
             </div>
           )}
@@ -496,12 +707,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
           )}
         </main>
 
-        {step !== 'success' && step !== 'type' && (
-          <aside className="content-wizard-preview" aria-label="Public card preview">
-            <p className="eyebrow">Preview</p>
-            <ContentCard item={previewItem} />
-          </aside>
-        )}
+        {step !== 'success' && step !== 'type' && <WizardLivePreview item={previewItem} draft={draft} />}
       </div>
 
       {step !== 'success' && (

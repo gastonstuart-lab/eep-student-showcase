@@ -785,8 +785,9 @@
 }
 
 .teacher-content-page--create .content-wizard-layout {
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.32fr);
+  grid-template-columns: minmax(0, 1fr) minmax(18.5rem, 0.42fr);
   gap: 0.75rem;
+  align-items: start;
 }
 
 .teacher-content-page--create .content-wizard-layout--type {
@@ -802,6 +803,151 @@
 
 .teacher-content-page--create .content-wizard-preview {
   top: 4.25rem;
+}
+
+.teacher-content-page--create .wizard-option-group {
+  display: grid;
+  gap: 0.62rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.62rem;
+  padding: 0.72rem;
+  background: #fcfdff;
+}
+
+.teacher-content-page--create .wizard-option-group h3 {
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.teacher-content-page--create .wizard-option-group > p {
+  margin: 0;
+  color: var(--workspace-muted);
+  font-size: 0.84rem;
+}
+
+.teacher-content-page--create .wizard-choice-row {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.teacher-content-page--create .wizard-choice-heading {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.teacher-content-page--create .wizard-choice-heading strong {
+  color: var(--workspace-ink);
+  font-size: 0.84rem;
+}
+
+.teacher-content-page--create .wizard-choice-heading small {
+  color: var(--workspace-muted);
+  font-size: 0.78rem;
+}
+
+.teacher-content-page--create .wizard-choice-grid,
+.teacher-content-page--create .wizard-preview-viewport-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+}
+
+.teacher-content-page--create .wizard-choice-chip {
+  min-height: 1.9rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 999px;
+  padding: 0.3rem 0.62rem;
+  background: #fff;
+  color: #31516b;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.teacher-content-page--create .wizard-choice-chip.is-active {
+  border-color: #bdd7f0;
+  background: var(--workspace-soft);
+  color: var(--workspace-blue);
+}
+
+.teacher-content-page--create .wizard-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.teacher-content-page--create .wizard-choice-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'input label'
+    '. help';
+  gap: 0.12rem 0.45rem;
+  align-items: center;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.55rem;
+  padding: 0.5rem 0.58rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.teacher-content-page--create .wizard-choice-toggle.is-active {
+  border-color: #bdd7f0;
+  background: #f7fbff;
+}
+
+.teacher-content-page--create .wizard-choice-toggle input {
+  grid-area: input;
+  margin: 0;
+}
+
+.teacher-content-page--create .wizard-choice-toggle span {
+  grid-area: label;
+  color: var(--workspace-ink);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.teacher-content-page--create .wizard-choice-toggle small {
+  grid-area: help;
+  color: var(--workspace-muted);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.teacher-content-page--create .content-wizard-preview .eyebrow {
+  margin-bottom: 0.45rem;
+}
+
+.teacher-content-page--create .wizard-preview-flags {
+  margin: 0.22rem 0 0.45rem;
+  color: var(--workspace-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.teacher-content-page--create .wizard-live-preview-frame {
+  width: 100%;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.62rem;
+  padding: 0.42rem;
+  background: #f8fbff;
+}
+
+.teacher-content-page--create .wizard-live-preview-frame--desktop .wizard-live-preview-card-shell {
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.teacher-content-page--create .wizard-live-preview-frame--tablet .wizard-live-preview-card-shell {
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+.teacher-content-page--create .wizard-live-preview-frame--mobile .wizard-live-preview-card-shell {
+  max-width: 24.4rem;
+  margin-inline: auto;
 }
 
 .teacher-content-page--create .wizard-type-grid {
@@ -1232,6 +1378,25 @@
   .staff-directory-row .staff-directory-actions {
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+
+  .teacher-content-page--create .wizard-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1280px) {
+  .teacher-content-page--create .content-wizard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-content-page--create .content-wizard-preview {
+    position: static;
+    top: auto;
+  }
+
+  .teacher-content-page--create .content-wizard-actions {
+    position: static;
   }
 }
 
