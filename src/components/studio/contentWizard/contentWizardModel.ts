@@ -3,6 +3,7 @@ import { hubConfigs, type HubConfig } from '../../../hubs'
 import type { ContentItem, ContentItemInput, ContentStatus, ContentType } from '../../../types'
 import { canCreateContentForAdmin, canEditContentForAdmin, canPublishContentForAdmin } from '../../../utils/authorization'
 import { contentAppearanceDefaults } from '../../../utils/contentAppearance'
+import { normalizeContentLifecycleFields } from '../../../utils/contentLifecycle'
 
 export const contentWizardSteps = ['type', 'essentials', 'media', 'publishing', 'review', 'success'] as const
 export type ContentWizardStep = typeof contentWizardSteps[number]
@@ -44,33 +45,43 @@ export interface WizardSaveResult {
 export function defaultDraftFor(config: HubConfig, userEmail: string): ContentItemInput {
   return {
     title: '',
+    titleZh: '',
     summary: '',
+    summaryZh: '',
     body: '',
+    bodyZh: '',
     type: 'announcement',
     department: config.department,
     sectionId: config.sectionId,
     sectionName: config.sectionName,
     status: 'draft',
     featured: false,
+    placement: 'main',
+    template: 'mediumCard',
+    expiryAction: 'hide',
     mediaUrl: '',
     linkUrl: '',
     eventDate: '',
     imageUrl: '',
     ...contentAppearanceDefaults,
     badgeText: '',
+    badgeTextZh: '',
     createdBy: userEmail,
     sortOrder: undefined,
     publishDate: '',
     expiryDate: '',
     actionLabel: '',
+    actionLabelZh: '',
     actionUrl: '',
     actionStyle: 'primary',
     actionNewTab: true,
     secondaryActionLabel: '',
+    secondaryActionLabelZh: '',
     secondaryActionUrl: '',
     secondaryActionStyle: 'secondary',
     secondaryActionNewTab: true,
     imageAlt: '',
+    imageAltZh: '',
     thumbnailUrl: '',
     hideImage: false,
     pinned: false,
@@ -80,6 +91,14 @@ export function defaultDraftFor(config: HubConfig, userEmail: string): ContentIt
 export function draftFromContentItem(item: ContentItem, userEmail: string): ContentItemInput {
   return {
     ...item,
+    titleZh: item.titleZh ?? '',
+    summaryZh: item.summaryZh ?? '',
+    bodyZh: item.bodyZh ?? '',
+    badgeTextZh: item.badgeTextZh ?? '',
+    actionLabelZh: item.actionLabelZh ?? '',
+    secondaryActionLabelZh: item.secondaryActionLabelZh ?? '',
+    imageAltZh: item.imageAltZh ?? '',
+    ...normalizeContentLifecycleFields(item),
     layoutColumns: item.layoutColumns ?? contentAppearanceDefaults.layoutColumns,
     cardShape: item.cardShape ?? contentAppearanceDefaults.cardShape,
     contentDensity: item.contentDensity ?? contentAppearanceDefaults.contentDensity,
@@ -134,37 +153,35 @@ export function publishingChoiceForDraft(draft: ContentItemInput): PublishingCho
 export function applyTypeDefaults(draft: ContentItemInput, type: ContentType): ContentItemInput {
   const defaults: Partial<ContentItemInput> =
     type === 'event'
-      ? { displayStyle: 'eventCard', badgeText: 'Event', actionLabel: draft.actionLabel || 'View Details' }
+      ? { placement: 'featured', template: 'eventCard', displayStyle: 'eventCard', contentWidth: 'medium', badgeText: 'Event', actionLabel: draft.actionLabel || 'View Details' }
       : type === 'video'
-        ? { displayStyle: 'media', badgeText: 'Video', actionLabel: draft.actionLabel || 'Watch Video' }
+        ? { placement: 'featured', template: 'largeFeature', displayStyle: 'media', contentWidth: 'wide', badgeText: 'Video', actionLabel: draft.actionLabel || 'Watch Video' }
         : type === 'resource'
-          ? { displayStyle: 'quickLink', badgeText: 'Resource', actionLabel: draft.actionLabel || 'Open Resource' }
+          ? { placement: 'main', template: 'smallTile', displayStyle: 'quickLink', contentWidth: 'small', badgeText: 'Resource', actionLabel: draft.actionLabel || 'Open Resource' }
           : type === 'studentWork'
-            ? { displayStyle: 'featured', badgeText: 'Student work', actionLabel: draft.actionLabel || 'View Work' }
+            ? { placement: 'featured', template: 'largeFeature', displayStyle: 'featured', contentWidth: 'wide', badgeText: 'Student work', actionLabel: draft.actionLabel || 'View Work' }
             : type === 'link'
-              ? { displayStyle: 'quickLink', badgeText: 'Link', actionLabel: draft.actionLabel || 'Visit Website' }
-              : { displayStyle: 'banner', badgeText: 'Update', actionLabel: draft.actionLabel || 'Learn More' }
+              ? { placement: 'main', template: 'mediumCard', displayStyle: 'quickLink', contentWidth: 'medium', badgeText: 'Link', actionLabel: draft.actionLabel || 'Visit Website' }
+              : { placement: 'announcement', template: 'announcementStrip', displayStyle: 'banner', contentWidth: 'full', badgeText: 'Update', actionLabel: draft.actionLabel || 'Learn More' }
 
   return { ...draft, ...defaults, type }
 }
 
 export function buildWizardPayload(draft: ContentItemInput, destination: HubConfig, status: PublishingChoice, contentCount: number): ContentItemInput {
-  const publishDate = status === 'scheduled' ? draft.publishDate : ''
-  const eventDate = draft.type === 'event' ? draft.eventDate : draft.eventDate
+  const publishDate = status === 'scheduled' ? draft.publishDate : status === 'published' ? draft.publishDate : ''
   const primaryUrl = draft.actionUrl || draft.linkUrl || draft.mediaUrl
 
   return {
     ...draft,
+    ...normalizeContentLifecycleFields(draft),
     department: destination.department,
     sectionId: destination.sectionId,
     sectionName: destination.sectionName,
     status,
     publishDate,
-    eventDate,
     sortOrder: draft.sortOrder ?? contentCount + 1,
     ctaStyle: draft.actionStyle ?? draft.ctaStyle,
     linkUrl: draft.type === 'link' || draft.type === 'resource' ? (draft.linkUrl || draft.actionUrl || '') : draft.linkUrl,
-    mediaUrl: draft.type === 'video' ? draft.mediaUrl : draft.mediaUrl,
     actionUrl: primaryUrl,
   }
 }
