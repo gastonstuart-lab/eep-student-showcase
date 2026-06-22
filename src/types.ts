@@ -86,9 +86,9 @@ export interface ContentItem {
   sectionName: string
   status: ContentStatus
   featured: boolean
-  placement: ContentPlacement
-  template: ContentTemplate
-  expiryAction: ContentExpiryAction
+  placement?: ContentPlacement
+  template?: ContentTemplate
+  expiryAction?: ContentExpiryAction
   mediaUrl: string
   linkUrl: string
   eventDate: string
