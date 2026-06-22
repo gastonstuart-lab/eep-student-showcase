@@ -22,26 +22,30 @@ const contentTypeLabels: Record<'en' | 'zh-Hant', Record<ContentType, string>> =
   },
 }
 
+function parseContentDate(value: string) {
+  const normalized = value.includes('T') ? value : `${value}T00:00:00`
+  const date = new Date(normalized)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 function formatContentDate(item: ContentItem, locale: string) {
   if (item.eventDate) {
-    const date = new Date(`${item.eventDate}T00:00:00`)
-
-    return Number.isNaN(date.getTime())
-      ? item.eventDate
-      : new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+    const date = parseContentDate(item.eventDate)
+    return date
+      ? new Intl.DateTimeFormat(locale, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          ...(item.eventDate.includes('T') ? { hour: 'numeric', minute: '2-digit' } : {}),
+        }).format(date)
+      : item.eventDate
   }
 
   const stamp = item.updatedAt ?? item.createdAt
-
-  if (!stamp || typeof stamp.toDate !== 'function') {
-    return ''
-  }
+  if (!stamp || typeof stamp.toDate !== 'function') return ''
 
   const date = stamp.toDate()
-
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
+  if (Number.isNaN(date.getTime())) return ''
 
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
@@ -58,15 +62,34 @@ function getThemeClass(accentStyle: ContentItem['accentStyle']) {
   return 'theme-neutral'
 }
 
+function bilingualValue(en: string | undefined, zh: string | undefined) {
+  const english = en?.trim() ?? ''
+  const traditionalChinese = zh?.trim() ?? ''
+  if (!traditionalChinese) return english
+  if (!english) return traditionalChinese
+  return `${english} / ${traditionalChinese}`
+}
+
 export function ContentCard({ item, compact = false }: { item: ContentItem; compact?: boolean }) {
   const { mode, t } = useLanguage()
-  const localized = localizedContentText(item, mode)
+  const contentMode = mode === 'zh-Hant' ? 'zh-Hant' : 'en'
+  const localized = localizedContentText(item, contentMode)
   const locale = mode === 'zh-Hant' ? 'zh-TW' : 'en'
+  const title = mode === 'bilingual' ? bilingualValue(item.title, item.titleZh) : localized.title
+  const summary = mode === 'bilingual' ? bilingualValue(item.summary, item.summaryZh) : localized.summary
+  const body = mode === 'bilingual' ? bilingualValue(item.body, item.bodyZh) : localized.body
+  const badgeText = mode === 'bilingual'
+    ? bilingualValue(item.badgeText, item.badgeTextZh).slice(0, 48)
+    : localized.badgeText?.trim().slice(0, 24)
   const primaryUrl = item.actionUrl || item.linkUrl || item.mediaUrl
-  const primaryLabel = localized.actionLabel || t('openContentLink')
+  const primaryLabel = mode === 'bilingual'
+    ? bilingualValue(item.actionLabel || t('openContentLink'), item.actionLabelZh)
+    : localized.actionLabel || t('openContentLink')
   const primaryStyle = item.actionStyle ?? item.ctaStyle
   const secondaryUrl = item.secondaryActionUrl ?? ''
-  const secondaryLabel = localized.secondaryActionLabel || (mode === 'zh-Hant' ? '了解更多' : 'Learn more')
+  const secondaryLabel = mode === 'bilingual'
+    ? bilingualValue(item.secondaryActionLabel || 'Learn more', item.secondaryActionLabelZh || '了解更多')
+    : localized.secondaryActionLabel || (mode === 'zh-Hant' ? '了解更多' : 'Learn more')
   const secondaryStyle = item.secondaryActionStyle ?? 'secondary'
   const showPrimaryCta = primaryStyle !== 'hidden' && Boolean(primaryUrl)
   const showSecondaryCta = secondaryStyle !== 'hidden' && Boolean(secondaryUrl)
@@ -75,7 +98,6 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
   const effectiveImagePlacement = item.hideImage ? 'hidden' : item.imagePlacement
   const showImage = Boolean(item.imageUrl) && effectiveImagePlacement !== 'hidden'
   const showBody = displayStyle !== 'compact' && displayStyle !== 'banner' && displayStyle !== 'quickLink'
-  const badgeText = localized.badgeText?.trim().slice(0, 24)
   const primaryCtaClassName =
     primaryStyle === 'primary'
       ? 'primary-button blue content-card-cta'
@@ -91,8 +113,13 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
   const imageStyle = (effectiveImagePlacement === 'background' || item.backgroundStyle === 'image' || item.backgroundStyle === 'darkOverlay') && showImage
     ? ({ backgroundImage: `url(${item.imageUrl})` } as CSSProperties)
     : undefined
-  const imageAlt = localized.imageAlt || `${localized.title} visual`
+  const imageAlt = mode === 'bilingual'
+    ? bilingualValue(item.imageAlt || `${item.title} visual`, item.imageAltZh)
+    : localized.imageAlt || `${localized.title} visual`
   const formattedDate = formatContentDate(item, locale)
+  const typeLabel = mode === 'bilingual'
+    ? `${contentTypeLabels.en[item.type]} / ${contentTypeLabels['zh-Hant'][item.type]}`
+    : contentTypeLabels[contentMode][item.type]
 
   return (
     <article
@@ -108,13 +135,13 @@ export function ContentCard({ item, compact = false }: { item: ContentItem; comp
 
       <div className="content-card-body">
         <div className="content-card-badges">
-          <span className="badge">{contentTypeLabels[mode][item.type]}</span>
+          <span className="badge">{typeLabel}</span>
           {badgeText && <span className="content-card-badge">{badgeText}</span>}
         </div>
-        <h3>{localized.title}</h3>
+        <h3>{title}</h3>
         {formattedDate && <p className="meta">{formattedDate}</p>}
-        <p className="content-card-summary">{localized.summary}</p>
-        {showBody && localized.body && <p className="muted">{localized.body}</p>}
+        <p className="content-card-summary">{summary}</p>
+        {showBody && body && <p className="muted">{body}</p>}
         {showCta && (
           <div className="content-card-actions">
             {showPrimaryCta && (
