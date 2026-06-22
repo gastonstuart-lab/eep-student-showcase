@@ -80,7 +80,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [mode],
   )
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+      <div className="global-language-control" aria-label="Site language">
+        <LanguageToggle />
+      </div>
+    </LanguageContext.Provider>
+  )
 }
 
 export const useLanguage = () => {
