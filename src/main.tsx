@@ -5,6 +5,7 @@ import App from './App.tsx'
 import './admin-layout-fix.css'
 import './workspace.css'
 import './global-language.css'
+import './content-design-controls.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
