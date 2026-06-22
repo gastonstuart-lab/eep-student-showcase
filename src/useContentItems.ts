@@ -1,8 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { watchAllPublishedContentItems, watchContentItems } from './data'
 import { isFirebaseConfigured } from './firebase'
 import type { ContentItem, ContentStatus } from './types'
+import { isPubliclyVisibleContent } from './utils/contentLifecycle'
 import { firestoreInitialLoadTimeoutMessage, firestoreInitialLoadTimeoutMs } from './utils/firestoreStatus'
 
 export function useContentItems(sectionId: string, status?: ContentStatus, enabled = true) {
@@ -49,7 +50,8 @@ export function useContentItems(sectionId: string, status?: ContentStatus, enabl
 }
 
 export function useAllPublishedContentItems() {
-  const [contentItems, setContentItems] = useState<ContentItem[]>([])
+  const [sourceItems, setSourceItems] = useState<ContentItem[]>([])
+  const [now, setNow] = useState(() => new Date())
   const [loading, setLoading] = useState(isFirebaseConfigured)
   const [error, setError] = useState('')
 
@@ -67,7 +69,7 @@ export function useAllPublishedContentItems() {
     const unsubscribe = watchAllPublishedContentItems(
       (nextContentItems) => {
         window.clearTimeout(timeout)
-        setContentItems(nextContentItems)
+        setSourceItems(nextContentItems)
         setLoading(false)
       },
       (watchError) => {
@@ -82,6 +84,16 @@ export function useAllPublishedContentItems() {
       unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const contentItems = useMemo(
+    () => sourceItems.filter((item) => isPubliclyVisibleContent(item, now)),
+    [now, sourceItems],
+  )
 
   return { contentItems, loading, error }
 }
