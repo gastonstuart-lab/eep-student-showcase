@@ -1,8 +1,22 @@
 import type { Timestamp } from 'firebase/firestore'
 
 export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
-export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'hidden'
+export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'hidden' | 'archived'
+export type ContentLifecycleState = 'draft' | 'scheduled' | 'live' | 'expired' | 'hidden' | 'archived'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
+export type ContentPlacement = 'hero' | 'announcement' | 'featured' | 'main' | 'sidebar'
+export type ContentTemplate =
+  | 'fullHero'
+  | 'wideBanner'
+  | 'largeFeature'
+  | 'mediumCard'
+  | 'smallTile'
+  | 'imageLeft'
+  | 'imageRight'
+  | 'announcementStrip'
+  | 'eventCard'
+  | 'sidebarNotice'
+export type ContentExpiryAction = 'hide' | 'archive'
 export type ContentDisplayStyle = 'standard' | 'featured' | 'compact' | 'banner' | 'media' | 'photoStory' | 'quickLink' | 'eventCard' | 'quote' | 'minimal'
 export type ContentWidth = 'small' | 'medium' | 'wide' | 'full'
 export type ContentLayoutColumns = 'auto' | 'one' | 'two' | 'three'
@@ -61,14 +75,20 @@ export type ProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
 export interface ContentItem {
   id: string
   title: string
+  titleZh?: string
   summary: string
+  summaryZh?: string
   body: string
+  bodyZh?: string
   type: ContentType
   department: Department
   sectionId: string
   sectionName: string
   status: ContentStatus
   featured: boolean
+  placement: ContentPlacement
+  template: ContentTemplate
+  expiryAction: ContentExpiryAction
   mediaUrl: string
   linkUrl: string
   eventDate: string
@@ -79,6 +99,7 @@ export interface ContentItem {
   textAlignment: ContentTextAlignment
   accentStyle: ContentAccentStyle
   badgeText?: string
+  badgeTextZh?: string
   ctaStyle: ContentCtaStyle
   layoutColumns?: ContentLayoutColumns
   cardShape?: ContentCardShape
@@ -89,14 +110,17 @@ export interface ContentItem {
   publishDate?: string
   expiryDate?: string
   actionLabel?: string
+  actionLabelZh?: string
   actionUrl?: string
   actionStyle?: ContentCtaStyle
   actionNewTab?: boolean
   secondaryActionLabel?: string
+  secondaryActionLabelZh?: string
   secondaryActionUrl?: string
   secondaryActionStyle?: ContentCtaStyle
   secondaryActionNewTab?: boolean
   imageAlt?: string
+  imageAltZh?: string
   thumbnailUrl?: string
   hideImage?: boolean
   pinned?: boolean
