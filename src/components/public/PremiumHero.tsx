@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import './LandingIntro.css'
 
@@ -32,14 +33,23 @@ function LandingIntro({ heroImage }: { heroImage: string }) {
   const heroIndex = 6
 
   useEffect(() => {
-    return () => timersRef.current.forEach((timer) => window.clearTimeout(timer))
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      timersRef.current.forEach((timer) => window.clearTimeout(timer))
+    }
   }, [])
 
   const enterHub = () => {
     if (phase !== 'idle') return
     setPhase('entering')
     timersRef.current.push(window.setTimeout(() => setPhase('done'), 1080))
-    timersRef.current.push(window.setTimeout(() => setVisible(false), 1380))
+    timersRef.current.push(window.setTimeout(() => {
+      document.body.style.overflow = ''
+      setVisible(false)
+    }, 1380))
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
@@ -55,12 +65,12 @@ function LandingIntro({ heroImage }: { heroImage: string }) {
     })
   }
 
-  if (!visible) return null
+  if (!visible || typeof document === 'undefined') return null
 
   let sourceIndex = 0
   const phaseClass = phase === 'entering' ? ' is-entering' : phase === 'done' ? ' is-done' : ''
 
-  return (
+  return createPortal(
     <section
       className={`landing-intro${phaseClass}`}
       aria-label="International Education Department introduction"
@@ -103,7 +113,8 @@ function LandingIntro({ heroImage }: { heroImage: string }) {
         </div>
       </div>
       <p className="landing-intro__note">Move your mouse or finger · select Enter to open the IED Hub</p>
-    </section>
+    </section>,
+    document.body,
   )
 }
 
