@@ -1,12 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import { IedIntroGate } from './components/public/IedIntroGate'
 import App from './App.tsx'
+import './index.css'
 import './admin-layout-fix.css'
 import './workspace.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <IedIntroGate>
+      <App />
+    </IedIntroGate>
   </StrictMode>,
 )
