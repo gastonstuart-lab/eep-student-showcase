@@ -6,16 +6,16 @@
   <title>IED Intro Grid Preview</title>
   <style>
     :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;background:#07111d}
-    *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111d} button{font:inherit}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111d}button{font:inherit}
     .stage{position:relative;width:100%;height:100%;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 50% 40%,#17354c 0,#091521 44%,#050b12 100%)}
-    .grid-wrap{position:absolute;left:50%;top:50%;width:146vw;height:116vh;transform:translate(-50%,-50%) rotate(-3.2deg) scale(1.06);transition:transform 1.1s cubic-bezier(.2,.8,.2,1),opacity .8s ease;will-change:transform}
-    .grid{width:100%;height:100%;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:clamp(10px,1vw,18px);padding:clamp(10px,1vw,18px)}
-    .tile{position:relative;min-width:0;min-height:0;overflow:hidden;border-radius:clamp(9px,.9vw,16px);background:#183145;box-shadow:0 15px 35px rgba(0,0,0,.34);transform:translate3d(var(--tx,0),var(--ty,0),0);transition:transform .9s cubic-bezier(.16,1,.3,1),filter .8s ease,opacity .8s ease;will-change:transform}
-    .tile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,8,15,.03),rgba(2,8,15,.23));pointer-events:none}
-    .tile img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.075);transition:transform 1.1s cubic-bezier(.16,1,.3,1),filter .8s ease}
-    .tile.hero{z-index:3;box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.18)}
-    .veil{position:absolute;inset:0;z-index:4;background:radial-gradient(circle at center,rgba(3,12,20,.03),rgba(3,12,20,.3) 54%,rgba(3,12,20,.66) 100%);pointer-events:none;transition:opacity .65s ease}
-    .site-logo{position:absolute;z-index:7;top:24px;left:28px;width:clamp(132px,11vw,190px);padding:10px 12px;border-radius:14px;background:rgba(5,18,30,.34);border:1px solid rgba(255,255,255,.15);box-shadow:0 16px 44px rgba(0,0,0,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transform:translateY(-10px);animation:logoIn .8s .35s cubic-bezier(.16,1,.3,1) forwards}
+    .grid-wrap{position:absolute;left:50%;top:50%;width:142vw;height:114vh;transform:translate(-50%,-50%) rotate(-2.6deg) scale(1.04);transition:transform 1.1s cubic-bezier(.2,.8,.2,1),opacity .8s ease;will-change:transform}
+    .grid{width:100%;height:100%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(10px,1vw,18px);padding:clamp(10px,1vw,18px)}
+    .tile{position:relative;min-width:0;min-height:0;overflow:hidden;border-radius:clamp(10px,.95vw,18px);background:#183145;box-shadow:0 15px 35px rgba(0,0,0,.34);transform:translate3d(var(--tx,0),var(--ty,0),0);transition:transform .9s cubic-bezier(.16,1,.3,1),filter .8s ease,opacity .8s ease;will-change:transform}
+    .tile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,8,15,.03),rgba(2,8,15,.22));pointer-events:none}
+    .tile img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.065);transition:transform 1.1s cubic-bezier(.16,1,.3,1),filter .8s ease}
+    .tile.hero{z-index:3;box-shadow:0 24px 70px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.18)}
+    .veil{position:absolute;inset:0;z-index:4;background:radial-gradient(circle at center,rgba(3,12,20,.03),rgba(3,12,20,.30) 54%,rgba(3,12,20,.66) 100%);pointer-events:none;transition:opacity .65s ease}
+    .site-logo{position:absolute;z-index:7;top:24px;left:28px;width:clamp(190px,15vw,260px);padding:12px 16px;border-radius:16px;background:rgba(255,255,255,.86);border:1px solid rgba(255,255,255,.96);box-shadow:0 18px 50px rgba(0,0,0,.30);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-10px);animation:logoIn .8s .35s cubic-bezier(.16,1,.3,1) forwards}
     .site-logo img{display:block;width:100%;height:auto}
     .brand{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:24px;text-align:center;pointer-events:none}
     .brand-card{width:min(620px,78vw);padding:clamp(22px,2.8vw,34px) clamp(22px,3.6vw,40px);border:1px solid rgba(255,255,255,.17);border-radius:22px;background:linear-gradient(145deg,rgba(4,16,28,.34),rgba(10,37,56,.16));box-shadow:0 22px 64px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(8px) saturate(1.14);-webkit-backdrop-filter:blur(8px) saturate(1.14);opacity:0;transform:translateY(22px) scale(.985);animation:brandIn 1s .65s cubic-bezier(.16,1,.3,1) forwards;pointer-events:auto}
@@ -29,9 +29,8 @@
     .stage.entering .tile.hero{position:fixed;inset:0!important;width:100vw!important;height:100vh!important;border-radius:0;transform:none!important;transition:all .85s cubic-bezier(.7,0,.2,1)}
     .stage.entering .tile.hero img{transform:scale(1.01);filter:brightness(.72)}
     .stage.done{opacity:0;visibility:hidden;transition:opacity .55s .75s ease,visibility 0s 1.3s}
-    @keyframes brandIn{to{opacity:1;transform:translateY(0) scale(1)}}
-    @keyframes logoIn{to{opacity:1;transform:translateY(0)}}
-    @media(max-width:760px){.grid-wrap{width:220vw;height:118vh}.grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:12px}.tile:nth-child(n+26){display:none}.brand-card{width:min(86vw,540px);border-radius:19px;padding:22px 20px}.site-logo{top:16px;left:16px;width:124px;padding:8px 9px}.note{bottom:12px}}
+    @keyframes brandIn{to{opacity:1;transform:translateY(0) scale(1)}}@keyframes logoIn{to{opacity:1;transform:translateY(0)}}
+    @media(max-width:760px){.grid-wrap{width:215vw;height:118vh}.grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:12px;padding:12px}.tile:nth-child(n+17){display:none}.brand-card{width:min(86vw,540px);border-radius:19px;padding:22px 20px}.site-logo{top:16px;left:16px;width:168px;padding:10px 12px}.note{bottom:12px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.grid-wrap{transform:translate(-50%,-50%)}.tile{transform:none!important}}
   </style>
 </head>
@@ -41,18 +40,13 @@
     <div class="grid-wrap" id="gridWrap"><div class="grid" id="grid"></div></div>
     <div class="veil"></div>
     <div class="site-logo"><img src="/school-logo.svg" alt="THUHS High School" /></div>
-    <div class="brand"><div class="brand-card">
-      <h1>International<br>Education Department</h1>
-      <p class="zh" lang="zh-Hant">國際教育處</p>
-      <button class="enter" id="enter">Enter</button>
-    </div></div>
+    <div class="brand"><div class="brand-card"><h1>International<br>Education Department</h1><p class="zh" lang="zh-Hant">國際教育處</p><button class="enter" id="enter">Enter</button></div></div>
     <p class="note">Move your mouse or finger · click Enter to see the transition</p>
   </main>
 <script>
-  const images=[
+  const heroImage='/images/ied-premium/heroes/ied-home-hero.webp';
+  const gridImages=[
     '/images/ied-premium/workspace/luce-chapel-hero.webp',
-    '/images/ied-premium/heroes/ied-home-hero.webp',
-    '/images/ied-premium/heroes/ied-about-hero.webp',
     '/images/ied-premium/heroes/eep-hero.webp',
     '/images/ied-premium/heroes/esl-hero.webp',
     '/images/ied-premium/heroes/science-hero.webp',
@@ -60,8 +54,6 @@
     '/images/ied-premium/heroes/performance-arts-hero.webp',
     '/images/ied-premium/heroes/social-studies-hero.webp',
     '/images/ied-premium/heroes/showcase-hero.webp',
-    '/images/ied-premium/cards/ied-home-card.webp',
-    '/images/ied-premium/cards/ied-about-card.webp',
     '/images/ied-premium/cards/eep-card.webp',
     '/images/ied-premium/cards/esl-card.webp',
     '/images/ied-premium/cards/science-card.webp',
@@ -69,31 +61,43 @@
     '/images/ied-premium/cards/performance-arts-card.webp',
     '/images/ied-premium/cards/social-studies-card.webp',
     '/images/ied-premium/cards/showcase-card.webp',
-    '/images/ied-premium/mobile/ied-home-mobile.webp',
+    '/images/ied-premium/cards/ied-about-card.webp',
     '/images/ied-premium/mobile/eep-mobile.webp',
-    '/images/ied-premium/mobile/esl-mobile.webp'
+    '/images/ied-premium/mobile/esl-mobile.webp',
+    '/images/ied-premium/mobile/ied-home-mobile.webp',
+    '/images/ied-premium/cards/ied-home-card.webp',
+    '/images/ied-premium/heroes/ied-about-hero.webp',
+    '/images/ied-premium/cards/showcase-card.webp',
+    '/images/ied-premium/cards/science-card.webp'
   ];
   const grid=document.getElementById('grid');
-  for(let i=0;i<35;i++){
-    const tile=document.createElement('div'); tile.className='tile'+(i===17?' hero':'');
-    tile.style.setProperty('--outx',`${(i%7-3)*18}vw`); tile.style.setProperty('--outy',`${(Math.floor(i/7)-2)*22}vh`);
-    const img=document.createElement('img'); img.src=images[i%images.length]; img.alt=''; img.loading=i<12?'eager':'lazy';
-    tile.appendChild(img); grid.appendChild(tile);
+  const totalTiles=24;
+  const heroIndex=14;
+  let sourceIndex=0;
+  for(let i=0;i<totalTiles;i++){
+    const tile=document.createElement('div');
+    const isHero=i===heroIndex;
+    tile.className='tile'+(isHero?' hero':'');
+    tile.style.setProperty('--outx',`${(i%6-2.5)*18}vw`);
+    tile.style.setProperty('--outy',`${(Math.floor(i/6)-1.5)*22}vh`);
+    const img=document.createElement('img');
+    img.src=isHero?heroImage:gridImages[sourceIndex++];
+    img.alt='';
+    img.loading=i<10?'eager':'lazy';
+    tile.appendChild(img);
+    grid.appendChild(tile);
   }
   const wrap=document.getElementById('gridWrap');
   const stage=document.getElementById('stage');
   const home=document.getElementById('home');
   function move(x,y){
     if(stage.classList.contains('entering'))return;
-    const nx=x/innerWidth-.5, ny=y/innerHeight-.5;
-    wrap.style.transform=`translate(calc(-50% + ${nx*-4}vw),calc(-50% + ${ny*-4}vh)) rotate(${-3.2+nx*1.2}deg) scale(1.06)`;
-    [...grid.children].forEach((tile,i)=>{const depth=(i%5+1)*1.4;tile.style.setProperty('--tx',`${nx*depth}px`);tile.style.setProperty('--ty',`${ny*depth}px`)});
+    const nx=x/innerWidth-.5,ny=y/innerHeight-.5;
+    wrap.style.transform=`translate(calc(-50% + ${nx*-3.2}vw),calc(-50% + ${ny*-3.2}vh)) rotate(${-2.6+nx*1}deg) scale(1.04)`;
+    [...grid.children].forEach((tile,i)=>{const depth=(i%4+1)*1.2;tile.style.setProperty('--tx',`${nx*depth}px`);tile.style.setProperty('--ty',`${ny*depth}px`)});
   }
   addEventListener('pointermove',e=>move(e.clientX,e.clientY),{passive:true});
-  document.getElementById('enter').addEventListener('click',()=>{
-    stage.classList.add('entering'); home.classList.add('show'); home.setAttribute('aria-hidden','false');
-    setTimeout(()=>stage.classList.add('done'),900);
-  });
+  document.getElementById('enter').addEventListener('click',()=>{stage.classList.add('entering');home.classList.add('show');home.setAttribute('aria-hidden','false');setTimeout(()=>stage.classList.add('done'),900)});
 </script>
 </body>
 </html>
