@@ -6,10 +6,17 @@ import './index.css'
 import './admin-layout-fix.css'
 import './workspace.css'
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')!
+const isHomepage = window.location.pathname === '/'
+
+createRoot(rootElement).render(
   <StrictMode>
-    <IedIntroGate>
+    {isHomepage ? (
+      <IedIntroGate>
+        <App />
+      </IedIntroGate>
+    ) : (
       <App />
-    </IedIntroGate>
+    )}
   </StrictMode>,
 )
