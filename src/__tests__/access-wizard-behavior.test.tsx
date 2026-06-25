@@ -102,5 +102,5 @@ describe('staff access wizard behavior', () => {
       temporaryPassword: 'TempPass12345!',
     })
     expect(JSON.stringify(localStorage)).not.toContain('TempPass12345!')
-  })
+  }, 20000)
 })

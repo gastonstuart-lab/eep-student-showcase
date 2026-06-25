@@ -22,9 +22,10 @@ import { ScrollReveal } from './components/public/ScrollReveal'
 import { SubjectPathwayCard } from './components/public/SubjectPathwayCard'
 import { StaffAccessPage } from './components/studio/accessWizard/AccessWizard'
 import { HubContentLibrary } from './components/studio/HubContentLibrary'
+import { ContentWizard } from './components/studio/contentWizard/ContentWizard'
 import { EmptyState, ProtectedAppShell } from './components/studio/ProtectedWorkspace'
 import { buildWorkspaceContentStatusCounts, buildWorkspaceContextOptions, buildWorkspaceNav, canShowSeedSampleDataAction, getAccessibleHubConfigs, shouldShowProjectSummary } from './components/studio/workspaceModel'
-import { workspaceHubViewUrl } from './components/studio/workspaceRouting'
+import { parseWorkspaceContentView, workspaceAllHubsCreateUrl, workspaceHubViewUrl } from './components/studio/workspaceRouting'
 import { ContentLayout } from './components/public/ContentLayout'
 import {
   createProject,
@@ -2039,11 +2040,11 @@ export function LoginPage() {
       <form className="login-card" onSubmit={submit}>
         <PageHeading
           eyebrow={t('teacherAccess')}
-          title={t('loginTitle')}
-          body="Sign in with the username and password issued by an IED Hub administrator."
+          title={t('teacherLogin')}
+          body={t('loginBody')}
         />
         <label>
-          Username
+          {t('username')}
           <input
             autoComplete="username"
             value={username}
@@ -2063,9 +2064,9 @@ export function LoginPage() {
           />
         </label>
         <button className="primary-button" type="submit" disabled={signingIn}>
-          {signingIn ? 'Signing in...' : t('signIn')}
+          {signingIn ? t('signingIn') : t('signIn')}
         </button>
-        <p className="muted">Forgot your password? Contact an IED Hub administrator.</p>
+        <p className="muted">{t('forgotPasswordHelp')}</p>
         <div aria-live="polite">
           {error && <p className="form-message">{error}</p>}
         </div>
@@ -2319,7 +2320,7 @@ function AdminDashboard() {
               {dashboardContextId === 'all' ? 'Create content for a hub' : `Create content for ${firstCreatableHub.sectionName}`}
             </h2>
             <p>Draft a hub update, resource, event, link, media item, or student-work story using the protected content workflow.</p>
-            <Link className="primary-button blue" to={workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>
+            <Link className="primary-button blue" to={dashboardContextId === 'all' ? workspaceAllHubsCreateUrl() : workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>
           </div>
           <img src="/images/ied-premium/workspace/luce-chapel-hero.webp" alt="Luce Chapel on the Tunghai University campus" />
         </section>
@@ -2515,11 +2516,35 @@ function AuditLogPage() {
 
 function HubAdminPage() {
   const { sectionId = 'ied' } = useParams()
+  const [searchParams] = useSearchParams()
   const config = hubConfigById[sectionId]
-  const { user, canManageSection } = useAuth()
+  const { user, adminUser, canManageSection } = useAuth()
+  const allHubsCreate = sectionId === 'all' && parseWorkspaceContentView(searchParams.get('view')) === 'create'
+  const firstCreatableHub = getAccessibleHubConfigs(adminUser).find((hub) => canCreateContentForAdmin(adminUser, hub.sectionId))
+  const allHubsCreateAllowed = allHubsCreate && Boolean(firstCreatableHub)
+  const allHubsContent = useContentItems(firstCreatableHub?.sectionId ?? 'ied', undefined, allHubsCreateAllowed)
   const canManageHub = Boolean(config && canManageSection(config.sectionId))
   const { hubPage } = useHubPage(sectionId)
   const { contentItems, loading, error } = useContentItems(sectionId, undefined, canManageHub)
+
+  if (allHubsCreate) {
+    if (!allHubsCreateAllowed || !firstCreatableHub) {
+      return <AccessDenied />
+    }
+
+    return (
+      <section className="admin-page teacher-content-page teacher-content-page--create">
+        <ContentWizard
+          config={firstCreatableHub}
+          contentCount={allHubsContent.contentItems.length}
+          contentItems={allHubsContent.contentItems}
+          forceDestinationChoice
+          libraryUrl="/admin"
+          userEmail={user?.email ?? ''}
+        />
+      </section>
+    )
+  }
 
   if (!config) {
     return <PageMessage title="Hub not found" body="This hub section is not available." />
@@ -2602,6 +2627,14 @@ function withSubmissionAction(hubPage: HubPageData, sectionId: string): HubPageD
 const submissionStatuses = ['settings', 'pending', 'approved', 'rejected', 'archived'] as const
 type SubmissionTab = typeof submissionStatuses[number]
 
+const submissionStatusLabelKeys: Record<SubmissionTab, TranslationKey> = {
+  settings: 'submissionsSettings',
+  pending: 'submissionsPending',
+  approved: 'submissionsApproved',
+  rejected: 'submissionsRejected',
+  archived: 'submissionsArchived',
+}
+
 function parseSubmissionTab(value: string | null): SubmissionTab {
   return submissionStatuses.includes(value as SubmissionTab) ? value as SubmissionTab : 'pending'
 }
@@ -2648,11 +2681,11 @@ function SubmissionsPage() {
   return (
     <section className="admin-page submissions-page">
       <PageHeading
-        eyebrow="Student submissions"
-        title={`${config.sectionName} Submissions`}
-        body="Manage this hub's independent submission settings and review queue without mixing records from other hubs."
+        eyebrow={t('submissionsEyebrow')}
+        title={t('submissionsTitle', { hub: config.sectionName })}
+        body={t('submissionsBody')}
       />
-      <div className="submission-tabs" role="tablist" aria-label="Submission views">
+      <div className="submission-tabs" role="tablist" aria-label={t('submissionsViews')}>
         {submissionStatuses.map((tab) => (
           <button
             aria-selected={activeTab === tab}
@@ -2662,7 +2695,7 @@ function SubmissionsPage() {
             type="button"
             onClick={() => setTab(tab)}
           >
-            {tab === 'settings' ? 'Settings' : `${tab[0].toUpperCase()}${tab.slice(1)} (${counts[tab]})`}
+            {tab === 'settings' ? t('submissionsSettings') : `${t(submissionStatusLabelKeys[tab])} (${counts[tab]})`}
           </button>
         ))}
       </div>
@@ -2679,8 +2712,8 @@ function SubmissionsPage() {
           {error && <PageMessage title={t('couldNotLoadProjects')} body={error} />}
           {!loading && !visibleProjects.length && (
             <PageMessage
-              title={`No ${activeTab} submissions`}
-              body={`${config.sectionName} has no ${activeTab} student submissions right now.`}
+              title={t('submissionsEmptyTitle', { status: t(submissionStatusLabelKeys[activeTab]).toLowerCase() })}
+              body={t('submissionsEmptyBody', { hub: config.sectionName, status: t(submissionStatusLabelKeys[activeTab]).toLowerCase() })}
             />
           )}
           <div className="admin-list">
@@ -2688,53 +2721,53 @@ function SubmissionsPage() {
               <article className="admin-item" key={project.id}>
                 <ProjectPreview project={project} />
                 <div className="admin-item-actions">
-                  <a className="secondary-button" href={project.googleSitesUrl} target="_blank" rel="noreferrer">Preview</a>
-                  <button className="secondary-button" type="button" onClick={() => setEditingId(project.id)}>Edit metadata</button>
+                  <a className="secondary-button" href={project.googleSitesUrl} target="_blank" rel="noreferrer">{t('submissionPreview')}</a>
+                  <button className="secondary-button" type="button" onClick={() => setEditingId(project.id)}>{t('submissionEditMetadata')}</button>
                   <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { featured: !project.featured })}>
-                    {project.featured ? 'Unfeature' : 'Feature'}
+                    {project.featured ? t('submissionUnfeature') : t('submissionFeature')}
                   </button>
                   <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { studentPick: !project.studentPick })}>
-                    {project.studentPick ? 'Remove pick' : 'Student pick'}
+                    {project.studentPick ? t('submissionRemovePick') : t('submissionStudentPick')}
                   </button>
                   {project.status !== 'approved' && (
                     <button className="primary-button" type="button" onClick={() => void updateProject(project.id, { status: 'approved', publiclyVisible: true })}>
-                      Approve
+                      {t('submissionApprove')}
                     </button>
                   )}
                   {project.status === 'approved' && (
                     <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'hidden', publiclyVisible: false })}>
-                      Unpublish
+                      {t('submissionUnpublish')}
                     </button>
                   )}
                   {project.status === 'hidden' && (
                     <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'approved', publiclyVisible: true })}>
-                      Publish
+                      {t('submissionPublish')}
                     </button>
                   )}
                   {project.status !== 'rejected' && (
                     <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'rejected', publiclyVisible: false })}>
-                      Reject
+                      {t('submissionReject')}
                     </button>
                   )}
                   {project.status === 'archived' ? (
                     <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'pending', publiclyVisible: false })}>
-                      Restore
+                      {t('submissionRestore')}
                     </button>
                   ) : (
                     <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'archived', publiclyVisible: false })}>
-                      Archive
+                      {t('submissionArchive')}
                     </button>
                   )}
                   <button
                     className="danger-button"
                     type="button"
                     onClick={() => {
-                      if (confirmDelete(`Delete "${project.title}"? This cannot be undone.`)) {
+                      if (confirmDelete(t('submissionDeleteConfirm', { title: project.title }))) {
                         void deleteProject(project.id)
                       }
                     }}
                   >
-                    Delete
+                    {t('submissionDelete')}
                   </button>
                 </div>
               </article>
@@ -2769,6 +2802,7 @@ function SubmissionSettingsPanel({
   config: (typeof hubConfigs)[number]
   hubPage: HubPageData
 }) {
+  const { t } = useLanguage()
   const [draft, setDraft] = useState({
     submissionsEnabled: Boolean(hubPage.submissionsEnabled),
     submissionsButtonLabel: hubPage.submissionsButtonLabel || config.defaults.submissionsButtonLabel || 'Submit Work',
@@ -2787,24 +2821,24 @@ function SubmissionSettingsPanel({
       sectionId: config.sectionId,
       childSectionIds: config.children,
     })
-    setMessage('Submission settings saved.')
+    setMessage(t('submissionSettingsSaved'))
   }
 
   return (
     <form className="submission-settings-panel form-grid" onSubmit={save}>
       <label className="checkbox-row span-2">
         <input checked={draft.submissionsEnabled} disabled={!canEdit} type="checkbox" onChange={(event) => setDraft({ ...draft, submissionsEnabled: event.target.checked })} />
-        <span>Student submissions are open for {config.sectionName}</span>
+        <span>{t('submissionSettingsOpen', { hub: config.sectionName })}</span>
       </label>
-      <label>Public button label<input disabled={!canEdit} value={draft.submissionsButtonLabel} onChange={(event) => setDraft({ ...draft, submissionsButtonLabel: event.target.value })} /></label>
-      <label>Accepted work types<input disabled={!canEdit} value={draft.submissionsAcceptedTypes} onChange={(event) => setDraft({ ...draft, submissionsAcceptedTypes: event.target.value })} /></label>
-      <label className="span-2">Instructions<textarea disabled={!canEdit} value={draft.submissionsInstructions} onChange={(event) => setDraft({ ...draft, submissionsInstructions: event.target.value })} /></label>
-      <label className="span-2">Student guidance<textarea disabled={!canEdit} value={draft.submissionsGuidance} onChange={(event) => setDraft({ ...draft, submissionsGuidance: event.target.value })} /></label>
+      <label>{t('submissionPublicButtonLabel')}<input disabled={!canEdit} value={draft.submissionsButtonLabel} onChange={(event) => setDraft({ ...draft, submissionsButtonLabel: event.target.value })} /></label>
+      <label>{t('submissionAcceptedTypes')}<input disabled={!canEdit} value={draft.submissionsAcceptedTypes} onChange={(event) => setDraft({ ...draft, submissionsAcceptedTypes: event.target.value })} /></label>
+      <label className="span-2">{t('submissionInstructions')}<textarea disabled={!canEdit} value={draft.submissionsInstructions} onChange={(event) => setDraft({ ...draft, submissionsInstructions: event.target.value })} /></label>
+      <label className="span-2">{t('submissionStudentGuidance')}<textarea disabled={!canEdit} value={draft.submissionsGuidance} onChange={(event) => setDraft({ ...draft, submissionsGuidance: event.target.value })} /></label>
       <label className="checkbox-row span-2">
         <input checked={draft.submissionsPubliclyVisible} disabled={!canEdit} type="checkbox" onChange={(event) => setDraft({ ...draft, submissionsPubliclyVisible: event.target.checked })} />
-        <span>Approved work may be publicly visible on this hub.</span>
+        <span>{t('submissionPublicVisibility')}</span>
       </label>
-      {canEdit ? <button className="primary-button blue" type="submit">Save submission settings</button> : <p className="module-note quiet">You can review submissions, but cannot edit hub settings.</p>}
+      {canEdit ? <button className="primary-button blue" type="submit">{t('submissionSaveSettings')}</button> : <p className="module-note quiet">{t('submissionReviewOnly')}</p>}
       {message && <p className="form-message span-2">{message}</p>}
     </form>
   )

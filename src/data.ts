@@ -189,6 +189,10 @@ export const watchProjects = (
   const firestore = requireDb()
   const constraints: QueryConstraint[] = []
 
+  if (sectionId) {
+    constraints.push(where('sectionId', '==', sectionId))
+  }
+
   if (status) {
     constraints.push(where('status', '==', status))
   } else {
@@ -200,7 +204,6 @@ export const watchProjects = (
     (snapshot) => {
       const projects = snapshot.docs
         .map((projectDoc) => fromFirestore(projectDoc.id, projectDoc.data()))
-        .filter((project) => !sectionId || project.sectionId === sectionId)
         .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
 
       onChange(projects)

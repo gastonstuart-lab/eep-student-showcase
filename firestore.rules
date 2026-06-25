@@ -385,8 +385,10 @@ service cloud.firestore {
     }
 
     match /projects/{projectId} {
-      allow read: if (resource.data.status == 'approved' && resource.data.get('publiclyVisible', true) == true)
-        || canManageProjectSection(projectSection(resource.data));
+      allow read: if canManageProjectSection(projectSection(resource.data));
+      allow read: if resource.data.keys().hasAny(['status'])
+        && resource.data.status == 'approved'
+        && resource.data.get('publiclyVisible', true) == true;
       allow create: if isValidProjectCreate() || canManageProjectSection(projectSection(request.resource.data));
       allow update: if canManageProjectSection(projectSection(resource.data))
         && projectSection(resource.data) == projectSection(request.resource.data)

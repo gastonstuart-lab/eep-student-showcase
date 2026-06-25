@@ -64,6 +64,7 @@ export function validateWizardStep(
 
   if (step === 'publishing' || step === 'review') {
     if (options.destinationCount < 1) errors.sectionId = 'No permitted destination hub is available.'
+    if (options.destinationCount > 1 && !draft.sectionId) errors.sectionId = 'Choose a destination hub.'
     if (options.publishingChoice !== 'draft' && !options.canPublish) {
       errors.status = 'This account can save drafts but cannot publish or schedule.'
     }

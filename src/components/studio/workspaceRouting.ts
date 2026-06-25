@@ -25,3 +25,7 @@ export function parseWorkspaceContentView(value: string | null | undefined): Wor
 export function workspaceHubViewUrl(sectionId: string, view: WorkspaceContentView = 'library') {
   return `/admin/hubs/${sectionId}?view=${view}`
 }
+
+export function workspaceAllHubsCreateUrl() {
+  return '/admin/hubs/all?view=create'
+}

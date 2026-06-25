@@ -2,7 +2,7 @@ import type { EffectiveAdmin } from '../../auth'
 import { hubConfigs, type HubConfig } from '../../hubs'
 import type { ContentItem, ContentStatus } from '../../types'
 import { canCreateContentForAdmin, canManageProjectsForAdmin, canManageUsersForAdmin, canViewAuditLogForAdmin, hasSectionAccess } from '../../utils/authorization'
-import { workspaceHubViewUrl } from './workspaceRouting'
+import { workspaceAllHubsCreateUrl, workspaceHubViewUrl } from './workspaceRouting'
 
 export interface WorkspaceNavItem {
   label: string
@@ -103,9 +103,11 @@ export function buildWorkspaceNav(admin: EffectiveAdmin | null, activeContextId?
 
   if (activeSection) {
     if (canCreate) {
-      items.push({ label: 'Create Content', to: workspaceHubViewUrl((creatableSection ?? activeSection).sectionId, 'create'), group: 'primary', activeMatch: 'content-create' })
+      items.push({ label: 'Create Content', to: isAllContext ? workspaceAllHubsCreateUrl() : workspaceHubViewUrl((creatableSection ?? activeSection).sectionId, 'create'), group: 'primary', activeMatch: 'content-create' })
     }
-    items.push({ label: 'Content Library', to: workspaceHubViewUrl(activeSection.sectionId, 'library'), group: 'primary', activeMatch: 'content-library' })
+    if (!isAllContext) {
+      items.push({ label: 'Content Library', to: workspaceHubViewUrl(activeSection.sectionId, 'library'), group: 'primary', activeMatch: 'content-library' })
+    }
   }
 
   if (canManageProjectsForAdmin(admin)) {
