@@ -59,6 +59,7 @@ const fullPermissions = {
 }
 
 const pendingProject = {
+  sectionId: 'eep',
   title: 'Student Google Site',
   groupName: 'Team One',
   className: 'EEP 8A',
@@ -72,6 +73,7 @@ const pendingProject = {
   status: 'pending',
   featured: false,
   studentPick: false,
+  publiclyVisible: false,
   createdAt: serverTimestamp(),
   updatedAt: serverTimestamp(),
 }
@@ -183,7 +185,7 @@ describe('Firestore security rules', () => {
   it('allows unauthenticated users to read approved projects and published content only', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore()
-      await setDoc(doc(db, 'projects', 'approved'), { ...pendingProject, status: 'approved' })
+      await setDoc(doc(db, 'projects', 'approved'), { ...pendingProject, status: 'approved', publiclyVisible: true })
       await setDoc(doc(db, 'projects', 'pending'), pendingProject)
       await setDoc(doc(db, 'contentItems', 'published'), {
         title: 'Published',
@@ -241,7 +243,7 @@ describe('Firestore security rules', () => {
   it('allows public pending project creation and rejects approved creation, updates, and deletes', async () => {
     const db = testEnv.unauthenticatedContext().firestore()
     await assertSucceeds(setDoc(doc(db, 'projects', 'pending-public'), pendingProject))
-    await assertFails(setDoc(doc(db, 'projects', 'approved-public'), { ...pendingProject, status: 'approved' }))
+    await assertFails(setDoc(doc(db, 'projects', 'approved-public'), { ...pendingProject, status: 'approved', publiclyVisible: true }))
     await assertFails(updateDoc(doc(db, 'projects', 'pending-public'), { status: 'approved' }))
     await assertFails(deleteDoc(doc(db, 'projects', 'pending-public')))
   })

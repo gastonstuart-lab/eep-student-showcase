@@ -122,7 +122,7 @@ export function canManageProjectsForAdmin(admin: PermissionAdmin | null | undefi
     return false
   }
 
-  return hasSectionAccess(admin, 'eep') && (isSuperAdmin(admin) || admin?.permissions === undefined || hasPermission(admin, 'manageProjects'))
+  return isSuperAdmin(admin) || admin?.permissions === undefined || hasPermission(admin, 'manageProjects')
 }
 
 export function canManageUsersForAdmin(admin: PermissionAdmin | null | undefined) {

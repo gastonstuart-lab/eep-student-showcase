@@ -344,23 +344,35 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
       <div className={step === 'type' ? 'content-wizard-layout content-wizard-layout--type' : 'content-wizard-layout'}>
         <main className="content-wizard-card">
           {step === 'type' && (
-            <fieldset className="wizard-type-grid">
-              <legend>Choose content type</legend>
-              {contentTypeOptions.map((option) => (
-                <label className={draft.type === option.type ? 'wizard-type-card is-selected' : 'wizard-type-card'} key={option.type}>
-                  <input
-                    checked={draft.type === option.type}
-                    name="content-type"
-                    onChange={() => updateDraft(applyTypeDefaults(draft, option.type))}
-                    type="radio"
-                    value={option.type}
-                  />
-                  <span className={`content-type-icon content-type-icon--${option.type}`} aria-hidden="true" />
-                  <strong>{option.title}</strong>
-                  <small>{option.help}</small>
-                </label>
-              ))}
-            </fieldset>
+            <>
+              {destinations.length > 1 && (
+                <WizardField id="sectionId" label="Destination hub" hint="Choose where this content will be published before selecting the format." error={errors.sectionId}>
+                  <select id={fieldId('sectionId')} value={draft.sectionId} onChange={(event) => {
+                    const nextHub = hubConfigById[event.target.value]
+                    if (nextHub) updateDraft({ sectionId: nextHub.sectionId, sectionName: nextHub.sectionName, department: nextHub.department })
+                  }}>
+                    {destinations.map((destination) => <option key={destination.sectionId} value={destination.sectionId}>{destination.sectionName}</option>)}
+                  </select>
+                </WizardField>
+              )}
+              <fieldset className="wizard-type-grid">
+                <legend>Choose content type</legend>
+                {contentTypeOptions.map((option) => (
+                  <label className={draft.type === option.type ? 'wizard-type-card is-selected' : 'wizard-type-card'} key={option.type}>
+                    <input
+                      checked={draft.type === option.type}
+                      name="content-type"
+                      onChange={() => updateDraft(applyTypeDefaults(draft, option.type))}
+                      type="radio"
+                      value={option.type}
+                    />
+                    <span className={`content-type-icon content-type-icon--${option.type}`} aria-hidden="true" />
+                    <strong>{option.title}</strong>
+                    <small>{option.help}</small>
+                  </label>
+                ))}
+              </fieldset>
+            </>
           )}
 
           {step === 'essentials' && (

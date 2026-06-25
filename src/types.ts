@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore'
 
-export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden'
+export type ProjectStatus = 'pending' | 'approved' | 'rejected' | 'hidden' | 'archived'
 export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'hidden'
 export type ContentType = 'announcement' | 'event' | 'video' | 'resource' | 'studentWork' | 'link'
 export type ContentDisplayStyle = 'standard' | 'featured' | 'compact' | 'banner' | 'media' | 'photoStory' | 'quickLink' | 'eventCard' | 'quote' | 'minimal'
@@ -39,6 +39,7 @@ export type ProjectCategory =
 
 export interface Project {
   id: string
+  sectionId: string
   title: string
   groupName: string
   className: string
@@ -52,6 +53,7 @@ export interface Project {
   status: ProjectStatus
   featured: boolean
   studentPick: boolean
+  publiclyVisible: boolean
   createdAt?: Timestamp
   updatedAt?: Timestamp
 }
@@ -124,6 +126,12 @@ export interface HubPage {
   secondaryButtonText: string
   secondaryButtonUrl: string
   featured: boolean
+  submissionsEnabled?: boolean
+  submissionsButtonLabel?: string
+  submissionsInstructions?: string
+  submissionsPubliclyVisible?: boolean
+  submissionsGuidance?: string
+  submissionsAcceptedTypes?: string
   updatedAt?: Timestamp
 }
 

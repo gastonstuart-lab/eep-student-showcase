@@ -49,6 +49,7 @@ const requireDb = () => {
 
 const fromFirestore = (id: string, data: DocumentData): Project => ({
   id,
+  sectionId: data.sectionId ?? 'eep',
   title: data.title ?? '',
   groupName: data.groupName ?? '',
   className: data.className ?? '',
@@ -62,6 +63,7 @@ const fromFirestore = (id: string, data: DocumentData): Project => ({
   status: data.status ?? 'pending',
   featured: Boolean(data.featured),
   studentPick: Boolean(data.studentPick),
+  publiclyVisible: data.publiclyVisible ?? data.status === 'approved',
   createdAt: data.createdAt,
   updatedAt: data.updatedAt,
 })
@@ -131,6 +133,12 @@ const hubPageFromFirestore = (id: string, data: DocumentData): HubPage => ({
   secondaryButtonText: data.secondaryButtonText ?? '',
   secondaryButtonUrl: data.secondaryButtonUrl ?? '',
   featured: Boolean(data.featured),
+  submissionsEnabled: Boolean(data.submissionsEnabled),
+  submissionsButtonLabel: data.submissionsButtonLabel ?? '',
+  submissionsInstructions: data.submissionsInstructions ?? '',
+  submissionsPubliclyVisible: data.submissionsPubliclyVisible ?? true,
+  submissionsGuidance: data.submissionsGuidance ?? '',
+  submissionsAcceptedTypes: data.submissionsAcceptedTypes ?? '',
   updatedAt: data.updatedAt,
 })
 
@@ -176,6 +184,7 @@ export const watchProjects = (
   onChange: (projects: Project[]) => void,
   onError: (error: Error) => void,
   status?: ProjectStatus,
+  sectionId?: string,
 ) => {
   const firestore = requireDb()
   const constraints: QueryConstraint[] = []
@@ -191,6 +200,7 @@ export const watchProjects = (
     (snapshot) => {
       const projects = snapshot.docs
         .map((projectDoc) => fromFirestore(projectDoc.id, projectDoc.data()))
+        .filter((project) => !sectionId || project.sectionId === sectionId)
         .sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0))
 
       onChange(projects)
@@ -202,6 +212,8 @@ export const watchProjects = (
 export const createProject = (project: ProjectInput) =>
   addDoc(collection(requireDb(), projectsPath), {
     ...project,
+    sectionId: project.sectionId || 'eep',
+    publiclyVisible: project.publiclyVisible ?? false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -380,7 +392,7 @@ export const seedProjects = async () => {
     return 0
   }
 
-  const samples: ProjectInput[] = [
+  const samples: Array<Omit<ProjectInput, 'sectionId' | 'publiclyVisible'>> = [
     {
       title: 'Taichung Food Guide',
       groupName: 'Night Market Navigators',
@@ -483,6 +495,8 @@ export const seedProjects = async () => {
     samples.map((sample) =>
       addDoc(collection(firestore, projectsPath), {
         ...sample,
+        sectionId: 'eep',
+        publiclyVisible: sample.status === 'approved',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       }),

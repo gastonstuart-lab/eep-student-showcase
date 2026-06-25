@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canManageProjectsForAdmin, canManageSectionForAdmin, type PermissionAdmin } from '../utils/authorization'
+import { canManageProjectsForAdmin, canManageSectionForAdmin, emptyStaffPermissions, type PermissionAdmin } from '../utils/authorization'
 
 const editor: PermissionAdmin = {
   role: 'editor',
@@ -24,9 +24,12 @@ describe('authorization helpers', () => {
     expect(canManageSectionForAdmin(editor, 'esl-social-studies')).toBe(false)
   })
 
-  it('allows project management only through EEP access', () => {
-    expect(canManageProjectsForAdmin(editor)).toBe(false)
-    expect(canManageProjectsForAdmin({ ...editor, allowedSectionIds: ['eep'] })).toBe(true)
+  it('allows submission management through explicit permission in an assigned hub', () => {
+    expect(canManageProjectsForAdmin({ ...editor, permissions: emptyStaffPermissions })).toBe(false)
+    expect(canManageProjectsForAdmin({
+      ...editor,
+      permissions: { ...emptyStaffPermissions, manageProjects: true },
+    })).toBe(true)
   })
 
   it('rejects inactive or missing administrators', () => {

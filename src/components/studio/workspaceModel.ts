@@ -79,8 +79,11 @@ export function resolveWorkspaceContext(admin: EffectiveAdmin | null, requestedC
 }
 
 function firstCreatableSection(admin: EffectiveAdmin | null, configs: HubConfig[]) {
-  return configs.find((config) => config.sectionId !== 'ied' && canCreateContentForAdmin(admin, config.sectionId))
-    ?? configs.find((config) => canCreateContentForAdmin(admin, config.sectionId))
+  return configs.find((config) => canCreateContentForAdmin(admin, config.sectionId))
+}
+
+function firstSubmissionSection(admin: EffectiveAdmin | null, configs: HubConfig[]) {
+  return configs.find((config) => config.sectionId !== 'ied' && hasSectionAccess(admin, config.sectionId)) ?? configs[0]
 }
 
 export function buildWorkspaceNav(admin: EffectiveAdmin | null, activeContextId?: string | null, configs: HubConfig[] = hubConfigs): WorkspaceNavItem[] {
@@ -106,7 +109,10 @@ export function buildWorkspaceNav(admin: EffectiveAdmin | null, activeContextId?
   }
 
   if (canManageProjectsForAdmin(admin)) {
-    items.push({ label: 'Submissions', to: '/admin/pending', group: 'primary', activeMatch: 'submissions' })
+    const submissionSection = isAllContext ? firstSubmissionSection(admin, accessible) : activeSection
+    if (submissionSection) {
+      items.push({ label: 'Submissions', to: `/admin/submissions/${submissionSection.sectionId}?status=pending`, group: 'primary', activeMatch: 'submissions' })
+    }
   }
 
   if (canManageUsersForAdmin(admin)) {

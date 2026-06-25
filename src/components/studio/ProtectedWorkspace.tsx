@@ -15,8 +15,11 @@ const roleLabels: Record<EffectiveAdmin['role'], string> = {
 
 function activeContextIdForPath(pathname: string, admin: EffectiveAdmin | null) {
   const hubMatch = pathname.match(/^\/admin\/hubs\/([^/]+)/)
+  const submissionMatch = pathname.match(/^\/admin\/submissions\/([^/]+)/)
   const matchedHub = hubMatch ? hubConfigs.find((config) => config.sectionId === decodeURIComponent(hubMatch[1])) : null
   if (matchedHub) return matchedHub.sectionId
+  const matchedSubmissionHub = submissionMatch ? hubConfigs.find((config) => config.sectionId === decodeURIComponent(submissionMatch[1])) : null
+  if (matchedSubmissionHub) return matchedSubmissionHub.sectionId
   if (pathname.includes('/admin/pending') || pathname.includes('/admin/approved')) return 'eep'
   return admin?.role === 'superAdmin' ? 'all' : firstContentSection(admin)?.sectionId ?? ''
 }
@@ -36,6 +39,7 @@ function currentWorkspaceHeading(pathname: string, search: string) {
   if (pathname === '/admin/hubs') return 'Manage Hubs'
   if (pathname === '/admin/pending') return 'Submissions'
   if (pathname === '/admin/approved') return 'Approved Projects'
+  if (pathname.startsWith('/admin/submissions/')) return 'Submissions'
   if (pathname === '/admin/users') return 'Staff Access'
   if (pathname === '/admin/audit') return 'Audit & Activity'
   if (pathname.startsWith('/admin/hubs/')) {
@@ -215,7 +219,7 @@ function WorkspaceNav({ admin, onNavigate }: { admin: EffectiveAdmin; onNavigate
     if (item.activeMatch === 'exact') return location.pathname === item.to
     if (item.activeMatch === 'content-create') return location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) === 'create'
     if (item.activeMatch === 'content-library') return location.pathname.startsWith('/admin/hubs/') && parseWorkspaceContentView(new URLSearchParams(location.search).get('view')) !== 'create'
-    if (item.activeMatch === 'submissions') return location.pathname === '/admin/pending' || location.pathname === '/admin/approved'
+    if (item.activeMatch === 'submissions') return location.pathname === '/admin/pending' || location.pathname === '/admin/approved' || location.pathname.startsWith('/admin/submissions/')
     return location.pathname === item.to
   }
 
@@ -256,9 +260,11 @@ function WorkspaceTopbar({
 
   return (
     <header className="workspace-topbar">
+      <Link className="workspace-topbar-logo" to="/ied" aria-label="Return to IED Hub">
+        <img src="/school-logo.svg" alt="" />
+      </Link>
       <div>
         <p>{currentContextLabel(location.pathname, admin)}</p>
-        <h1>IED Studio</h1>
       </div>
       <div className="workspace-account">
         <span>{admin.displayName || admin.username}</span>
@@ -284,7 +290,7 @@ function WorkspaceHeader({ admin }: { admin: EffectiveAdmin }) {
 
 function currentPublicHubRoute(pathname: string, admin: EffectiveAdmin | null) {
   const activeContext = resolveWorkspaceContext(admin, activeContextIdForPath(pathname, admin))
-  return activeContext?.section?.route ?? firstContentSection(admin)?.route ?? '/'
+  return activeContext?.section?.route ?? firstContentSection(admin)?.route ?? '/ied'
 }
 
 function WorkspaceSidebarUtility({ admin }: { admin: EffectiveAdmin }) {
@@ -404,7 +410,7 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
         <aside className="workspace-sidebar" aria-hidden={drawerOpen ? true : undefined}>
           <Link className="workspace-sidebar-brand" to="/admin">
             <span>IED</span>
-            <strong>IED Hub</strong>
+            <strong>IED Studio</strong>
           </Link>
           <WorkspaceNav admin={adminUser} />
           <WorkspaceSidebarUtility admin={adminUser} />

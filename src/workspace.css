@@ -101,42 +101,38 @@
   box-shadow: 0 8px 22px rgba(16, 36, 63, 0.05);
 }
 
+.workspace-topbar-logo {
+  display: inline-flex;
+  align-items: center;
+  width: clamp(150px, 16vw, 220px);
+  padding: 0.32rem 0.5rem;
+  border-radius: 0.55rem;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(16, 36, 63, 0.08);
+}
+
+.workspace-topbar-logo:focus-visible {
+  outline: 3px solid #86c5ff;
+  outline-offset: 3px;
+}
+
+.workspace-topbar-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .workspace-topbar > div:first-of-type {
   display: flex;
   align-items: center;
   gap: 0.7rem;
 }
 
-.workspace-topbar > div:first-of-type::before {
-  display: inline-grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border-radius: 0.55rem;
-  background: var(--workspace-blue);
-  color: #fff;
-  content: 'IED';
-  font-size: 0.66rem;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-}
-
 .workspace-topbar p {
-  display: none;
-}
-
-.workspace-topbar h1 {
   margin: 0;
   color: var(--workspace-ink);
-  font-size: 0;
-}
-
-.workspace-topbar h1::before {
-  display: block;
-  content: 'IED Studio';
-  font-size: 0.98rem;
-  font-weight: 950;
-  line-height: 1.1;
+  font-size: 0.92rem;
+  font-weight: 850;
 }
 
 .workspace-account,
@@ -395,6 +391,7 @@
 }
 
 .overview-create-panel {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(13rem, 24%);
   gap: 0.85rem;
@@ -402,6 +399,17 @@
   overflow: hidden;
   min-height: 8.75rem;
   margin-bottom: 0.8rem;
+}
+
+.overview-create-panel::after {
+  position: absolute;
+  top: 0;
+  right: 19%;
+  bottom: 0;
+  width: 7rem;
+  pointer-events: none;
+  background: linear-gradient(90deg, #fff 4%, rgba(255, 255, 255, 0));
+  content: '';
 }
 
 .overview-create-panel > div {
@@ -426,6 +434,7 @@
   height: 100%;
   min-height: 8.75rem;
   object-fit: cover;
+  object-position: center;
 }
 
 .overview-grid {
@@ -433,6 +442,39 @@
   grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
   gap: 0.8rem;
   align-items: start;
+}
+
+.submission-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+}
+
+.submission-tabs button {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--workspace-ink);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.submission-tabs button.active,
+.submission-tabs button:focus-visible {
+  border-color: var(--workspace-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(23, 105, 210, 0.16);
+}
+
+.submission-settings-panel {
+  padding: 1rem;
+  border: 1px solid var(--workspace-line);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: var(--workspace-shadow);
 }
 
 .overview-panel {

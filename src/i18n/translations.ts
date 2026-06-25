@@ -9,7 +9,7 @@ export type Translation = {
 
 export const languageModeLabels: Record<LanguageMode, string> = {
   en: 'EN',
-  bilingual: 'EN + 中文',
+  bilingual: 'EN + 繁中',
   'zh-Hant': '繁中',
 }
 
@@ -29,6 +29,45 @@ export const translations = {
   teacherLogin: { en: 'Teacher Login', zh: '教師登入' },
   back: { en: 'Back', zh: '返回' },
   languageToggle: { en: 'Language', zh: '語言' },
+  introDepartmentTitle: { en: 'International Education Department', zh: '國際教育處' },
+  introEnter: { en: 'Enter', zh: '進入' },
+  introHint: {
+    en: 'Move your mouse or finger, then select Enter to open the IED Hub',
+    zh: '移動滑鼠或手指，選擇「進入」開啟 IED 學習中心',
+  },
+  introLogoAlt: {
+    en: 'The Affiliated High School of Tunghai University',
+    zh: '東海大學附屬高級中等學校',
+  },
+  enterEep: { en: 'Enter EEP', zh: '進入 EEP' },
+  enterEsl: { en: 'Enter ESL', zh: '進入 ESL' },
+  eepLearningHub: { en: 'EEP Learning Hub', zh: 'EEP 學習中心' },
+  eslLearningHub: { en: 'ESL Learning Hub', zh: 'ESL 學習中心' },
+  iedHeroImageAlt: {
+    en: 'THUHS campus building and international learning visual',
+    zh: '東大附中校園建築與國際學習意象',
+  },
+  eepCardImageAlt: {
+    en: 'Books, workbooks, and story-based English enrichment materials',
+    zh: '書籍、學習單與故事導向的英語增能教材',
+  },
+  eslCardImageAlt: {
+    en: 'Globe and subject learning materials for ESL',
+    zh: '地球儀與 ESL 學科學習教材',
+  },
+  submitToEepShowcase: { en: 'Submit to the EEP Showcase', zh: '送出至 EEP 成果展示' },
+  showcaseHeroImageAlt: {
+    en: 'Digital student website showcase visual',
+    zh: '學生網站數位成果展示意象',
+  },
+  hubNotFoundTitle: { en: 'Hub not found', zh: '找不到學習中心' },
+  hubNotFoundBody: { en: 'This learning hub is not available.', zh: '此學習中心目前無法使用。' },
+  submitWork: { en: 'Submit Work', zh: '送出作品' },
+  submissionsClosedTitle: { en: 'Submissions are currently closed', zh: '目前暫停收件' },
+  submissionsClosedBody: {
+    en: 'This hub is not accepting new student submissions right now. Existing reviewed work remains available.',
+    zh: '此學習中心目前未開放新的學生送件，已審核的作品仍會保留。',
+  },
 
   iedHeroEyebrow: { en: 'INTERNATIONAL EDUCATION DEPARTMENT', zh: '國際教育處' },
   iedHeroTitle: { en: 'IED Learning Showcase Hub', zh: 'IED 學習成果展示中心' },
@@ -262,6 +301,7 @@ export const translations = {
   statApproved: { en: 'approved', zh: '已核准' },
   statRejected: { en: 'rejected', zh: '已退回' },
   statHidden: { en: 'hidden', zh: '已隱藏' },
+  statArchived: { en: 'archived', zh: '已封存' },
   statFeatured: { en: 'featured', zh: '精選' },
   pendingTitle: { en: 'Pending submissions', zh: '待審核送件' },
   pendingBody: {
@@ -331,4 +371,5 @@ export const statusTranslationKeys: Record<ProjectStatus, TranslationKey> = {
   approved: 'statApproved',
   rejected: 'statRejected',
   hidden: 'statHidden',
+  archived: 'statArchived',
 }

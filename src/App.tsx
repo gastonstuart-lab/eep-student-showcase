@@ -10,10 +10,12 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 import { AuthProvider, mapAuthError, useAuth } from './auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
+import { IedEntryPage } from './components/public/IedEntryPage'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
 import { ScrollReveal } from './components/public/ScrollReveal'
@@ -27,6 +29,7 @@ import { ContentLayout } from './components/public/ContentLayout'
 import {
   createProject,
   deleteProject,
+  saveHubPage,
   seedProjects,
   updateProject,
   watchAuditLogs,
@@ -52,6 +55,7 @@ import {
 import './App.css'
 
 const emptyProject: ProjectInput = {
+  sectionId: 'eep',
   title: '',
   groupName: '',
   className: '',
@@ -65,6 +69,7 @@ const emptyProject: ProjectInput = {
   status: 'pending',
   featured: false,
   studentPick: false,
+  publiclyVisible: false,
 }
 
 const studentGuidePreziUrl = 'https://prezi.com/view/nGLmHqRktUdpbzEUlJmK/embed'
@@ -83,7 +88,8 @@ const defaultPageDescription =
   'Explore student learning, creative projects, ESL subject hubs, and the EEP Student Website Showcase from the International Education Department at THUHS.'
 
 const routeMeta = [
-  { pattern: /^\/$/, title: 'IED Learning Hub | THUHS', description: defaultPageDescription },
+  { pattern: /^\/$/, title: 'International Education Department | THUHS', description: 'Enter the IED Learning Hub at THUHS.' },
+  { pattern: /^\/ied\/?$/, title: 'IED Learning Hub | THUHS', description: defaultPageDescription },
   { pattern: /^\/eep\/?$/, title: 'EEP Learning Hub | THUHS', description: 'Explore EEP stories, language activities, creative work, and student website projects.' },
   { pattern: /^\/eep\/showcase\/?$/, title: 'EEP Student Website Showcase | THUHS', description: 'Browse approved student-built Google Sites projects from the EEP Student Website Showcase.' },
   { pattern: /^\/eep\/showcase\/submit\/?$|^\/submit\/?$/, title: 'Submit an EEP Project | THUHS', description: 'Submit a Google Sites student project to the EEP teacher review queue.' },
@@ -99,10 +105,39 @@ const routeMeta = [
 
 const submissionDestinations = {
   'eep-showcase': {
+    sectionId: 'eep',
     name: 'EEP Student Website Showcase',
     title: 'Submit to the EEP Showcase',
     body: 'Send your Google Sites project to the teacher review queue for the EEP Student Website Showcase.',
     success: 'Project submitted to the EEP Student Website Showcase. It is awaiting teacher review.',
+  },
+  science: {
+    sectionId: 'esl-science',
+    name: 'Science Hub',
+    title: 'Submit work to Science',
+    body: 'Send your science learning, investigation, or explanation for teacher review.',
+    success: 'Your Science submission is awaiting teacher review.',
+  },
+  'language-arts': {
+    sectionId: 'esl-language-arts',
+    name: 'Language Arts Hub',
+    title: 'Submit work to Language Arts',
+    body: 'Send your reading, writing, speaking, or response work for teacher review.',
+    success: 'Your Language Arts submission is awaiting teacher review.',
+  },
+  'performance-arts': {
+    sectionId: 'esl-performance-arts',
+    name: 'Performance Arts Hub',
+    title: 'Submit work to Performance Arts',
+    body: 'Send your performance, rehearsal, media, or reflection work for teacher review.',
+    success: 'Your Performance Arts submission is awaiting teacher review.',
+  },
+  'social-studies': {
+    sectionId: 'esl-social-studies',
+    name: 'Social Studies Hub',
+    title: 'Submit work to Social Studies',
+    body: 'Send your social studies project, explanation, or public update for teacher review.',
+    success: 'Your Social Studies submission is awaiting teacher review.',
   },
 } as const
 
@@ -147,6 +182,7 @@ const premiumAssets = {
 const demoPreviewProjects: Project[] = [
   {
     id: 'demo-taichung-food',
+    sectionId: 'eep',
     title: 'Taichung Food Guide',
     groupName: 'Night Market Navigators',
     className: 'EEP 8A',
@@ -160,9 +196,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: true,
     studentPick: true,
+    publiclyVisible: true,
   },
   {
     id: 'demo-happy-paws',
+    sectionId: 'eep',
     title: 'Happy Paws Pet Grooming',
     groupName: 'Pawsitive Web Team',
     className: 'EEP 8B',
@@ -176,9 +214,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: true,
+    publiclyVisible: true,
   },
   {
     id: 'demo-basketball-club',
+    sectionId: 'eep',
     title: 'Basketball Club Hub',
     groupName: 'Full Court Builders',
     className: 'EEP 7B',
@@ -192,9 +232,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: true,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'demo-night-market',
+    sectionId: 'eep',
     title: 'Night Market for Visitors',
     groupName: 'Lantern Lane',
     className: 'EEP 8A',
@@ -208,9 +250,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'demo-study-survival',
+    sectionId: 'eep',
     title: 'Study Survival Guide',
     groupName: 'Focus Lab',
     className: 'EEP 8C',
@@ -224,9 +268,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'demo-ocean-campaign',
+    sectionId: 'eep',
     title: 'Save the Ocean Campaign',
     groupName: 'Blue Future Team',
     className: 'EEP 9A',
@@ -240,9 +286,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: true,
+    publiclyVisible: true,
   },
   {
     id: 'demo-comic-world',
+    sectionId: 'eep',
     title: 'Comic World Adventures',
     groupName: 'Panel Power',
     className: 'EEP 7A',
@@ -256,9 +304,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: true,
+    publiclyVisible: true,
   },
   {
     id: 'demo-family-bakery',
+    sectionId: 'eep',
     title: 'Family Bakery Website',
     groupName: 'Sweet Street Studio',
     className: 'EEP 9B',
@@ -272,9 +322,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: true,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'demo-eco-actions',
+    sectionId: 'eep',
     title: 'Eco Actions Today',
     groupName: 'Green Steps',
     className: 'EEP 9A',
@@ -288,9 +340,11 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'demo-soundwave',
+    sectionId: 'eep',
     title: 'Soundwave Studio',
     groupName: 'Audio Makers',
     className: 'EEP 7C',
@@ -304,6 +358,7 @@ const demoPreviewProjects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: false,
+    publiclyVisible: true,
   },
 ]
 
@@ -477,15 +532,16 @@ function Shell() {
   }, [mobileMenuOpen])
 
   const protectedWorkspaceRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/change-password'
+  const introRoute = location.pathname === '/'
 
   return (
     <div className={protectedWorkspaceRoute ? 'app-shell app-shell--workspace' : 'app-shell'}>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      {!protectedWorkspaceRoute && (
+      {!protectedWorkspaceRoute && !introRoute && (
         <header className="topbar">
-          <Link className="brand" to="/">
+          <Link className="brand" to="/ied">
             <img className="brand-logo" src="/school-logo.svg" alt="" />
             <span className="brand-text">
               <strong>IED Hub</strong>
@@ -502,7 +558,7 @@ function Shell() {
             Menu
           </button>
           <nav className="main-nav" aria-label={t('primaryNavigation')}>
-            <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
+            <NavLink to="/ied" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
             <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
             <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
             <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
@@ -539,23 +595,27 @@ function Shell() {
               </>
             ) : (
               <Link className="small-button" to="/login" onClick={() => setMobileMenuOpen(false)}>
-                Login
+                {chromeText('loginTitle')}
               </Link>
             )}
           </div>
         </header>
       )}
 
-      {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
+      {!isFirebaseConfigured && !introRoute && <FirebaseNotice />}
 
       <main className={protectedWorkspaceRoute ? 'page-transition route-main route-main--workspace' : 'page-transition route-main'} id="main-content" key={location.pathname} tabIndex={-1}>
-        {!protectedWorkspaceRoute && location.pathname !== '/' && <BackNavigation />}
+        {!protectedWorkspaceRoute && !introRoute && <BackNavigation />}
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/ied" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<IedEntryPage />} />
+          <Route path="/ied" element={<HomePage />} />
           <Route path="/eep" element={<HubPageView sectionId="eep" />} />
           <Route path="/eep/showcase" element={<EepShowcasePage />} />
           <Route path="/eep/showcase/submit" element={<SubmitPage destination="eep-showcase" />} />
+          <Route path="/esl/science/submit" element={<SubmitPage destination="science" />} />
+          <Route path="/esl/language-arts/submit" element={<SubmitPage destination="language-arts" />} />
+          <Route path="/esl/performance-arts/submit" element={<SubmitPage destination="performance-arts" />} />
+          <Route path="/esl/social-studies/submit" element={<SubmitPage destination="social-studies" />} />
           <Route path="/esl" element={<HubPageView sectionId="esl" />} />
           <Route path="/esl/science" element={<HubPageView sectionId="esl-science" />} />
           <Route path="/esl/language-arts" element={<HubPageView sectionId="esl-language-arts" />} />
@@ -577,16 +637,24 @@ function Shell() {
           <Route
             path="/admin/pending"
             element={
-              <ProtectedRoute sectionId="eep">
-                <PendingPage />
+              <ProtectedRoute>
+                <Navigate to="/admin/submissions/eep?status=pending" replace />
               </ProtectedRoute>
             }
           />
           <Route
             path="/admin/approved"
             element={
-              <ProtectedRoute sectionId="eep">
-                <ApprovedPage />
+              <ProtectedRoute>
+                <Navigate to="/admin/submissions/eep?status=approved" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/submissions/:sectionId"
+            element={
+              <ProtectedRoute>
+                <SubmissionsPage />
               </ProtectedRoute>
             }
           />
@@ -671,7 +739,7 @@ function BackNavigation() {
       return
     }
 
-    navigate('/')
+    navigate('/ied')
   }
 
   return (
@@ -751,7 +819,7 @@ export function AccessDenied({ sectionId, requireSuperAdmin = false }: { section
         title={t('accessDeniedTitle')}
         body={body}
       />
-      <Link className="secondary-button" to="/">
+      <Link className="secondary-button" to="/ied">
         {t('returnToPublicHub')}
       </Link>
     </section>
@@ -765,7 +833,7 @@ function NotFoundPage() {
     <section className="missing-page">
       <PageMessage title={t('notFoundTitle')} body={t('notFoundBody')} />
       <div className="hero-actions">
-        <Link className="primary-button blue" to="/">
+        <Link className="primary-button blue" to="/ied">
           {t('returnToPublicHub')}
         </Link>
         <Link className="secondary-button" to="/eep/showcase">
@@ -791,13 +859,13 @@ function HomePage() {
         body={t('iedHeroBody')}
         desktopImage={premiumAssets.heroes.home}
         mobileImage={premiumAssets.mobile.home}
-        imageAlt="THUHS campus building and international learning visual"
+        imageAlt={t('iedHeroImageAlt')}
         theme="ied"
         className="home-premium-hero"
         imagePosition="72% center"
         actions={[
-          { label: 'Enter EEP →', to: '/eep', variant: 'blue' },
-          { label: 'Enter ESL →', to: '/esl', variant: 'teal' },
+          { label: `${t('enterEep')} →`, to: '/eep', variant: 'blue' },
+          { label: `${t('enterEsl')} →`, to: '/esl', variant: 'teal' },
           ...(hasPublishedIedContent ? [{ label: `${t('viewLatestIedUpdates')} ↓`, to: '#ied-published-content', variant: 'outline' } as PremiumHeroAction] : []),
         ]}
       />
@@ -805,21 +873,21 @@ function HomePage() {
       <ScrollReveal className="premium-pathway-grid" stagger>
         <ProgrammePathwayCard
           to="/eep"
-          title="EEP Learning Hub"
+          title={t('eepLearningHub')}
           description={t('eepHomeDescription')}
           cta={`${t('exploreEepHub')} →`}
           desktopImage={premiumAssets.cards.eep}
-          imageAlt="Books, workbooks, and story-based English enrichment materials"
+          imageAlt={t('eepCardImageAlt')}
           theme="eep"
           kicker={t('eepProgramme')}
         />
         <ProgrammePathwayCard
           to="/esl"
-          title="ESL Learning Hub"
+          title={t('eslLearningHub')}
           description={t('eslHomeDescription')}
           cta={`${t('exploreEslHub')} →`}
           desktopImage={premiumAssets.cards.esl}
-          imageAlt="Globe and subject learning materials for ESL"
+          imageAlt={t('eslCardImageAlt')}
           theme="esl"
           kicker={t('eslProgramme')}
         />
@@ -841,7 +909,7 @@ function HomePage() {
 }
 
 function EepShowcasePage() {
-  const { projects, loading, error } = useProjects('approved')
+  const { projects, loading, error } = useProjects('approved', true, 'eep')
   const { t } = useLanguage()
   const location = useLocation()
   const [category, setCategory] = useState<'All Projects' | ProjectCategory>('All Projects')
@@ -879,12 +947,12 @@ function EepShowcasePage() {
         body={t('heroSupport')}
         desktopImage={premiumAssets.heroes.showcase}
         mobileImage={premiumAssets.mobile.showcase}
-        imageAlt="Digital student website showcase visual"
+        imageAlt={t('showcaseHeroImageAlt')}
         theme="showcase"
         className="showcase-premium-hero"
         imagePosition="76% center"
         actions={[
-          { label: 'Submit to the EEP Showcase →', to: '/eep/showcase/submit', variant: 'blue' },
+          { label: `${t('submitToEepShowcase')} →`, to: '/eep/showcase/submit', variant: 'blue' },
           { label: `${t('browseProjects')} →`, to: '/eep/showcase#projects', variant: 'outline' },
         ]}
       />
@@ -928,7 +996,7 @@ function EepShowcasePage() {
               <p>{t('noApprovedBody')}</p>
               <div className="hero-actions">
                 <Link className="primary-button blue" to="/eep/showcase/submit">
-                  Submit to the EEP Showcase
+                  {t('submitToEepShowcase')}
                 </Link>
                 <Link className="secondary-button" to="/login">
                   {t('teacherLogin')}
@@ -978,7 +1046,7 @@ function HubPageView({ sectionId }: { sectionId: string }) {
   const { user } = useAuth()
   const { hubPage, loading, error } = useHubPage(sectionId)
   const { contentItems, loading: contentLoading, error: contentError } = useContentItems(sectionId, 'published')
-  const { projects } = useProjects('approved', sectionId === 'eep')
+  const { projects } = useProjects('approved', sectionId === 'eep', 'eep')
 
   if (!config || !hubPage) {
     return <PageMessage title="Hub not found" body="This learning hub is not available." />
@@ -992,7 +1060,7 @@ function HubPageView({ sectionId }: { sectionId: string }) {
   const resources = contentItems.filter((item) => item.type === 'resource' || item.type === 'link').slice(0, 4)
   const recent = contentItems.slice(0, 5)
   const eepProjects = (projects.length ? projects : demoPreviewProjects).filter((project) => project.featured).slice(0, 3)
-  const displayHubPage = getDisplayHubPage(config.sectionId, hubPage, Boolean(user))
+  const displayHubPage = withSubmissionAction(getDisplayHubPage(config.sectionId, hubPage, Boolean(user)), config.sectionId)
   const programCards = getProgramCards(config.sectionId)
   const subjectHighlights = getSubjectHighlights(config.sectionId)
 
@@ -1628,7 +1696,7 @@ function Spotlight({ titleKey, projects }: { titleKey: TranslationKey; projects:
 function ProjectDetailPage() {
   const { t } = useLanguage()
   const { id } = useParams()
-  const { projects, loading } = useProjects('approved')
+  const { projects, loading } = useProjects('approved', true)
   const showingDemoPreview = !isFirebaseConfigured || (!loading && projects.length === 0)
   const displayProjects = showingDemoPreview ? demoPreviewProjects : projects
   const project = displayProjects.find((item) => item.id === id)
@@ -1684,7 +1752,13 @@ function ProjectDetailPage() {
 function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
   const { t } = useLanguage()
   const submissionDestination = submissionDestinations[destination]
-  const [project, setProject] = useState<ProjectInput>(emptyProject)
+  const destinationConfig = hubConfigById[submissionDestination.sectionId]
+  const { hubPage } = useHubPage(submissionDestination.sectionId)
+  const submissionsEnabled = hubPage?.submissionsEnabled ?? destinationConfig?.defaults.submissionsEnabled ?? false
+  const [project, setProject] = useState<ProjectInput>(() => ({
+    ...emptyProject,
+    sectionId: submissionDestination.sectionId,
+  }))
   const [permission, setPermission] = useState(false)
   const [website, setWebsite] = useState('')
   const [message, setMessage] = useState('')
@@ -1703,16 +1777,23 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
       return
     }
 
-    const validationErrors = validateProjectSubmission(project, permission)
+    if (!submissionsEnabled) {
+      setMessage(t('submissionsClosedBody'))
+      return
+    }
+
+    const scopedProject = { ...project, sectionId: submissionDestination.sectionId }
+    const validationErrors = validateProjectSubmission(scopedProject, permission)
     if (validationErrors.length) {
       setMessage(validationErrors.join(' '))
       return
     }
 
     const now = Date.now()
-    const lastSubmissionAt = Number(window.localStorage.getItem('eep-last-submission-at') ?? 0)
-    const fingerprint = projectSubmissionFingerprint(project)
-    const lastFingerprint = window.localStorage.getItem('eep-last-submission-fingerprint')
+    const fingerprint = projectSubmissionFingerprint(scopedProject)
+    const storagePrefix = `ied-last-submission:${submissionDestination.sectionId}`
+    const lastSubmissionAt = Number(window.localStorage.getItem(`${storagePrefix}:at`) ?? 0)
+    const lastFingerprint = window.localStorage.getItem(`${storagePrefix}:fingerprint`)
 
     if (lastFingerprint === fingerprint && now - lastSubmissionAt < 10 * 60 * 1000) {
       setMessage('This project was already submitted recently. Please wait before submitting it again.')
@@ -1727,14 +1808,16 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
     setSaving(true)
     try {
       await createProject({
-        ...project,
+        ...scopedProject,
+        sectionId: submissionDestination.sectionId,
         status: 'pending',
         featured: false,
         studentPick: false,
+        publiclyVisible: false,
       })
-      window.localStorage.setItem('eep-last-submission-at', String(Date.now()))
-      window.localStorage.setItem('eep-last-submission-fingerprint', fingerprint)
-      setProject(emptyProject)
+      window.localStorage.setItem(`${storagePrefix}:at`, String(Date.now()))
+      window.localStorage.setItem(`${storagePrefix}:fingerprint`, fingerprint)
+      setProject({ ...emptyProject, sectionId: submissionDestination.sectionId })
       setPermission(false)
       setMessage(submissionDestination.success)
     } catch (error) {
@@ -1766,6 +1849,9 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
         actions={[{ label: t('browseProjects'), to: '/eep/showcase#projects', variant: 'outline' }]}
       />
       <StudentGuideEmbed />
+      {!submissionsEnabled && (
+        <PageMessage title={t('submissionsClosedTitle')} body={t('submissionsClosedBody')} />
+      )}
       <div className="submit-form-heading">
         <UiText id="submitFormEyebrow" as="p" className="eyebrow" />
         <UiText id="submitFormTitle" as="h2" />
@@ -1775,9 +1861,9 @@ function SubmitPage({ destination }: { destination: SubmissionDestinationId }) {
         </p>
       </div>
       <ProjectForm
-        disabled={saving}
+        disabled={saving || !submissionsEnabled}
         project={project}
-        onChange={setProject}
+        onChange={(nextProject) => setProject({ ...nextProject, sectionId: submissionDestination.sectionId })}
         onSubmit={submit}
         submitLabel={saving ? t('submitting') : t('submitProject')}
       >
@@ -2128,8 +2214,7 @@ function AdminDashboard() {
   const contextHubs = dashboardContextId === 'all'
     ? accessibleHubs
     : accessibleHubs.filter((config) => config.sectionId === dashboardContextId)
-  const firstCreatableHub = accessibleHubs.find((config) => config.sectionId !== 'ied' && canCreateContentForAdmin(adminUser, config.sectionId))
-    ?? accessibleHubs.find((config) => canCreateContentForAdmin(adminUser, config.sectionId))
+  const firstCreatableHub = accessibleHubs.find((config) => canCreateContentForAdmin(adminUser, config.sectionId))
   const hasAccessTo = (sectionId: string) => accessibleHubs.some((config) => config.sectionId === sectionId)
   const iedContent = useContentItems('ied', undefined, hasAccessTo('ied'))
   const eepContent = useContentItems('eep', undefined, hasAccessTo('eep'))
@@ -2169,7 +2254,7 @@ function AdminDashboard() {
     ...(showProjectSummary && projectStats.pending > 0 ? [{
       label: 'Pending submissions',
       count: projectStats.pending,
-      to: '/admin/pending',
+      to: submissionRoute(defaultWorkspaceHub?.sectionId ?? 'eep', 'pending'),
       helper: 'Student projects waiting for review.',
     }] : []),
     ...(contentStats.draft > 0 && defaultWorkspaceHub ? [{
@@ -2189,7 +2274,7 @@ function AdminDashboard() {
     ...(navItems.some((item) => item.to === '/admin/users') ? [{ label: 'Staff Access', to: '/admin/users' }] : []),
     ...(navItems.some((item) => item.to === '/admin/hubs') ? [{ label: 'Manage Hubs', to: '/admin/hubs' }] : []),
     ...(navItems.some((item) => item.to === '/admin/audit') ? [{ label: 'Audit & Activity', to: '/admin/audit' }] : []),
-    ...(defaultWorkspaceHub ? [{ label: 'Public Hub', to: defaultWorkspaceHub.route }] : []),
+    { label: 'Public IED Hub', to: '/ied' },
   ]
   const workspaceLine = accessibleHubs.length
     ? `Working across ${dashboardContextId === 'all' ? 'all assigned hubs' : contextHubs.map((config) => config.sectionName).join(', ')}.`
@@ -2230,11 +2315,13 @@ function AdminDashboard() {
       {firstCreatableHub ? (
         <section className="overview-create-panel" aria-labelledby="overview-create-heading">
           <div>
-            <h2 id="overview-create-heading">Create content for {firstCreatableHub.sectionName}</h2>
+            <h2 id="overview-create-heading">
+              {dashboardContextId === 'all' ? 'Create content for a hub' : `Create content for ${firstCreatableHub.sectionName}`}
+            </h2>
             <p>Draft a hub update, resource, event, link, media item, or student-work story using the protected content workflow.</p>
             <Link className="primary-button blue" to={workspaceHubViewUrl(firstCreatableHub.sectionId, 'create')}>Create Content</Link>
           </div>
-          <img src="/images/ied-campus.png" alt="" />
+          <img src="/images/ied-premium/workspace/luce-chapel-hero.webp" alt="Luce Chapel on the Tunghai University campus" />
         </section>
       ) : (
         <EmptyState
@@ -2486,161 +2573,240 @@ function HubAdminEditor({
   )
 }
 
-function PendingPage() {
-  const { projects, loading, error } = useProjects('pending')
-  const { t } = useLanguage()
-
-  return (
-    <AdminListPage
-      title={t('pendingTitle')}
-      body={t('pendingBody')}
-      empty={t('noPending')}
-      error={error}
-      loading={loading}
-      projects={projects}
-      renderActions={(project) => (
-        <>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => void updateProject(project.id, { status: 'approved' })}
-          >
-            {t('approve')}
-          </button>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => void updateProject(project.id, { status: 'rejected' })}
-          >
-            {t('reject')}
-          </button>
-          <button
-            className="danger-button"
-            type="button"
-            onClick={() => {
-              if (confirmDelete(`Delete "${project.title}"? This cannot be undone.`)) {
-                void deleteProject(project.id)
-              }
-            }}
-          >
-            {t('delete')}
-          </button>
-        </>
-      )}
-    />
-  )
+function submissionDestinationForSection(sectionId: string): SubmissionDestinationId | null {
+  const entry = Object.entries(submissionDestinations).find(([, destination]) => destination.sectionId === sectionId)
+  return entry ? entry[0] as SubmissionDestinationId : null
 }
 
-function ApprovedPage() {
-  const { projects, loading, error } = useProjects('approved')
+function withSubmissionAction(hubPage: HubPageData, sectionId: string): HubPageData {
+  if (!hubPage.submissionsEnabled) {
+    if (hubPage.secondaryButtonUrl?.includes('/submit')) {
+      return { ...hubPage, secondaryButtonText: '', secondaryButtonUrl: '' }
+    }
+    return hubPage
+  }
+
+  const destination = submissionDestinationForSection(sectionId)
+  if (!destination) return hubPage
+  const submitUrl = destination === 'eep-showcase'
+    ? '/eep/showcase/submit'
+    : `${hubConfigById[sectionId]?.route}/submit`
+
+  return {
+    ...hubPage,
+    secondaryButtonText: hubPage.submissionsButtonLabel || hubPage.secondaryButtonText || 'Submit Work',
+    secondaryButtonUrl: submitUrl,
+  }
+}
+
+const submissionStatuses = ['settings', 'pending', 'approved', 'rejected', 'archived'] as const
+type SubmissionTab = typeof submissionStatuses[number]
+
+function parseSubmissionTab(value: string | null): SubmissionTab {
+  return submissionStatuses.includes(value as SubmissionTab) ? value as SubmissionTab : 'pending'
+}
+
+function submissionRoute(sectionId: string, status: SubmissionTab = 'pending') {
+  return `/admin/submissions/${sectionId}?status=${status}`
+}
+
+function SubmissionsPage() {
+  const { sectionId = 'eep' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { canManageSection, canManageHubSettings } = useAuth()
   const { t } = useLanguage()
+  const config = hubConfigById[sectionId]
+  const canManage = Boolean(config && canManageSection(config.sectionId))
+  const { projects, loading, error } = useProjects(undefined, canManage, config?.sectionId)
+  const { hubPage } = useHubPage(config?.sectionId ?? 'eep')
+  const activeTab = parseSubmissionTab(searchParams.get('status'))
   const [editingId, setEditingId] = useState<string | null>(null)
   const editingProject = projects.find((project) => project.id === editingId)
 
-  return (
-    <section className="admin-page">
-      <PageHeading
-        eyebrow={t('approvedEyebrow')}
-        title={t('approvedTitle')}
-        body={t('approvedBody')}
-      />
-      {loading && <PageMessage title={t('loadingApprovedTitle')} body={t('loadingApprovedBody')} />}
-      {error && <PageMessage title={t('couldNotLoadProjects')} body={error} />}
-      {!loading && !projects.length && <PageMessage title={t('noApprovedAdminTitle')} body={t('approveFirst')} />}
+  if (!config) {
+    return <PageMessage title={t('hubNotFoundTitle')} body={t('hubNotFoundBody')} />
+  }
 
-      <div className="admin-list">
-        {projects.map((project) => (
-          <article className="admin-item" key={project.id}>
-            <ProjectPreview project={project} />
-            <div className="admin-item-actions">
-              <button className="secondary-button" type="button" onClick={() => setEditingId(project.id)}>
-                {t('edit')}
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void updateProject(project.id, { featured: !project.featured })}
-              >
-                {project.featured ? t('unfeature') : t('feature')}
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void updateProject(project.id, { studentPick: !project.studentPick })}
-              >
-                {project.studentPick ? t('removePick') : t('studentPick')}
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void updateProject(project.id, { status: 'hidden' })}
-              >
-                {t('hide')}
-              </button>
-              <button
-                className="danger-button"
-                type="button"
-                onClick={() => {
-                  if (confirmDelete(`Delete "${project.title}"? This cannot be undone.`)) {
-                    void deleteProject(project.id)
-                  }
-                }}
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </article>
+  if (!canManage) {
+    return <AccessDenied sectionId={config.sectionId} />
+  }
+
+  const counts = {
+    pending: projects.filter((project) => project.status === 'pending').length,
+    approved: projects.filter((project) => project.status === 'approved' || project.status === 'hidden').length,
+    rejected: projects.filter((project) => project.status === 'rejected').length,
+    archived: projects.filter((project) => project.status === 'archived').length,
+  }
+  const visibleProjects = projects.filter((project) => {
+    if (activeTab === 'approved') return project.status === 'approved' || project.status === 'hidden'
+    if (activeTab === 'settings') return false
+    return project.status === activeTab
+  })
+
+  const setTab = (tab: SubmissionTab) => setSearchParams({ status: tab })
+
+  return (
+    <section className="admin-page submissions-page">
+      <PageHeading
+        eyebrow="Student submissions"
+        title={`${config.sectionName} Submissions`}
+        body="Manage this hub's independent submission settings and review queue without mixing records from other hubs."
+      />
+      <div className="submission-tabs" role="tablist" aria-label="Submission views">
+        {submissionStatuses.map((tab) => (
+          <button
+            aria-selected={activeTab === tab}
+            className={activeTab === tab ? 'active' : ''}
+            key={tab}
+            role="tab"
+            type="button"
+            onClick={() => setTab(tab)}
+          >
+            {tab === 'settings' ? 'Settings' : `${tab[0].toUpperCase()}${tab.slice(1)} (${counts[tab]})`}
+          </button>
         ))}
       </div>
 
-      {editingProject && (
-        <EditProjectModal
-          project={editingProject}
-          onClose={() => setEditingId(null)}
-          onSave={async (nextProject) => {
-            await updateProject(editingProject.id, nextProject)
-            setEditingId(null)
-          }}
+      {activeTab === 'settings' ? (
+        <SubmissionSettingsPanel
+          canEdit={canManageHubSettings(config.sectionId)}
+          config={config}
+          hubPage={hubPage ?? hubPageFromConfigFallback(config)}
         />
+      ) : (
+        <>
+          {loading && <PageMessage title={t('loadingProjectsTitle')} body={t('reviewQueueBody')} />}
+          {error && <PageMessage title={t('couldNotLoadProjects')} body={error} />}
+          {!loading && !visibleProjects.length && (
+            <PageMessage
+              title={`No ${activeTab} submissions`}
+              body={`${config.sectionName} has no ${activeTab} student submissions right now.`}
+            />
+          )}
+          <div className="admin-list">
+            {visibleProjects.map((project) => (
+              <article className="admin-item" key={project.id}>
+                <ProjectPreview project={project} />
+                <div className="admin-item-actions">
+                  <a className="secondary-button" href={project.googleSitesUrl} target="_blank" rel="noreferrer">Preview</a>
+                  <button className="secondary-button" type="button" onClick={() => setEditingId(project.id)}>Edit metadata</button>
+                  <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { featured: !project.featured })}>
+                    {project.featured ? 'Unfeature' : 'Feature'}
+                  </button>
+                  <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { studentPick: !project.studentPick })}>
+                    {project.studentPick ? 'Remove pick' : 'Student pick'}
+                  </button>
+                  {project.status !== 'approved' && (
+                    <button className="primary-button" type="button" onClick={() => void updateProject(project.id, { status: 'approved', publiclyVisible: true })}>
+                      Approve
+                    </button>
+                  )}
+                  {project.status === 'approved' && (
+                    <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'hidden', publiclyVisible: false })}>
+                      Unpublish
+                    </button>
+                  )}
+                  {project.status === 'hidden' && (
+                    <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'approved', publiclyVisible: true })}>
+                      Publish
+                    </button>
+                  )}
+                  {project.status !== 'rejected' && (
+                    <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'rejected', publiclyVisible: false })}>
+                      Reject
+                    </button>
+                  )}
+                  {project.status === 'archived' ? (
+                    <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'pending', publiclyVisible: false })}>
+                      Restore
+                    </button>
+                  ) : (
+                    <button className="secondary-button" type="button" onClick={() => void updateProject(project.id, { status: 'archived', publiclyVisible: false })}>
+                      Archive
+                    </button>
+                  )}
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() => {
+                      if (confirmDelete(`Delete "${project.title}"? This cannot be undone.`)) {
+                        void deleteProject(project.id)
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+          {editingProject && (
+            <EditProjectModal
+              project={editingProject}
+              onClose={() => setEditingId(null)}
+              onSave={async (nextProject) => {
+                await updateProject(editingProject.id, { ...nextProject, sectionId: editingProject.sectionId })
+                setEditingId(null)
+              }}
+            />
+          )}
+        </>
       )}
     </section>
   )
 }
 
-function AdminListPage({
-  title,
-  body,
-  empty,
-  projects,
-  loading,
-  error,
-  renderActions,
+function hubPageFromConfigFallback(config: (typeof hubConfigs)[number]): HubPageData {
+  return { id: config.sectionId, ...config.defaults }
+}
+
+function SubmissionSettingsPanel({
+  canEdit,
+  config,
+  hubPage,
 }: {
-  title: string
-  body: string
-  empty: string
-  projects: Project[]
-  loading: boolean
-  error: string
-  renderActions: (project: Project) => ReactElement
+  canEdit: boolean
+  config: (typeof hubConfigs)[number]
+  hubPage: HubPageData
 }) {
-  const { t } = useLanguage()
+  const [draft, setDraft] = useState({
+    submissionsEnabled: Boolean(hubPage.submissionsEnabled),
+    submissionsButtonLabel: hubPage.submissionsButtonLabel || config.defaults.submissionsButtonLabel || 'Submit Work',
+    submissionsInstructions: hubPage.submissionsInstructions || config.defaults.submissionsInstructions || '',
+    submissionsPubliclyVisible: hubPage.submissionsPubliclyVisible ?? true,
+    submissionsGuidance: hubPage.submissionsGuidance || config.defaults.submissionsGuidance || '',
+    submissionsAcceptedTypes: hubPage.submissionsAcceptedTypes || config.defaults.submissionsAcceptedTypes || '',
+  })
+  const [message, setMessage] = useState('')
+
+  const save = async (event: FormEvent) => {
+    event.preventDefault()
+    await saveHubPage(config.sectionId, {
+      ...hubPage,
+      ...draft,
+      sectionId: config.sectionId,
+      childSectionIds: config.children,
+    })
+    setMessage('Submission settings saved.')
+  }
 
   return (
-    <section className="admin-page">
-      <PageHeading eyebrow={t('teacherReview')} title={title} body={body} />
-      {loading && <PageMessage title={t('loadingProjectsTitle')} body={t('reviewQueueBody')} />}
-      {error && <PageMessage title={t('couldNotLoadProjects')} body={error} />}
-      {!loading && !projects.length && <PageMessage title={empty} body={t('nothingNeedsAttention')} />}
-      <div className="admin-list">
-        {projects.map((project) => (
-          <article className="admin-item" key={project.id}>
-            <ProjectPreview project={project} />
-            <div className="admin-item-actions">{renderActions(project)}</div>
-          </article>
-        ))}
-      </div>
-    </section>
+    <form className="submission-settings-panel form-grid" onSubmit={save}>
+      <label className="checkbox-row span-2">
+        <input checked={draft.submissionsEnabled} disabled={!canEdit} type="checkbox" onChange={(event) => setDraft({ ...draft, submissionsEnabled: event.target.checked })} />
+        <span>Student submissions are open for {config.sectionName}</span>
+      </label>
+      <label>Public button label<input disabled={!canEdit} value={draft.submissionsButtonLabel} onChange={(event) => setDraft({ ...draft, submissionsButtonLabel: event.target.value })} /></label>
+      <label>Accepted work types<input disabled={!canEdit} value={draft.submissionsAcceptedTypes} onChange={(event) => setDraft({ ...draft, submissionsAcceptedTypes: event.target.value })} /></label>
+      <label className="span-2">Instructions<textarea disabled={!canEdit} value={draft.submissionsInstructions} onChange={(event) => setDraft({ ...draft, submissionsInstructions: event.target.value })} /></label>
+      <label className="span-2">Student guidance<textarea disabled={!canEdit} value={draft.submissionsGuidance} onChange={(event) => setDraft({ ...draft, submissionsGuidance: event.target.value })} /></label>
+      <label className="checkbox-row span-2">
+        <input checked={draft.submissionsPubliclyVisible} disabled={!canEdit} type="checkbox" onChange={(event) => setDraft({ ...draft, submissionsPubliclyVisible: event.target.checked })} />
+        <span>Approved work may be publicly visible on this hub.</span>
+      </label>
+      {canEdit ? <button className="primary-button blue" type="submit">Save submission settings</button> : <p className="module-note quiet">You can review submissions, but cannot edit hub settings.</p>}
+      {message && <p className="form-message span-2">{message}</p>}
+    </form>
   )
 }
 
@@ -2679,6 +2845,7 @@ function EditProjectModal({
 }) {
   const { t } = useLanguage()
   const [draft, setDraft] = useState<ProjectInput>({
+    sectionId: project.sectionId,
     title: project.title,
     groupName: project.groupName,
     className: project.className,
@@ -2692,6 +2859,7 @@ function EditProjectModal({
     status: project.status,
     featured: project.featured,
     studentPick: project.studentPick,
+    publiclyVisible: project.publiclyVisible,
   })
 
   const submit = async (event: FormEvent) => {

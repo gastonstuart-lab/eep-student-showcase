@@ -10,6 +10,7 @@ import type { Project } from '../types'
 const projects: Project[] = [
   {
     id: 'alpha',
+    sectionId: 'eep',
     title: 'Alpha Food Guide',
     groupName: 'Alpha Team',
     className: 'EEP 8A',
@@ -23,9 +24,11 @@ const projects: Project[] = [
     status: 'approved',
     featured: true,
     studentPick: false,
+    publiclyVisible: true,
   },
   {
     id: 'beta',
+    sectionId: 'eep',
     title: 'Beta Club Hub',
     groupName: 'Beta Team',
     className: 'EEP 8B',
@@ -39,6 +42,7 @@ const projects: Project[] = [
     status: 'approved',
     featured: false,
     studentPick: true,
+    publiclyVisible: true,
   },
 ]
 
