@@ -1,0 +1,55 @@
+name: Apply public hub i18n fix
+
+on:
+  push:
+    branches:
+      - codex/ied-hub-complete-repair
+    paths:
+      - scripts/apply-public-hub-i18n-fix.mjs
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ied-hub-complete-repair
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply public hub translation patch
+        run: node scripts/apply-public-hub-i18n-fix.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit validated repair
+        run: |
+          rm scripts/apply-public-hub-i18n-fix.mjs
+          git config user.name "IED Hub Repair Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Fix public hub English and Traditional Chinese content"
+          git push origin HEAD:codex/ied-hub-complete-repair
