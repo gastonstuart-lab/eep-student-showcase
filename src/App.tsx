@@ -13,6 +13,7 @@ import {
 } from 'react-router-dom'
 import { AuthProvider, mapAuthError, useAuth } from './auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { IedIntroPage } from './components/public/IedIntroPage'
 import { PremiumHero, type PremiumHeroAction } from './components/public/PremiumHero'
 import { PremiumImageCard } from './components/public/PremiumImageCard'
 import { ProgrammePathwayCard } from './components/public/ProgrammePathwayCard'
@@ -83,7 +84,8 @@ const defaultPageDescription =
   'Explore student learning, creative projects, ESL subject hubs, and the EEP Student Website Showcase from the International Education Department at THUHS.'
 
 const routeMeta = [
-  { pattern: /^\/$/, title: 'IED Learning Hub | THUHS', description: defaultPageDescription },
+  { pattern: /^\/$/, title: 'International Education Department | THUHS', description: defaultPageDescription },
+  { pattern: /^\/ied\/?$/, title: 'IED Learning Hub | THUHS', description: defaultPageDescription },
   { pattern: /^\/eep\/?$/, title: 'EEP Learning Hub | THUHS', description: 'Explore EEP stories, language activities, creative work, and student website projects.' },
   { pattern: /^\/eep\/showcase\/?$/, title: 'EEP Student Website Showcase | THUHS', description: 'Browse approved student-built Google Sites projects from the EEP Student Website Showcase.' },
   { pattern: /^\/eep\/showcase\/submit\/?$|^\/submit\/?$/, title: 'Submit an EEP Project | THUHS', description: 'Submit a Google Sites student project to the EEP teacher review queue.' },
@@ -477,15 +479,16 @@ function Shell() {
   }, [mobileMenuOpen])
 
   const protectedWorkspaceRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/change-password'
+  const introRoute = location.pathname === '/'
 
   return (
-    <div className={protectedWorkspaceRoute ? 'app-shell app-shell--workspace' : 'app-shell'}>
+    <div className={protectedWorkspaceRoute ? 'app-shell app-shell--workspace' : `app-shell${introRoute ? ' app-shell--intro' : ''}`}>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      {!protectedWorkspaceRoute && (
+      {!protectedWorkspaceRoute && !introRoute && (
         <header className="topbar">
-          <Link className="brand" to="/">
+          <Link className="brand" to="/ied">
             <img className="brand-logo" src="/school-logo.svg" alt="" />
             <span className="brand-text">
               <strong>IED Hub</strong>
@@ -502,7 +505,7 @@ function Shell() {
             Menu
           </button>
           <nav className="main-nav" aria-label={t('primaryNavigation')}>
-            <NavLink to="/" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
+            <NavLink to="/ied" onClick={() => setMobileMenuOpen(false)}>IED</NavLink>
             <NavLink to="/eep" onClick={() => setMobileMenuOpen(false)}>EEP</NavLink>
             <NavLink to="/esl" onClick={() => setMobileMenuOpen(false)}>ESL</NavLink>
             <NavLink to="/about" onClick={() => setMobileMenuOpen(false)}>{chromeText('navAbout')}</NavLink>
@@ -548,11 +551,20 @@ function Shell() {
 
       {!isFirebaseConfigured && location.pathname !== '/' && <FirebaseNotice />}
 
-      <main className={protectedWorkspaceRoute ? 'page-transition route-main route-main--workspace' : 'page-transition route-main'} id="main-content" key={location.pathname} tabIndex={-1}>
+      <main
+        className={
+          protectedWorkspaceRoute
+            ? 'page-transition route-main route-main--workspace'
+            : `page-transition route-main${introRoute ? ' route-main--intro' : ''}`
+        }
+        id="main-content"
+        key={location.pathname}
+        tabIndex={-1}
+      >
         {!protectedWorkspaceRoute && location.pathname !== '/' && <BackNavigation />}
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/ied" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<IedIntroPage />} />
+          <Route path="/ied" element={<HomePage />} />
           <Route path="/eep" element={<HubPageView sectionId="eep" />} />
           <Route path="/eep/showcase" element={<EepShowcasePage />} />
           <Route path="/eep/showcase/submit" element={<SubmitPage destination="eep-showcase" />} />
@@ -671,7 +683,7 @@ function BackNavigation() {
       return
     }
 
-    navigate('/')
+    navigate('/ied')
   }
 
   return (
@@ -751,7 +763,7 @@ export function AccessDenied({ sectionId, requireSuperAdmin = false }: { section
         title={t('accessDeniedTitle')}
         body={body}
       />
-      <Link className="secondary-button" to="/">
+      <Link className="secondary-button" to="/ied">
         {t('returnToPublicHub')}
       </Link>
     </section>
@@ -765,7 +777,7 @@ function NotFoundPage() {
     <section className="missing-page">
       <PageMessage title={t('notFoundTitle')} body={t('notFoundBody')} />
       <div className="hero-actions">
-        <Link className="primary-button blue" to="/">
+        <Link className="primary-button blue" to="/ied">
           {t('returnToPublicHub')}
         </Link>
         <Link className="secondary-button" to="/eep/showcase">

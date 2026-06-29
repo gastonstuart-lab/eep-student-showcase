@@ -29,6 +29,16 @@ export const translations = {
   teacherLogin: { en: 'Teacher Login', zh: '教師登入' },
   back: { en: 'Back', zh: '返回' },
   languageToggle: { en: 'Language', zh: '語言' },
+  introDepartmentTitle: { en: 'International Education Department', zh: '國際教育處' },
+  introEnter: { en: 'Enter', zh: '進入' },
+  introHint: {
+    en: 'Move your mouse or finger · select Enter to open the IED Hub',
+    zh: '移動滑鼠或手指，選擇「進入」開啟 IED 學習中心',
+  },
+  introLogoAlt: {
+    en: 'The Affiliated High School of Tunghai University',
+    zh: '東海大學附屬高級中等學校',
+  },
 
   iedHeroEyebrow: { en: 'INTERNATIONAL EDUCATION DEPARTMENT', zh: '國際教育處' },
   iedHeroTitle: { en: 'IED Learning Showcase Hub', zh: 'IED 學習成果展示中心' },

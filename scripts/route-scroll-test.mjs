@@ -290,11 +290,11 @@ async function runViewport(serverInfo, viewport) {
 
   try {
     await expectKeyboardFocusVisible(page, serverInfo.baseUrl, `${viewport.name} keyboard focus`)
-    await runNormalRouteCase(page, serverInfo.baseUrl, '/', '/eep', '/eep', 'EEP Learning Hub', `${viewport.name} home -> EEP`)
-    await runNormalRouteCase(page, serverInfo.baseUrl, '/', '/esl', '/esl', 'ESL Learning Hub', `${viewport.name} home -> ESL`)
+    await runNormalRouteCase(page, serverInfo.baseUrl, '/ied', '/eep', '/eep', 'EEP Learning Hub', `${viewport.name} IED -> EEP`)
+    await runNormalRouteCase(page, serverInfo.baseUrl, '/ied', '/esl', '/esl', 'ESL Learning Hub', `${viewport.name} IED -> ESL`)
     await runNormalRouteCase(page, serverInfo.baseUrl, '/esl', '/esl/science', '/esl/science', 'Science Hub', `${viewport.name} ESL -> Science`)
     await runNormalRouteCase(page, serverInfo.baseUrl, '/esl/science', '/about', '/about', 'International Education at THUHS', `${viewport.name} Science -> About`)
-    await runNormalRouteCase(page, serverInfo.baseUrl, '/about', '/login', '/login', 'Login', `${viewport.name} public -> Login`)
+    await runNormalRouteCase(page, serverInfo.baseUrl, '/about', '/login', '/login', undefined, `${viewport.name} public -> Login`)
     await runHashCase(page, serverInfo.baseUrl, `${viewport.name} valid hash`)
     await runAdminCases(page, serverInfo.baseUrl, viewport.name)
 

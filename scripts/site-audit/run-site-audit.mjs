@@ -511,7 +511,7 @@ async function auditPlaceholders() {
 }
 
 async function runLighthouseIfPossible() {
-  const routes = ['/', '/eep', '/esl', '/eep/showcase', '/esl/science', '/login']
+  const routes = ['/', '/ied', '/eep', '/esl', '/eep/showcase', '/esl/science', '/login']
   try {
     const lighthouse = (await import('lighthouse')).default
     const chromeLauncher = await import('chrome-launcher')
