@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { UiText, useLanguage } from '../../i18n/LanguageContext'
 import './IedIntroPage.css'
+
+const introHeroImage = '/images/ied-premium/heroes/ied-home-hero.webp'
+const introHeroPosition = '72% center'
+const uiFadeMs = 240
+const expansionMs = 1000
+const holdMs = 320
+const revealMs = 580
+const reducedMotionMs = 180
 
 const introTiles = [
   { src: '/images/ied-premium/workspace/luce-chapel-hero.webp', label: 'Luce Chapel' },
@@ -10,7 +19,7 @@ const introTiles = [
   { src: '/images/ied-premium/heroes/science-hero.webp', label: 'Science' },
   { src: '/images/ied-premium/heroes/language-arts-hero.webp', label: 'Language Arts' },
   { src: '/images/ied-premium/cards/eep-card.webp', label: 'EEP materials' },
-  { src: '/images/ied-premium/heroes/ied-home-hero.webp', label: 'THUHS campus building' },
+  { src: introHeroImage, label: 'THUHS campus building' },
   { src: '/images/ied-premium/heroes/performance-arts-hero.webp', label: 'Performance Arts' },
   { src: '/images/ied-premium/heroes/social-studies-hero.webp', label: 'Social Studies' },
   { src: '/images/ied-premium/heroes/showcase-hero.webp', label: 'Student Showcase' },
@@ -19,6 +28,66 @@ const introTiles = [
 ] as const
 
 const selectedTileIndex = 6
+
+type IntroPhase = 'idle' | 'fading-ui' | 'expanding' | 'holding' | 'navigating' | 'revealing-home' | 'complete'
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => { finished: Promise<void> }
+}
+
+function preloadImage(src: string) {
+  return new Promise<void>((resolve) => {
+    const image = new Image()
+    const timeout = window.setTimeout(resolve, 260)
+
+    image.onload = () => {
+      window.clearTimeout(timeout)
+      resolve()
+    }
+    image.onerror = () => {
+      window.clearTimeout(timeout)
+      resolve()
+    }
+    image.src = src
+
+    if (image.complete) {
+      window.clearTimeout(timeout)
+      resolve()
+    }
+  })
+}
+
+function appendCarryoverLayer() {
+  const layer = document.createElement('div')
+  layer.className = 'ied-intro__carryover-layer'
+  layer.setAttribute('aria-hidden', 'true')
+  layer.dataset.preserveAcrossRoute = 'true'
+
+  const image = document.createElement('img')
+  image.src = introHeroImage
+  image.alt = ''
+  image.draggable = false
+  image.style.objectPosition = introHeroPosition
+
+  layer.append(image)
+  document.body.append(layer)
+
+  return layer
+}
+
+function revealCarryoverLayer(layer: HTMLDivElement | null) {
+  window.requestAnimationFrame(() => {
+    layer?.classList.add('ied-intro__carryover-layer--revealing')
+    document.documentElement.classList.add('ied-intro__home-revealing')
+  })
+
+  window.setTimeout(() => {
+    layer?.remove()
+    document.documentElement.classList.remove('ied-intro__scroll-lock')
+    document.documentElement.classList.remove('ied-intro__home-arriving')
+    document.documentElement.classList.remove('ied-intro__home-revealing')
+  }, revealMs)
+}
 
 function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
@@ -50,10 +119,12 @@ export function IedIntroPage() {
   const navigate = useNavigate()
   const { t } = useLanguage()
   const selectedTileRef = useRef<HTMLDivElement | null>(null)
-  const navigationTimerRef = useRef<number | null>(null)
-  const [transitioning, setTransitioning] = useState(false)
+  const timersRef = useRef<number[]>([])
+  const carryoverLayerRef = useRef<HTMLDivElement | null>(null)
+  const [phase, setPhase] = useState<IntroPhase>('idle')
   const [tileBounds, setTileBounds] = useState<CSSProperties>({})
   const prefersReducedMotion = usePrefersReducedMotion()
+  const transitioning = phase !== 'idle' && phase !== 'complete'
 
   const pageStyle = useMemo(
     () => ({
@@ -64,13 +135,23 @@ export function IedIntroPage() {
 
   useEffect(() => {
     return () => {
-      if (navigationTimerRef.current !== null) {
-        window.clearTimeout(navigationTimerRef.current)
+      timersRef.current.forEach((timer) => window.clearTimeout(timer))
+      if (!carryoverLayerRef.current?.dataset.preserveAcrossRoute) {
+        carryoverLayerRef.current?.remove()
+        document.documentElement.classList.remove('ied-intro__scroll-lock')
+        document.documentElement.classList.remove('ied-intro__home-arriving')
+        document.documentElement.classList.remove('ied-intro__home-revealing')
       }
-
-      document.documentElement.classList.remove('ied-intro__scroll-lock')
     }
   }, [])
+
+  const queueTimer = (callback: () => void, delay: number) => {
+    const timer = window.setTimeout(() => {
+      timersRef.current = timersRef.current.filter((item) => item !== timer)
+      callback()
+    }, delay)
+    timersRef.current.push(timer)
+  }
 
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
     if (prefersReducedMotion || transitioning) {
@@ -88,6 +169,31 @@ export function IedIntroPage() {
   const handlePointerLeave = (event: PointerEvent<HTMLElement>) => {
     event.currentTarget.style.setProperty('--ied-intro-shift-x', '0px')
     event.currentTarget.style.setProperty('--ied-intro-shift-y', '0px')
+  }
+
+  const navigateToHome = async (useCarryoverLayer: boolean) => {
+    setPhase('navigating')
+    document.documentElement.classList.add('ied-intro__home-arriving')
+
+    if (useCarryoverLayer) {
+      carryoverLayerRef.current = appendCarryoverLayer()
+    }
+
+    await preloadImage(introHeroImage)
+
+    const transitionDocument = document as ViewTransitionDocument
+
+    if (transitionDocument.startViewTransition) {
+      transitionDocument.startViewTransition(() => {
+        flushSync(() => navigate('/ied'))
+      })
+
+      window.setTimeout(() => revealCarryoverLayer(carryoverLayerRef.current), 120)
+      return
+    }
+
+    navigate('/ied')
+    window.setTimeout(() => revealCarryoverLayer(carryoverLayerRef.current), 80)
   }
 
   const handleEnter = () => {
@@ -108,21 +214,28 @@ export function IedIntroPage() {
     }
 
     document.documentElement.classList.add('ied-intro__scroll-lock')
-    setTransitioning(true)
+    void preloadImage(introHeroImage)
 
-    navigationTimerRef.current = window.setTimeout(
-      () => {
+    if (prefersReducedMotion) {
+      setPhase('fading-ui')
+      queueTimer(() => {
         document.documentElement.classList.remove('ied-intro__scroll-lock')
-        navigate('/ied')
-      },
-      prefersReducedMotion ? 180 : 900,
-    )
+        void navigateToHome(false)
+      }, reducedMotionMs)
+      return
+    }
+
+    setPhase('fading-ui')
+    queueTimer(() => setPhase('expanding'), uiFadeMs)
+    queueTimer(() => setPhase('holding'), uiFadeMs + expansionMs)
+    queueTimer(() => void navigateToHome(true), uiFadeMs + expansionMs + holdMs)
   }
 
   return (
     <section
-      className={`ied-intro${transitioning ? ' ied-intro--entering' : ''}${prefersReducedMotion ? ' ied-intro--reduced-motion' : ''}`}
+      className={`ied-intro ied-intro--${phase}${transitioning ? ' ied-intro--entering' : ''}${prefersReducedMotion ? ' ied-intro--reduced-motion' : ''}`}
       aria-labelledby="ied-intro-title"
+      data-transition-phase={phase}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       style={pageStyle}
@@ -141,7 +254,7 @@ export function IedIntroPage() {
       </div>
 
       <div className="ied-intro__selected-expander" aria-hidden="true">
-        <img src="/images/ied-premium/heroes/ied-home-hero.webp" alt="" draggable={false} />
+        <img src={introHeroImage} alt="" draggable={false} />
       </div>
 
       <div className="ied-intro__logo-panel">
