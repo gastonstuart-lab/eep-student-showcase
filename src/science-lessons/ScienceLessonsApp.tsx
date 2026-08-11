@@ -17,12 +17,21 @@ import {
   type Semester,
   type YearLevel,
 } from './data'
+import { BiomesV2Prototype } from './presentation-v2/BiomesV2Prototype'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
 const languageOptions: LanguageMode[] = ['English', 'Bilingual', '繁體中文']
 
 export function ScienceLessonsApp() {
+  if (window.location.search.includes('v2=biomes')) {
+    return <BiomesV2Prototype />
+  }
+
+  return <ScienceLessonsWorkspace />
+}
+
+function ScienceLessonsWorkspace() {
   const [screen, setScreen] = useState<Screen>('home')
   const [year, setYear] = useState<YearLevel>('J1')
   const [semester, setSemester] = useState<Semester>('Fall')

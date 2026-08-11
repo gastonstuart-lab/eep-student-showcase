@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { ScienceLessonsApp } from '../science-lessons/ScienceLessonsApp'
 import { rainfallComparisonData } from '../science-lessons/curriculum/biomeCharts'
 import { findLesson, scienceLessons, scienceVisualAssets } from '../science-lessons/data'
+import { BiomesV2Prototype } from '../science-lessons/presentation-v2/BiomesV2Prototype'
 import { validateScienceCurriculum } from '../science-lessons/validation'
 
 const biomes = findLesson('j1-ch2-4-biomes-real-pilot')
@@ -99,5 +100,25 @@ describe('Science Lessons teacher flow', () => {
     fireEvent.click(screen.getByRole('button', { name: '繁體中文' }))
 
     expect(screen.getByRole('heading', { name: /第 2.4 章/ })).toBeInTheDocument()
+  })
+})
+
+describe('Biomes presentation V2 prototype', () => {
+  it('keeps Chinese support outside the immutable English slide plane', () => {
+    const { container } = render(<BiomesV2Prototype />)
+
+    const englishPlane = container.querySelector('.v2-english-plane')
+    const supportLayer = container.querySelector('.v2-support-layer')
+
+    expect(englishPlane).toBeInTheDocument()
+    expect(supportLayer).toBeInTheDocument()
+    expect(englishPlane?.contains(supportLayer)).toBe(false)
+    expect(supportLayer?.contains(englishPlane)).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bilingual' }))
+
+    expect(container.querySelector('.v2-stage')).toHaveAttribute('data-language', 'Bilingual')
+    expect(supportLayer).toHaveClass('is-visible')
+    expect(englishPlane?.querySelector('.v2-title-block h1')).toHaveTextContent('What is a biome?')
   })
 })
