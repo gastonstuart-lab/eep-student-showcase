@@ -648,21 +648,23 @@ function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
         <SlideBody slide={slide} language={language} />
       </section>
       <section className="concept-map" aria-label="Climate and organisms form a biome">
-        <div className="concept-map__inputs">
-          <article>
+        <div className="concept-map__equation">
+          <article className="concept-factor concept-factor--climate">
+            <strong>CLIMATE</strong>
             <span>temperature + precipitation</span>
-            <strong>climate</strong>
           </article>
-          <article>
+          <b aria-hidden="true">+</b>
+          <article className="concept-factor concept-factor--organisms">
+            <strong>ORGANISMS</strong>
             <span>plants + animals</span>
-            <strong>organisms</strong>
+          </article>
+          <b aria-hidden="true">=</b>
+          <article className="concept-factor concept-factor--biome">
+            <strong>BIOME</strong>
+            <span>similar land ecosystems</span>
           </article>
         </div>
-        <div className="concept-map__arrow" aria-hidden="true">↓</div>
-        <article className="concept-map__result">
-          <strong>biome</strong>
-          <span>a group of land ecosystems with similar climates and organisms</span>
-        </article>
+        <div className="concept-definition">A biome is a group of land ecosystems with similar climates and organisms.</div>
       </section>
       <RevealStack items={visibleReveals} language={language} mode="statements" />
     </>
@@ -800,22 +802,27 @@ function SciencePhoto({
 function TeachingDiagram({ slide }: { slide: LessonSlide }) {
   if (slide.id.includes('climate-drivers')) {
     return (
-      <section className="climate-concept-diagram" aria-label="Temperature and precipitation determine biome concept diagram">
-        <div className="climate-input climate-input--temperature">
-          <span>climate factor 1</span>
-          <strong>temperature</strong>
-          <small>hot · moderate · cold</small>
+      <section className="climate-concept-diagram" aria-label="Conceptual temperature and precipitation biome diagram">
+        <div className="climate-question">What two climate factors help determine the biome?</div>
+        <div className="climate-axis climate-axis--temperature" aria-hidden="true">
+          <span>cold</span>
+          <i />
+          <span>hot</span>
         </div>
-        <div className="climate-input climate-input--precipitation">
-          <span>climate factor 2</span>
-          <strong>precipitation</strong>
-          <small>wet · seasonal · dry</small>
+        <div className="climate-axis climate-axis--precipitation" aria-hidden="true">
+          <span>wet</span>
+          <i />
+          <span>dry</span>
         </div>
-        <div className="climate-join" aria-hidden="true">+</div>
-        <div className="climate-output">
-          <span>strong clue for</span>
-          <strong>biome</strong>
-          <small>organisms survive these conditions</small>
+        <div className="climate-field">
+          <span className="climate-marker climate-marker--tundra">cold + dry<br /><strong>tundra</strong></span>
+          <span className="climate-marker climate-marker--desert">hot + dry<br /><strong>desert</strong></span>
+          <span className="climate-marker climate-marker--grassland">seasonal rain<br /><strong>grassland</strong></span>
+          <span className="climate-marker climate-marker--rainforest">hot + wet<br /><strong>rain forest</strong></span>
+        </div>
+        <div className="climate-rule">
+          <strong>TEMPERATURE + PRECIPITATION</strong>
+          <span>give the climate clues for biome conditions.</span>
         </div>
       </section>
     )
@@ -881,22 +888,31 @@ function RainfallSpectrum({ visibleCount }: { visibleCount: number }) {
 
   return (
     <section className="rainfall-spectrum" aria-label="Annual precipitation chart in centimeters per year">
-      <span className="rainfall-spectrum__unit">Annual precipitation (cm/year)</span>
-      <div className="rainfall-axis" aria-hidden="true"><span>300</span><span>150</span><span>0</span></div>
-      {rainfallComparisonData.map((point, index) => (
-        <article
-          className={index < visibleCount ? 'is-visible' : ''}
-          key={point.label}
-          style={{
-            '--bar': `${Math.max(8, (point.representativeCm / maxRainfall) * 100)}%`,
-            '--rainfall-column': String(index + 1),
-          } as CSSProperties}
-        >
-          <i />
-          <span>{point.label}</span>
-          <strong>{point.valueLabel}</strong>
-        </article>
-      ))}
+      <div className="rainfall-chart-title">
+        <strong>Increasing annual precipitation</strong>
+        <span>cm per year</span>
+      </div>
+      <div className="rainfall-axis" aria-hidden="true"><span>300</span><span>200</span><span>100</span><span>0</span></div>
+      <div className="rainfall-plot">
+        <span className="rainfall-gridline rainfall-gridline--300" />
+        <span className="rainfall-gridline rainfall-gridline--200" />
+        <span className="rainfall-gridline rainfall-gridline--100" />
+        {rainfallComparisonData.map((point, index) => (
+          <article
+            className={`${index < visibleCount ? 'is-visible' : ''} rainfall-bar--${index}`}
+            key={point.label}
+            style={{
+              '--bar': `${Math.max(8, (point.representativeCm / maxRainfall) * 100)}%`,
+              '--rainfall-column': String(index + 1),
+            } as CSSProperties}
+          >
+            <i />
+            <span>{point.label}</span>
+            <strong>{point.valueLabel}</strong>
+          </article>
+        ))}
+      </div>
+      <div className="rainfall-direction" aria-hidden="true">MORE PRECIPITATION -&gt; DIFFERENT ECOSYSTEM CONDITIONS</div>
     </section>
   )
 }
