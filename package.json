@@ -9,6 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "science:extract-pptx": "node scripts/science-lessons/extract-pptx.mjs",
+    "science:validate-assets": "node scripts/science-lessons/validate-assets.mjs",
     "audit:site": "node scripts/site-audit/run-site-audit.mjs",
     "audit:site:preview": "node scripts/site-audit/run-site-audit.mjs --mode preview --base-url https://ied-hub--final-review-0w7hj3l0.web.app",
     "test:route-scroll": "node scripts/run-route-scroll-test-v4.mjs",

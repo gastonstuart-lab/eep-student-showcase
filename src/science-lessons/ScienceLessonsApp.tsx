@@ -1,9 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { rainfallComparisonData } from './curriculum/biomeCharts'
 import {
+  biomeAssetIds,
   findLesson,
+  findVisualAsset,
   scienceLessons,
   scienceUnits,
   type LanguageMode,
+  type LessonBiomeKey,
+  type LessonVisualAsset,
+  type LocalizedText,
+  type LessonResource,
   type LessonSlide,
   type ScienceLesson,
   type Semester,
@@ -60,11 +68,11 @@ export function ScienceLessonsApp() {
       )}
       {screen === 'viewer' && (
         <SlideViewer
+          key={lesson.id}
           lesson={lesson}
           language={language}
           onLanguageChange={setLanguage}
           onBack={() => setScreen('library')}
-          onEdit={() => setScreen('editor')}
         />
       )}
       {screen === 'editor' && (
@@ -83,7 +91,7 @@ function AppHeader({ screen, onNavigate }: { screen: Screen; onNavigate: (screen
         </a>
         <div>
           <strong>Science Lessons</strong>
-          <span>Teacher workspace</span>
+          <span><a href="/esl/science">Back to Science Hub</a></span>
         </div>
       </div>
 
@@ -129,8 +137,8 @@ function ScienceHome({
           <p className="science-eyebrow">IED · ESL Science</p>
           <h1>Everything needed to teach the next Science lesson.</h1>
           <p>
-            Browse organised J1 and J2 lessons, present bilingual slides, keep teacher notes close, and open every
-            worksheet, quiz, and video from one place.
+            Find the right J1 or J2 lesson quickly, press Present, and teach from source-faithful Science slides with
+            notes and resources close at hand.
           </p>
           <div className="science-hero__actions">
             <button className="science-button science-button--primary" type="button" onClick={() => onBrowse()}>
@@ -142,11 +150,16 @@ function ScienceHome({
           </div>
         </div>
         <div className="science-hero__visual" aria-hidden="true">
-          <div className="orbit orbit--one" />
-          <div className="orbit orbit--two" />
-          <span className="atom atom--one" />
-          <span className="atom atom--two" />
-          <span className="atom atom--three" />
+          <div className="teacher-flow-card">
+            <span>Teacher path</span>
+            <ol>
+              <li>IED</li>
+              <li>ESL</li>
+              <li>Science</li>
+              <li>Science Lessons</li>
+              <li>Present</li>
+            </ol>
+          </div>
           <div className="science-hero__panel">
             <span>Next lesson</span>
             <strong>{continueLesson.title}</strong>
@@ -269,11 +282,8 @@ function LessonLibrary({
         <div>
           <p className="science-eyebrow">Science curriculum</p>
           <h1>Unit and lesson library</h1>
-          <p>Open a lesson for teaching, review its resources, or continue editing a draft.</p>
+          <p>Choose the year, semester, and lesson, then open a classroom-ready presentation.</p>
         </div>
-        <button className="science-button science-button--primary" type="button" onClick={() => onOpenLesson(scienceLessons[0], 'editor')}>
-          + New lesson
-        </button>
       </section>
 
       <section className="library-toolbar" aria-label="Lesson filters">
@@ -337,6 +347,8 @@ function LessonLibrary({
               <div className="lesson-row__main">
                 <div className="lesson-row__meta">
                   <span className={`science-status science-status--${lesson.status.toLowerCase()}`}>{lesson.status}</span>
+                  {lesson.title.includes('REAL PILOT') && <span className="science-status science-status--pilot">Real pilot</span>}
+                  <span>{lesson.chapter}</span>
                   <span>{lesson.duration} min</span>
                   <span>{lesson.slides.length} slides</span>
                   <span>{lesson.resources.length} resources</span>
@@ -347,10 +359,7 @@ function LessonLibrary({
               </div>
               <div className="lesson-row__actions">
                 <button className="science-button science-button--primary" type="button" onClick={() => onOpenLesson(lesson)}>
-                  Open lesson
-                </button>
-                <button className="science-icon-button" type="button" onClick={() => onOpenLesson(lesson, 'editor')} aria-label={`Edit ${lesson.title}`}>
-                  ✎
+                  Present lesson
                 </button>
               </div>
             </article>
@@ -371,21 +380,87 @@ function SlideViewer({
   language,
   onLanguageChange,
   onBack,
-  onEdit,
 }: {
   lesson: ScienceLesson
   language: LanguageMode
   onLanguageChange: (language: LanguageMode) => void
   onBack: () => void
-  onEdit: () => void
 }) {
   const [slideIndex, setSlideIndex] = useState(0)
+  const [revealIndex, setRevealIndex] = useState(0)
   const [notesOpen, setNotesOpen] = useState(true)
   const [resourcesOpen, setResourcesOpen] = useState(true)
+  const [isPresenting, setIsPresenting] = useState(false)
+  const stageAreaRef = useRef<HTMLElement>(null)
   const slide = lesson.slides[slideIndex] ?? lesson.slides[0]
+  const totalReveals = slide.revealMode === 'step-by-step' ? (slide.reveals?.length ?? 0) : 0
 
-  const previous = () => setSlideIndex((current) => Math.max(0, current - 1))
-  const next = () => setSlideIndex((current) => Math.min(lesson.slides.length - 1, current + 1))
+  const previous = useCallback(() => {
+    if (revealIndex > 0) {
+      setRevealIndex((current) => Math.max(0, current - 1))
+      return
+    }
+    setSlideIndex((current) => Math.max(0, current - 1))
+  }, [revealIndex])
+
+  const next = useCallback(() => {
+    if (revealIndex < totalReveals) {
+      setRevealIndex((current) => Math.min(totalReveals, current + 1))
+      return
+    }
+    setRevealIndex(0)
+    setSlideIndex((current) => Math.min(lesson.slides.length - 1, current + 1))
+  }, [lesson.slides.length, revealIndex, totalReveals])
+
+  const jumpToSlide = (index: number) => {
+    setRevealIndex(0)
+    setSlideIndex(index)
+  }
+
+  useEffect(() => {
+    const syncPresentationState = () => setIsPresenting(document.fullscreenElement === stageAreaRef.current)
+    document.addEventListener('fullscreenchange', syncPresentationState)
+    return () => document.removeEventListener('fullscreenchange', syncPresentationState)
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const isFormField = target?.closest('input, textarea, select, [contenteditable="true"]')
+      if (isFormField) return
+
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+        event.preventDefault()
+        next()
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault()
+        previous()
+      }
+      if (event.key === 'Home') {
+        event.preventDefault()
+        setRevealIndex(0)
+        setSlideIndex(0)
+      }
+      if (event.key === 'End') {
+        event.preventDefault()
+        setRevealIndex(0)
+        setSlideIndex(lesson.slides.length - 1)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [lesson.slides.length, next, previous])
+
+  const togglePresentation = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.()
+      return
+    }
+
+    await stageAreaRef.current?.requestFullscreen?.()
+  }
 
   return (
     <main className="viewer-shell">
@@ -393,7 +468,7 @@ function SlideViewer({
         <div className="viewer-toolbar__lesson">
           <button className="viewer-back" type="button" onClick={onBack} aria-label="Return to lesson library">←</button>
           <div>
-            <span>{lesson.year} · {lesson.semester}</span>
+            <span>{lesson.year} · {lesson.semester} · {lesson.chapter}</span>
             <strong>{lesson.title}</strong>
           </div>
         </div>
@@ -403,9 +478,8 @@ function SlideViewer({
               <button className={language === item ? 'is-active' : ''} key={item} type="button" onClick={() => onLanguageChange(item)}>{item}</button>
             ))}
           </div>
-          <button className="viewer-tool-button" type="button" onClick={onEdit}>✎ Edit lesson</button>
-          <button className="viewer-tool-button viewer-tool-button--accent" type="button" onClick={() => document.documentElement.requestFullscreen?.()}>
-            ⛶ Fullscreen
+          <button className="viewer-tool-button viewer-tool-button--accent" type="button" onClick={togglePresentation}>
+            ⛶ {isPresenting ? 'Exit' : 'Present'}
           </button>
         </div>
       </header>
@@ -417,21 +491,21 @@ function SlideViewer({
             <strong>{lesson.slides.length}</strong>
           </div>
           {lesson.slides.map((item, index) => (
-            <button className={index === slideIndex ? 'is-current' : ''} key={item.id} type="button" onClick={() => setSlideIndex(index)}>
+            <button className={index === slideIndex ? 'is-current' : ''} key={item.id} type="button" onClick={() => jumpToSlide(index)}>
               <span>{index + 1}</span>
               <SlideMiniature slide={item} />
             </button>
           ))}
         </aside>
 
-        <section className="viewer-stage-area">
+        <section className={`viewer-stage-area${isPresenting ? ' is-presenting' : ''}`} ref={stageAreaRef}>
           <div className="viewer-stage">
-            <SlideCanvas slide={slide} language={language} />
+            <SlideCanvas slide={slide} language={language} visibleRevealCount={revealIndex} />
           </div>
           <div className="viewer-navigation">
-            <button type="button" onClick={previous} disabled={slideIndex === 0}>← Previous</button>
-            <span>Slide {slideIndex + 1} of {lesson.slides.length}</span>
-            <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1}>Next →</button>
+            <button type="button" onClick={previous} disabled={slideIndex === 0 && revealIndex === 0}>← Previous</button>
+            <span>Slide {slideIndex + 1} of {lesson.slides.length}{totalReveals > 0 ? ` · Reveal ${revealIndex} of ${totalReveals}` : ''}</span>
+            <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1 && revealIndex === totalReveals}>Next →</button>
           </div>
         </section>
 
@@ -451,13 +525,7 @@ function SlideViewer({
             </button>
             {resourcesOpen && (
               <div className="resource-stack">
-                {lesson.resources.map((resource) => (
-                  <button key={resource.id} type="button">
-                    <span className="resource-icon" aria-hidden="true">{resource.type === 'Video' ? '▶' : resource.type === 'Quiz' ? '?' : '▤'}</span>
-                    <span><strong>{resource.title}</strong><small>{resource.type} · {resource.detail}</small></span>
-                    <span aria-hidden="true">↗</span>
-                  </button>
-                ))}
+                {lesson.resources.map((resource) => <ResourceLink key={resource.id} resource={resource} />)}
               </div>
             )}
           </section>
@@ -466,26 +534,370 @@ function SlideViewer({
             <span>Lesson objectives</span>
             <ul>{lesson.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul>
           </section>
+
+          <section className="viewer-panel viewer-panel--sources">
+            <span>Source references</span>
+            <ul>{lesson.sourceReferences.map((source) => <li key={source.id}><strong>{source.title}</strong><small>{source.slideRange ?? source.location}</small></li>)}</ul>
+          </section>
         </aside>
       </div>
     </main>
   )
 }
 
-function SlideCanvas({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+function localizedText(text: LocalizedText, language: LanguageMode) {
+  if (language === '繁體中文') return text.zhHant ?? text.en
+  return text.en
+}
+
+function secondaryText(text: LocalizedText, language: LanguageMode) {
+  if (language === 'Bilingual') return text.zhHant
+  return undefined
+}
+
+function SlideCanvas({
+  slide,
+  language,
+  visibleRevealCount,
+}: {
+  slide: LessonSlide
+  language: LanguageMode
+  visibleRevealCount: number
+}) {
+  const visibleReveals = slide.revealMode === 'step-by-step' ? slide.reveals?.slice(0, visibleRevealCount) ?? [] : slide.reveals ?? []
+  const layout = slide.layout ?? 'concept'
+
   return (
-    <article className={`slide-canvas slide-canvas--${slide.visual}`}>
-      <div className="slide-canvas__content">
-        <span className="slide-label">Science concept</span>
-        {(language === 'English' || language === 'Bilingual') && <h1>{slide.titleEn}</h1>}
-        {(language === '繁體中文' || language === 'Bilingual') && <h2 lang="zh-Hant">{slide.titleZh}</h2>}
-        <div className="slide-rule" />
-        {(language === 'English' || language === 'Bilingual') && <p>{slide.bodyEn}</p>}
-        {(language === '繁體中文' || language === 'Bilingual') && <p className="slide-chinese" lang="zh-Hant">{slide.bodyZh}</p>}
-      </div>
-      <ScienceVisual type={slide.visual} />
-      <span className="slide-corner">IED · SCIENCE</span>
+    <article className={`slide-canvas slide-canvas--${slide.visual} slide-layout slide-layout--${layout}${slide.biomeKey ? ` slide-biome--${slide.biomeKey}` : ''}`}>
+      {layout === 'hero' && <HeroVisualSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'concept' && <ConceptSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'vocabulary' && <VocabularySlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'diagram' && <DiagramSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'comparison' && <ComparisonSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'image-focus' && <ImageFocusSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {layout === 'question' && <QuestionSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
+      {slide.sourceId && <span className="slide-source">Source: {slide.sourceId}</span>}
+      <span className="slide-corner">IED SCIENCE</span>
     </article>
+  )
+}
+
+function SlideTitle({ slide, language, kicker }: { slide: LessonSlide; language: LanguageMode; kicker?: string }) {
+  return (
+    <div className="slide-title-block">
+      {kicker && <span className="slide-label">{kicker}</span>}
+      {(language === 'English' || language === 'Bilingual') && <h1>{slide.title.en}</h1>}
+      {language === '繁體中文' && <h1 lang="zh-Hant">{slide.title.zhHant ?? slide.title.en}</h1>}
+      {language === 'Bilingual' && slide.title.zhHant && <h2 lang="zh-Hant">{slide.title.zhHant}</h2>}
+      {slide.emphasis && <strong className="slide-emphasis">{slide.emphasis}</strong>}
+    </div>
+  )
+}
+
+function SlideBody({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  return (
+    <div className="slide-body-copy">
+      {(language === 'English' || language === 'Bilingual') && <p>{slide.body.en}</p>}
+      {language === '繁體中文' && <p lang="zh-Hant">{slide.body.zhHant ?? slide.body.en}</p>}
+      {language === 'Bilingual' && slide.body.zhHant && <p className="slide-chinese" lang="zh-Hant">{slide.body.zhHant}</p>}
+    </div>
+  )
+}
+
+function RevealStack({
+  items,
+  language,
+  mode = 'stack',
+}: {
+  items: NonNullable<LessonSlide['reveals']>
+  language: LanguageMode
+  mode?: 'stack' | 'chips' | 'cards' | 'questions' | 'prompts' | 'statements'
+}) {
+  if (items.length === 0) return null
+
+  return (
+    <ul className={`slide-reveal-list slide-reveal-list--${mode}`}>
+      {items.map((item) => (
+        <li key={item.id}>
+          <span>{localizedText(item.text, language)}</span>
+          {secondaryText(item.text, language) && <small lang="zh-Hant">{secondaryText(item.text, language)}</small>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  return (
+    <>
+      <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />
+      <section className="slide-hero-copy">
+        <SlideTitle slide={slide} language={language} kicker="Chapter 2.4" />
+        <SlideBody slide={slide} language={language} />
+        <RevealStack items={visibleReveals} language={language} mode="prompts" />
+      </section>
+    </>
+  )
+}
+
+function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  return (
+    <>
+      <section className="slide-concept-main">
+        <SlideTitle slide={slide} language={language} kicker="Core idea" />
+        <SlideBody slide={slide} language={language} />
+      </section>
+      <section className="concept-map" aria-label="Climate and organisms form a biome">
+        <div className="concept-map__inputs">
+          <article>
+            <span>temperature + precipitation</span>
+            <strong>climate</strong>
+          </article>
+          <article>
+            <span>plants + animals</span>
+            <strong>organisms</strong>
+          </article>
+        </div>
+        <div className="concept-map__arrow" aria-hidden="true">↓</div>
+        <article className="concept-map__result">
+          <strong>biome</strong>
+          <span>a group of land ecosystems with similar climates and organisms</span>
+        </article>
+      </section>
+      <RevealStack items={visibleReveals} language={language} mode="statements" />
+    </>
+  )
+}
+
+function VocabularySlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const biomes = slide.revealMode === 'step-by-step' ? visibleReveals : slide.reveals ?? []
+
+  return (
+    <>
+      <section className="slide-vocab-heading">
+        <SlideTitle slide={slide} language={language} kicker="Vocabulary map" />
+        <SlideBody slide={slide} language={language} />
+      </section>
+      <section className="biome-vocab-grid">
+        {biomes.map((item, index) => (
+          <article className={`biome-token biome-token--${index}`} key={item.id}>
+            <img src={findVisualAsset(biomeAssetIds[biomeOrder[index]])?.localPath} alt="" aria-hidden="true" />
+            <strong>{localizedText(item.text, language)}</strong>
+            {secondaryText(item.text, language) && <small lang="zh-Hant">{secondaryText(item.text, language)}</small>}
+          </article>
+        ))}
+      </section>
+    </>
+  )
+}
+
+function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const isClimate = slide.id.includes('climate-drivers')
+
+  return (
+    <>
+      <section className="slide-diagram-copy">
+        <SlideTitle slide={slide} language={language} kicker="Explain the pattern" />
+        <SlideBody slide={slide} language={language} />
+        <RevealStack items={visibleReveals} language={language} mode={isClimate ? 'statements' : 'stack'} />
+      </section>
+      <TeachingDiagram slide={slide} />
+    </>
+  )
+}
+
+function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const isRainfall = slide.id.includes('rainfall-spectrum')
+
+  return (
+    <>
+      <section className="slide-comparison-heading">
+        <SlideTitle slide={slide} language={language} kicker={isRainfall ? 'Retrieval' : 'Compare'} />
+        <SlideBody slide={slide} language={language} />
+      </section>
+      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} /> : <GrasslandComparison />}
+      {!isRainfall && <RevealStack items={visibleReveals} language={language} mode="chips" />}
+    </>
+  )
+}
+
+function ImageFocusSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  return (
+    <>
+      <SciencePhoto slide={slide} className="slide-photo slide-photo--panel">
+        {slide.biomeKey === 'rainforest' && (
+          <>
+            <span className="photo-label photo-label--canopy">Canopy</span>
+            <span className="photo-label photo-label--understory">Understory</span>
+          </>
+        )}
+      </SciencePhoto>
+      <section className="image-focus-copy">
+        <SlideTitle slide={slide} language={language} kicker="Biome close-up" />
+        <SlideBody slide={slide} language={language} />
+        <RevealStack items={visibleReveals} language={language} mode="cards" />
+      </section>
+    </>
+  )
+}
+
+function QuestionSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const currentQuestion = visibleReveals.at(-1)
+
+  return (
+    <>
+      <section className="slide-question-copy">
+        <SlideTitle slide={slide} language={language} kicker="Exit check" />
+        <SlideBody slide={slide} language={language} />
+      </section>
+      {currentQuestion && (
+        <section className="exit-question-focus" aria-live="polite">
+          <span>Question {visibleReveals.length}</span>
+          <strong>{localizedText(currentQuestion.text, language)}</strong>
+          {secondaryText(currentQuestion.text, language) && <small lang="zh-Hant">{secondaryText(currentQuestion.text, language)}</small>}
+        </section>
+      )}
+      {visibleReveals.length > 1 && <RevealStack items={visibleReveals} language={language} mode="questions" />}
+    </>
+  )
+}
+
+interface SlideLayoutProps {
+  slide: LessonSlide
+  language: LanguageMode
+  visibleReveals: NonNullable<LessonSlide['reveals']>
+}
+
+const biomeOrder: LessonBiomeKey[] = ['rainforest', 'desert', 'grassland', 'deciduous', 'boreal', 'tundra']
+
+function visualForSlide(slide: LessonSlide): LessonVisualAsset | undefined {
+  return findVisualAsset(slide.media?.assetId ?? (slide.biomeKey ? biomeAssetIds[slide.biomeKey] : undefined))
+}
+
+function SciencePhoto({
+  slide,
+  className,
+  children,
+}: {
+  slide: LessonSlide
+  className: string
+  children?: ReactNode
+}) {
+  const visual = visualForSlide(slide)
+  const src = visual?.localPath ?? slide.media?.src ?? '/science-lessons/biomes/earth-blue-marble.jpg'
+  const alt = visual?.alt ?? slide.media?.alt ?? 'Science lesson visual'
+  const attribution = visual?.attribution ?? slide.media?.credit ?? 'Source visual'
+
+  return (
+    <figure className={className}>
+      <img src={src} alt={alt} />
+      {children}
+      <figcaption>{attribution}</figcaption>
+    </figure>
+  )
+}
+
+function TeachingDiagram({ slide }: { slide: LessonSlide }) {
+  if (slide.id.includes('climate-drivers')) {
+    return (
+      <section className="climate-concept-diagram" aria-label="Temperature and precipitation determine biome concept diagram">
+        <div className="climate-input climate-input--temperature">
+          <span>climate factor 1</span>
+          <strong>temperature</strong>
+          <small>hot · moderate · cold</small>
+        </div>
+        <div className="climate-input climate-input--precipitation">
+          <span>climate factor 2</span>
+          <strong>precipitation</strong>
+          <small>wet · seasonal · dry</small>
+        </div>
+        <div className="climate-join" aria-hidden="true">+</div>
+        <div className="climate-output">
+          <span>strong clue for</span>
+          <strong>biome</strong>
+          <small>organisms survive these conditions</small>
+        </div>
+      </section>
+    )
+  }
+
+  if (slide.biomeKey === 'desert') {
+    return (
+      <section className="teaching-visual-stack" aria-label="Desert image and water balance">
+        <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram slide-photo--short" />
+        <div className="desert-balance" aria-label="Desert evaporation and precipitation comparison">
+          <div><span>water in</span><strong>&lt; 25 cm</strong><small>rain per year</small></div>
+          <b>&lt;</b>
+          <div><span>water out</span><strong>evaporation</strong><small>exceeds precipitation</small></div>
+        </div>
+      </section>
+    )
+  }
+
+  if (slide.biomeKey === 'tundra') {
+    return (
+      <section className="teaching-visual-stack" aria-label="Tundra landscape and permafrost cross-section">
+        <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram slide-photo--short" />
+        <div className="permafrost-diagram" aria-label="Permafrost cross-section diagram">
+          <div className="permafrost-surface"><span>summer surface</span><strong>marshy ground</strong></div>
+          <div className="permafrost-active"><span>active layer</span><strong>brief thaw</strong></div>
+          <div className="permafrost-layer"><span>permafrost</span><strong>frozen soil all year</strong></div>
+        </div>
+      </section>
+    )
+  }
+
+  return <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram" />
+}
+
+function GrasslandComparison() {
+  const grasslandVisual = findVisualAsset('biomes-grassland-savanna')
+  const src = grasslandVisual?.localPath ?? '/science-lessons/biomes/grassland-savanna.jpg'
+
+  return (
+    <section className="grassland-comparison" aria-label="Prairie and savanna comparison">
+      <article className="grassland-panel grassland-panel--prairie">
+        <img src={src} alt="" aria-hidden="true" />
+        <div>
+          <span>Prairie</span>
+          <strong>25-75 cm</strong>
+          <p>rain/year · grasses with few trees</p>
+        </div>
+      </article>
+      <article className="grassland-panel grassland-panel--savanna">
+        <img src={src} alt="" aria-hidden="true" />
+        <div>
+          <span>Savanna</span>
+          <strong>120 cm</strong>
+          <p>rain/year · grasses with scattered trees</p>
+        </div>
+      </article>
+    </section>
+  )
+}
+
+function RainfallSpectrum({ visibleCount }: { visibleCount: number }) {
+  const maxRainfall = Math.max(...rainfallComparisonData.map((point) => point.representativeCm))
+
+  return (
+    <section className="rainfall-spectrum" aria-label="Annual precipitation chart in centimeters per year">
+      <span className="rainfall-spectrum__unit">Annual precipitation (cm/year)</span>
+      <div className="rainfall-axis" aria-hidden="true"><span>300</span><span>150</span><span>0</span></div>
+      {rainfallComparisonData.map((point, index) => (
+        <article
+          className={index < visibleCount ? 'is-visible' : ''}
+          key={point.label}
+          style={{
+            '--bar': `${Math.max(8, (point.representativeCm / maxRainfall) * 100)}%`,
+            '--rainfall-column': String(index + 1),
+          } as CSSProperties}
+        >
+          <i />
+          <span>{point.label}</span>
+          <strong>{point.valueLabel}</strong>
+        </article>
+      ))}
+    </section>
   )
 }
 
@@ -493,10 +905,31 @@ function SlideMiniature({ slide }: { slide: LessonSlide }) {
   return (
     <span className={`slide-miniature slide-miniature--${slide.visual}`}>
       <i />
-      <b>{slide.titleEn}</b>
+      <b>{slide.title.en}</b>
       <em />
     </span>
   )
+}
+
+function ResourceLink({ resource }: { resource: LessonResource }) {
+  const icon = resource.type === 'Video' ? '▶' : resource.type === 'Quiz' ? '?' : resource.type === 'Test' ? 'T' : '▤'
+  const content = (
+    <>
+      <span className="resource-icon" aria-hidden="true">{icon}</span>
+      <span><strong>{resource.title}</strong><small>{resource.type} · {resource.detail}{resource.teacherOnly ? ' · Teacher only' : ''}</small></span>
+      <span aria-hidden="true">{resource.href ? '↗' : '待'}</span>
+    </>
+  )
+
+  if (resource.href) {
+    return (
+      <a href={resource.href} target="_blank" rel="noreferrer">
+        {content}
+      </a>
+    )
+  }
+
+  return <button type="button" disabled title="Add the real Drive URL or file path during curriculum ingestion">{content}</button>
 }
 
 function ScienceVisual({ type }: { type: LessonSlide['visual'] }) {
@@ -538,23 +971,49 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
   const [title, setTitle] = useState(lesson.title)
   const [subtitle, setSubtitle] = useState(lesson.subtitle)
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [slides, setSlides] = useState(() => lesson.slides.map((slide) => ({ ...slide })))
+  const [slides, setSlides] = useState<LessonSlide[]>(() => lesson.slides.map((slide) => ({
+    ...slide,
+    title: { ...slide.title },
+    body: { ...slide.body },
+    reveals: slide.reveals?.map((item) => ({ ...item, text: { ...item.text } })),
+  })))
   const [saveState, setSaveState] = useState<'Saved' | 'Unsaved'>('Saved')
   const selectedSlide = slides[selectedIndex] ?? slides[0]
 
-  const updateSelectedSlide = (field: keyof LessonSlide, value: string) => {
+  const updateSelectedSlide = <Field extends keyof LessonSlide>(field: Field, value: LessonSlide[Field]) => {
     setSlides((current) => current.map((slide, index) => index === selectedIndex ? { ...slide, [field]: value } : slide))
+    setSaveState('Unsaved')
+  }
+
+  const updateSelectedSlideText = (field: 'title' | 'body', locale: 'en' | 'zhHant', value: string) => {
+    setSlides((current) => current.map((slide, index) => index === selectedIndex ? {
+      ...slide,
+      [field]: { ...slide[field], [locale]: value },
+    } : slide))
+    setSaveState('Unsaved')
+  }
+
+  const addReveal = () => {
+    const nextReveal = {
+      id: `reveal-${Date.now()}`,
+      text: { en: 'New reveal point', zhHant: '新的逐步顯示重點' },
+    }
+
+    setSlides((current) => current.map((slide, index) => index === selectedIndex ? {
+      ...slide,
+      revealMode: 'step-by-step',
+      reveals: [...(slide.reveals ?? []), nextReveal],
+    } : slide))
     setSaveState('Unsaved')
   }
 
   const addSlide = () => {
     const nextSlide: LessonSlide = {
       id: `draft-${Date.now()}`,
-      titleEn: 'New science idea',
-      titleZh: '新的科學概念',
-      bodyEn: 'Add the English explanation here.',
-      bodyZh: '在這裡加入繁體中文說明。',
+      title: { en: 'New science idea', zhHant: '新的科學概念' },
+      body: { en: 'Add the English explanation here.', zhHant: '在這裡加入繁體中文說明。' },
       visual: 'particles',
+      revealMode: 'all-at-once',
       teacherNote: 'Add a teaching prompt or misconception to watch for.',
     }
     setSlides((current) => [...current, nextSlide])
@@ -572,7 +1031,7 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
         <div className="editor-toolbar__left">
           <button className="viewer-back" type="button" onClick={onBack} aria-label="Return to presentation">←</button>
           <div>
-            <span>Lesson editor · {lesson.year} · {lesson.semester}</span>
+            <span>Prototype editor · local only · {lesson.year} · {lesson.semester}</span>
             <strong>{title}</strong>
           </div>
         </div>
@@ -580,7 +1039,7 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
         <div className="editor-toolbar__actions">
           <button className="science-button science-button--ghost" type="button" onClick={onLibrary}>Close</button>
           <button className="science-button science-button--ghost" type="button" onClick={onBack}>Preview</button>
-          <button className="science-button science-button--primary" type="button" onClick={saveDraft}>Save draft</button>
+          <button className="science-button science-button--primary" type="button" onClick={saveDraft}>Mark local draft reviewed</button>
         </div>
       </header>
 
@@ -624,22 +1083,22 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
                 <span className="editor-language-label">EN · English</span>
                 <label>
                   <span>Slide heading</span>
-                  <textarea value={selectedSlide.titleEn} onChange={(event) => updateSelectedSlide('titleEn', event.target.value)} />
+                  <textarea value={selectedSlide.title.en} onChange={(event) => updateSelectedSlideText('title', 'en', event.target.value)} />
                 </label>
                 <label>
                   <span>Explanation</span>
-                  <textarea className="editor-textarea--body" value={selectedSlide.bodyEn} onChange={(event) => updateSelectedSlide('bodyEn', event.target.value)} />
+                  <textarea className="editor-textarea--body" value={selectedSlide.body.en} onChange={(event) => updateSelectedSlideText('body', 'en', event.target.value)} />
                 </label>
               </div>
               <div>
                 <span className="editor-language-label editor-language-label--zh">繁 · Traditional Chinese</span>
                 <label>
                   <span>投影片標題</span>
-                  <textarea lang="zh-Hant" value={selectedSlide.titleZh} onChange={(event) => updateSelectedSlide('titleZh', event.target.value)} />
+                  <textarea lang="zh-Hant" value={selectedSlide.title.zhHant ?? ''} onChange={(event) => updateSelectedSlideText('title', 'zhHant', event.target.value)} />
                 </label>
                 <label>
                   <span>說明</span>
-                  <textarea className="editor-textarea--body" lang="zh-Hant" value={selectedSlide.bodyZh} onChange={(event) => updateSelectedSlide('bodyZh', event.target.value)} />
+                  <textarea className="editor-textarea--body" lang="zh-Hant" value={selectedSlide.body.zhHant ?? ''} onChange={(event) => updateSelectedSlideText('body', 'zhHant', event.target.value)} />
                 </label>
               </div>
             </div>
@@ -650,11 +1109,11 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
               </div>
               <div>
                 <span className="editor-language-label">Visual</span>
-                <h3>Image or teaching visual</h3>
-                <p>Use a diagram, photograph, graph, or embedded video that supports this slide.</p>
+                <h3>Prototype visual note</h3>
+                <p>This surface does not replace media or persist curriculum changes. Use source files for real edits.</p>
                 <div className="editor-media-actions">
-                  <button type="button">Replace image</button>
-                  <button type="button">Add video</button>
+                  <button type="button" disabled>Media replacement postponed</button>
+                  <button type="button" disabled>Video insertion postponed</button>
                 </div>
               </div>
             </div>
@@ -663,6 +1122,24 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
               <span>Teacher notes</span>
               <textarea value={selectedSlide.teacherNote} onChange={(event) => updateSelectedSlide('teacherNote', event.target.value)} />
             </label>
+
+            <section className="editor-reveal-block">
+              <div className="editor-inspector-heading">
+                <h3>Progressive reveal</h3>
+                <button type="button" onClick={addReveal}>+ Add point</button>
+              </div>
+              <p>{selectedSlide.revealMode === 'step-by-step' ? 'Teacher navigation reveals these points one at a time.' : 'This slide currently appears all at once.'}</p>
+              {selectedSlide.reveals && selectedSlide.reveals.length > 0 && (
+                <ol>
+                  {selectedSlide.reveals.map((item) => (
+                    <li key={item.id}>
+                      <span>{item.text.en}</span>
+                      {item.text.zhHant && <small lang="zh-Hant">{item.text.zhHant}</small>}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
           </div>
         </section>
 
@@ -693,9 +1170,9 @@ function LessonEditor({ lesson, onBack, onLibrary }: { lesson: ScienceLesson; on
 
           <section className="editor-publish-card">
             <span className="science-status science-status--published">{lesson.status}</span>
-            <h3>Publishing workflow</h3>
-            <p>Keep unfinished changes in a draft. Publishing approval will be connected after the pilot is validated.</p>
-            <button type="button">Review lesson settings</button>
+            <h3>Prototype only</h3>
+            <p>Firebase persistence and publishing are intentionally postponed until the classroom slide standard is validated.</p>
+            <button type="button" disabled>Publishing postponed</button>
           </section>
         </aside>
       </div>
