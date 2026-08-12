@@ -87,6 +87,7 @@ describe('Science Lessons curriculum', () => {
     expect(biomesQuizCoverage).toHaveLength(10)
     expect(biomesHomeworkCoverage.map((item) => item.question)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     expect(biomesQuizCoverage.map((item) => item.question)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    expect(biomesQuizCoverage.find((item) => item.question === 7)?.assessedConcept).toContain('TEACHER CONFIRMATION REQUIRED')
 
     for (const item of [...biomesHomeworkCoverage, ...biomesQuizCoverage]) {
       expect(item.taughtInLessonIds.every((lessonId) => lessonIds.has(lessonId))).toBe(true)
@@ -168,6 +169,30 @@ describe('Science Lessons teacher flow', () => {
     fireEvent.click(screen.getByRole('button', { name: '繁體中文' }))
 
     expect(screen.getByRole('heading', { name: /第 2.4 章/ })).toBeInTheDocument()
+  })
+
+  it('keeps final Biomes QA labels correct in Traditional Chinese mode', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue last lesson/i }))
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[1])
+
+    expect(screen.getAllByText(/Question of the Day/i).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/Exit check/i)).not.toBeInTheDocument()
+
+    fireEvent.click(container.querySelectorAll('.viewer-language > button')[2])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[7])
+
+    expect(screen.getByText('\u6bcf\u5e74\u964d\u96e8\u5c11\u65bc 25 \u516c\u5206')).toBeInTheDocument()
+    expect(screen.queryByText('< 25 cm rain/year')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    fireEvent.click(container.querySelectorAll('.viewer-language > button')[2])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[6])
+
+    expect(screen.getByText('\u9077\u5f99 + \u539a\u6bdb')).toBeInTheDocument()
+    expect(screen.queryByText('migration + thick fur')).not.toBeInTheDocument()
   })
 })
 

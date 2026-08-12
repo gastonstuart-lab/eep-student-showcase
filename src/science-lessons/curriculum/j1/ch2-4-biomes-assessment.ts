@@ -125,7 +125,7 @@ export const biomesQuizCoverage: BiomesAssessmentCoverageItem[] = [
   {
     question: 7,
     source: 'quiz',
-    assessedConcept: 'Taiwan is part of the tropical rain forest biome',
+    assessedConcept: 'TEACHER CONFIRMATION REQUIRED - expected source answer currently interpreted as Tropical Rain Forest',
     taughtInLessonIds: ['j1-ch2-4-biomes-lesson-1'],
     taughtInSlideIds: ['j1-ch2-4-rain-forest'],
   },

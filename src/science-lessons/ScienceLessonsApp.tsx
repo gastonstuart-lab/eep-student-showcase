@@ -625,6 +625,7 @@ function studentLabel(label: string, language: LanguageMode) {
     Retrieval: '複習提取',
     Compare: '比較',
     'Biome close-up': '生物群系特寫',
+    'Question of the Day': '\u4eca\u65e5\u554f\u984c',
     'Exit check': '課堂檢核',
     CLIMATE: '氣候 CLIMATE',
     ORGANISMS: '生物 ORGANISMS',
@@ -639,6 +640,33 @@ function studentLabel(label: string, language: LanguageMode) {
     'MORE PRECIPITATION -> DIFFERENT ECOSYSTEM CONDITIONS': '降水量越多 -> 生態系條件越不同',
     'annual precipitation (cm/year)': '年降水量（公分 / 年）',
     'Climate shapes life': '氣候塑造生命',
+    'factors determine biome': '\u6c7a\u5b9a\u751f\u7269\u7fa4\u7cfb\u7684\u56e0\u7d20',
+    '< 25 cm rain/year': '\u6bcf\u5e74\u964d\u96e8\u5c11\u65bc 25 \u516c\u5206',
+    'migration + thick fur': '\u9077\u5f99 + \u539a\u6bdb',
+    'Canopy': '\u6a39\u51a0\u5c64 Canopy',
+    'Understory': '\u6797\u4e0b\u5c64 Understory',
+    'Prairie': '\u5927\u8349\u539f Prairie',
+    'Savanna': '\u7a00\u6a39\u8349\u539f Savanna',
+    'rain/year - grasses with few trees': '\u6bcf\u5e74\u964d\u96e8 - \u4ee5\u8349\u70ba\u4e3b\uff0c\u6a39\u6728\u8f03\u5c11',
+    'rain/year - grasses with scattered trees': '\u6bcf\u5e74\u964d\u96e8 - \u4ee5\u8349\u70ba\u4e3b\uff0c\u6709\u96f6\u661f\u6a39\u6728',
+    'Source PPT slide 99': '\u539f\u59cb PPT \u7b2c 99 \u5f35',
+    'climate + organisms': '\u6c23\u5019 + \u751f\u7269',
+    'warm or moderate + lots of rain': '\u6eab\u6696\u6216\u9069\u4e2d + \u5927\u91cf\u964d\u96e8',
+    'canopy over understory': '\u6a39\u51a0\u5c64\u5728\u6797\u4e0b\u5c64\u4e0a\u65b9',
+    'cooler nights support activity': '\u8f03\u6dbc\u7684\u591c\u665a\u652f\u6301\u52d5\u7269\u6d3b\u52d5',
+    'prairie and savanna': '\u5927\u8349\u539f + \u7a00\u6a39\u8349\u539f',
+    'rich soil, limited trees': '\u80a5\u6c83\u571f\u58e4\uff0c\u6a39\u6728\u53d7\u9650',
+    'shed leaves, grow new ones': '\u843d\u8449\uff0c\u518d\u9577\u51fa\u65b0\u8449',
+    'rain + seasonal change': '\u964d\u96e8 + \u5b63\u7bc0\u8b8a\u5316',
+    'cones + needles': '\u6bec\u679c + \u91dd\u72c0\u8449',
+    'herbivores and carnivores': '\u8349\u98df\u52d5\u7269 + \u8089\u98df\u52d5\u7269',
+    'permafrost': '\u6c38\u4e45\u51cd\u571f permafrost',
+    'long days, short season': '\u9577\u65e5\u7167\uff0c\u77ed\u5b63\u7bc0',
+    'not part of any major biome': '\u4e0d\u5c6c\u65bc\u4efb\u4f55\u4e3b\u8981\u751f\u7269\u7fa4\u7cfb',
+    'less rain -> more rain': '\u964d\u96e8\u8f03\u5c11 -> \u964d\u96e8\u8f03\u591a',
+    'prove it with source evidence': '\u7528\u539f\u59cb\u6559\u6750\u8b49\u64da\u8aaa\u660e',
+    'Desert': '\u6c99\u6f20 Desert',
+    'Rain forest': '\u96e8\u6797 Rain forest',
   }
 
   return labels[label] ?? label
@@ -808,7 +836,7 @@ function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
         <SlideTitle slide={slide} language={language} kicker={isRainfall ? 'Retrieval' : 'Compare'} />
         <SlideBody slide={slide} language={language} />
       </section>
-      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison />}
+      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
       {!isRainfall && <RevealStack items={visibleReveals} language={language} mode="chips" />}
     </>
   )
@@ -820,8 +848,8 @@ function ImageFocusSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
       <SciencePhoto slide={slide} className="slide-photo slide-photo--panel">
         {slide.biomeKey === 'rainforest' && (
           <>
-            <span className="photo-label photo-label--canopy">Canopy</span>
-            <span className="photo-label photo-label--understory">Understory</span>
+            <span className="photo-label photo-label--canopy">{studentLabel('Canopy', language)}</span>
+            <span className="photo-label photo-label--understory">{studentLabel('Understory', language)}</span>
           </>
         )}
       </SciencePhoto>
@@ -836,11 +864,12 @@ function ImageFocusSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 
 function QuestionSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const currentQuestion = visibleReveals.at(-1)
+  const kicker = slide.id.includes('question-day') ? 'Question of the Day' : 'Exit check'
 
   return (
     <>
       <section className="slide-question-copy">
-        <SlideTitle slide={slide} language={language} kicker="Exit check" />
+        <SlideTitle slide={slide} language={language} kicker={kicker} />
         <SlideBody slide={slide} language={language} />
       </section>
       {currentQuestion && (
@@ -948,7 +977,7 @@ function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: La
   return <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram" />
 }
 
-function GrasslandComparison() {
+function GrasslandComparison({ language }: { language: LanguageMode }) {
   const grasslandVisual = findVisualAsset('biomes-grassland-savanna')
   const src = grasslandVisual?.localPath ?? '/science-lessons/biomes/grassland-savanna.jpg'
 
@@ -957,17 +986,17 @@ function GrasslandComparison() {
       <article className="grassland-panel grassland-panel--prairie">
         <img src={src} alt="" aria-hidden="true" />
         <div>
-          <span>Prairie</span>
+          <span>{studentLabel('Prairie', language)}</span>
           <strong>25-75 cm</strong>
-          <p>rain/year · grasses with few trees</p>
+          <p>{studentLabel('rain/year - grasses with few trees', language)}</p>
         </div>
       </article>
       <article className="grassland-panel grassland-panel--savanna">
         <img src={src} alt="" aria-hidden="true" />
         <div>
-          <span>Savanna</span>
+          <span>{studentLabel('Savanna', language)}</span>
           <strong>120 cm</strong>
-          <p>rain/year · grasses with scattered trees</p>
+          <p>{studentLabel('rain/year - grasses with scattered trees', language)}</p>
         </div>
       </article>
     </section>
@@ -998,7 +1027,7 @@ function RainfallSpectrum({ visibleCount, language }: { visibleCount: number; la
             } as CSSProperties}
           >
             <i />
-            <span>{point.label}</span>
+            <span>{studentLabel(point.label, language)}</span>
             <strong>{point.valueLabel}</strong>
           </article>
         ))}

@@ -124,7 +124,7 @@ These generated elements should be treated as teaching scaffolds derived from so
 
 - The extracted PPT media confirms image references, but this pass does not create a committed source-media registry because original school media must remain out of Git.
 - Some source values appear in different forms across PPT/notes. The production lessons follow the assessment-facing notes where needed: rain forest about 300 cm, desert less than 25 cm, prairie 25-75 cm, savanna 120 cm, deciduous forest about 50 cm.
-- The quiz asks "Taiwan is part of this biome"; the production lesson teaches tropical rain forest conditions, but a future teacher note may need Stuart confirmation on the expected answer wording.
+- The quiz asks "Taiwan is part of this biome"; TEACHER CONFIRMATION REQUIRED - the expected source answer is currently interpreted as Tropical Rain Forest. This is an assessment-alignment assumption, not a newly verified scientific claim.
 - Original answer keys or teacher-only notes were not present in the supplied ZIP.
 
 ## Definition Of Done For Full Biomes Unit
