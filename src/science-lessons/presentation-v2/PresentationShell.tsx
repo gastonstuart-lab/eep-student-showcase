@@ -8,9 +8,14 @@ interface PresentationShellProps {
   slide: LessonSlide
   language: LanguageMode
   revealIndex: number
+  totalReveals?: number
   totalSlides: number
   slideNumber: number
   onExit: () => void
+  onPrevious?: () => void
+  onNext?: () => void
+  canPrevious?: boolean
+  canNext?: boolean
   fallback: (slide: LessonSlide, revealIndex: number) => ReactNode
 }
 
@@ -18,9 +23,14 @@ export function PresentationShell({
   slide,
   language,
   revealIndex,
+  totalReveals = 0,
   totalSlides,
   slideNumber,
   onExit,
+  onPrevious = () => undefined,
+  onNext = () => undefined,
+  canPrevious = false,
+  canNext = false,
   fallback,
 }: PresentationShellProps) {
   const [notesOpen, setNotesOpen] = useState(false)
@@ -29,19 +39,20 @@ export function PresentationShell({
   const [activeSupportId, setActiveSupportId] = useState<string | null>(null)
   const [pinnedSupportId, setPinnedSupportId] = useState<string | null>(null)
   const v2Scene = biomesV2SceneBySlideId[slide.id]
+  const useEnhancedScene = Boolean(v2Scene && language !== '繁體中文')
   const support = presentationSupport(slide, language, v2Scene?.support, v2Scene?.zh)
   const supportVisible = language !== 'English' && Boolean(support.primary || support.secondary)
-  const renderer = v2Scene ? v2Scene.render(Math.min(revealIndex, v2Scene.maxStep)) : fallback(slide, revealIndex)
-  const sceneId = v2Scene?.id ?? 'fallback'
-  const activeSupport = v2Scene?.supportTerms.find((term) => term.id === (pinnedSupportId ?? activeSupportId))
-  const studentNotes = v2Scene?.notes
+  const renderer = useEnhancedScene && v2Scene ? v2Scene.render(Math.min(revealIndex, v2Scene.maxStep)) : fallback(slide, revealIndex)
+  const sceneId = useEnhancedScene ? v2Scene?.id ?? 'fallback' : 'fallback'
+  const activeSupport = useEnhancedScene ? v2Scene?.supportTerms.find((term) => term.id === (pinnedSupportId ?? activeSupportId)) : undefined
+  const studentNotes = useEnhancedScene ? v2Scene?.notes : undefined
   const noteStepCount = studentNotes ? 3 : 1
   const visibleNoteSteps = notesMode === 'all' ? noteStepCount : notesReveal
 
-  const supportButtons = useMemo(() => v2Scene?.supportTerms ?? [], [v2Scene])
+  const supportButtons = useMemo(() => useEnhancedScene ? v2Scene?.supportTerms ?? [] : [], [useEnhancedScene, v2Scene])
 
   return (
-    <div className="presentation-shell" data-renderer={v2Scene ? 'v2' : 'v1-fallback'} data-slide-id={slide.id}>
+    <div className="presentation-shell" data-renderer={useEnhancedScene ? 'v2' : 'v1-fallback'} data-slide-id={slide.id}>
       <div className={`v2-stage unified-stage unified-stage--${sceneId}`} data-scene={sceneId} data-step={revealIndex} data-language={language}>
         {notesOpen && studentNotes ? (
           <StudentNotesView
@@ -97,10 +108,12 @@ export function PresentationShell({
         )}
         <div className="unified-presenter-meta" aria-hidden="true">
           <span>{slideNumber} / {totalSlides}</span>
-          <span>{v2Scene ? 'Enhanced scene' : 'Classic slide'}</span>
+          <span>Reveal {Math.min(revealIndex, totalReveals)} / {totalReveals}</span>
         </div>
         <div className="unified-presenter-controls">
           {studentNotes && <button type="button" onClick={() => setNotesOpen((current) => !current)}>{notesOpen ? 'Return' : 'Notes'}</button>}
+          <button type="button" onClick={onPrevious} disabled={!canPrevious}>Previous</button>
+          <button type="button" onClick={onNext} disabled={!canNext}>Next</button>
           <button type="button" onClick={onExit}>Exit</button>
         </div>
       </div>

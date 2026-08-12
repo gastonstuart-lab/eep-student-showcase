@@ -376,8 +376,8 @@ function LessonLibrary({
             </article>
           )) : (
             <div className="science-empty-state science-empty-state--large">
-              <strong>No lessons match these filters</strong>
-              <p>Try a different year, semester, publishing status, or search term.</p>
+              <strong>{units.length > 0 ? 'Lessons for this unit have not been added yet.' : 'Curriculum structure ready'}</strong>
+              <p>{units.length > 0 ? 'This pathway is in place, and lesson content will appear here as it is populated.' : 'Units and lessons for this pathway will appear here as content is imported.'}</p>
             </div>
           )}
         </section>
@@ -402,11 +402,12 @@ function SlideViewer({
   const [notesOpen, setNotesOpen] = useState(true)
   const [resourcesOpen, setResourcesOpen] = useState(true)
   const [isPresenting, setIsPresenting] = useState(false)
-  const stageAreaRef = useRef<HTMLElement>(null)
+  const presentationRef = useRef<HTMLDivElement>(null)
   const slide = lesson.slides[slideIndex] ?? lesson.slides[0]
   const enhancedPresentationScene = biomesV2SceneBySlideId[slide.id]
   const v1TotalReveals = slide.revealMode === 'step-by-step' ? (slide.reveals?.length ?? 0) : 0
-  const totalReveals = isPresenting && enhancedPresentationScene ? enhancedPresentationScene.maxStep : v1TotalReveals
+  const usesEnhancedPresentation = isPresenting && language !== '繁體中文' && Boolean(enhancedPresentationScene)
+  const totalReveals = usesEnhancedPresentation && enhancedPresentationScene ? enhancedPresentationScene.maxStep : v1TotalReveals
 
   const previous = useCallback(() => {
     if (revealIndex > 0) {
@@ -430,23 +431,39 @@ function SlideViewer({
     setSlideIndex(index)
   }
 
+  const exitPresentation = useCallback(async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.()
+    }
+    setIsPresenting(false)
+  }, [])
+
   useEffect(() => {
-    const syncPresentationState = () => {
-      const nextIsPresenting = document.fullscreenElement === stageAreaRef.current
-      setIsPresenting(nextIsPresenting)
-      if (!nextIsPresenting) {
-        setRevealIndex((current) => Math.min(current, v1TotalReveals))
+    setRevealIndex((current) => Math.min(current, totalReveals))
+  }, [totalReveals])
+
+  useEffect(() => {
+    const syncFullscreenExit = () => {
+      if (isPresenting && document.fullscreenElement !== presentationRef.current) {
+        setIsPresenting(false)
       }
     }
-    document.addEventListener('fullscreenchange', syncPresentationState)
-    return () => document.removeEventListener('fullscreenchange', syncPresentationState)
-  }, [v1TotalReveals])
+
+    document.addEventListener('fullscreenchange', syncFullscreenExit)
+    return () => document.removeEventListener('fullscreenchange', syncFullscreenExit)
+  }, [isPresenting])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       const isFormField = target?.closest('input, textarea, select, [contenteditable="true"]')
       if (isFormField) return
+
+      if (event.key === 'Escape' && isPresenting) {
+        event.preventDefault()
+        void exitPresentation()
+        return
+      }
 
       if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
         event.preventDefault()
@@ -470,21 +487,18 @@ function SlideViewer({
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [lesson.slides.length, next, previous])
+  }, [exitPresentation, isPresenting, lesson.slides.length, next, previous])
 
   const togglePresentation = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen?.()
+    if (isPresenting) {
+      await exitPresentation()
       return
     }
 
-    await stageAreaRef.current?.requestFullscreen?.()
-  }
-
-  const exitPresentation = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen?.()
-    }
+    setIsPresenting(true)
+    window.setTimeout(() => {
+      void presentationRef.current?.requestFullscreen?.().catch(() => undefined)
+    }, 0)
   }
 
   return (
@@ -523,21 +537,7 @@ function SlideViewer({
           ))}
         </aside>
 
-        <section className={`viewer-stage-area${isPresenting ? ' is-presenting' : ''}`} ref={stageAreaRef}>
-          {isPresenting ? (
-            <PresentationShell
-              slide={slide}
-              language={language}
-              revealIndex={revealIndex}
-              totalSlides={lesson.slides.length}
-              slideNumber={slideIndex + 1}
-              onExit={exitPresentation}
-              fallback={(fallbackSlide, fallbackRevealIndex) => (
-                <SlideCanvas slide={fallbackSlide} language="English" visibleRevealCount={fallbackRevealIndex} />
-              )}
-            />
-          ) : (
-            <>
+        <section className="viewer-stage-area">
           <div className="viewer-stage">
             <SlideCanvas slide={slide} language={language} visibleRevealCount={revealIndex} />
           </div>
@@ -546,8 +546,6 @@ function SlideViewer({
             <span>Slide {slideIndex + 1} of {lesson.slides.length}{totalReveals > 0 ? ` · Reveal ${revealIndex} of ${totalReveals}` : ''}</span>
             <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1 && revealIndex === totalReveals}>Next →</button>
           </div>
-            </>
-          )}
         </section>
 
         <aside className="viewer-inspector">
@@ -582,6 +580,26 @@ function SlideViewer({
           </section>
         </aside>
       </div>
+      {isPresenting && (
+        <div className="classroom-presentation-overlay" ref={presentationRef} role="dialog" aria-label="Classroom presentation mode">
+          <PresentationShell
+            slide={slide}
+            language={language}
+            revealIndex={revealIndex}
+            totalReveals={totalReveals}
+            totalSlides={lesson.slides.length}
+            slideNumber={slideIndex + 1}
+            onExit={exitPresentation}
+            onPrevious={previous}
+            onNext={next}
+            canPrevious={slideIndex > 0 || revealIndex > 0}
+            canNext={slideIndex < lesson.slides.length - 1 || revealIndex < totalReveals}
+            fallback={(fallbackSlide, fallbackRevealIndex) => (
+              <SlideCanvas slide={fallbackSlide} language={language} visibleRevealCount={fallbackRevealIndex} hideSource />
+            )}
+          />
+        </div>
+      )}
     </main>
   )
 }
@@ -596,14 +614,45 @@ function secondaryText(text: LocalizedText, language: LanguageMode) {
   return undefined
 }
 
+function studentLabel(label: string, language: LanguageMode) {
+  if (language !== '繁體中文') return label
+
+  const labels: Record<string, string> = {
+    'Chapter 2.4': '第 2.4 章',
+    'Core idea': '核心概念',
+    'Vocabulary map': '詞彙地圖',
+    'Explain the pattern': '解釋規律',
+    Retrieval: '複習提取',
+    Compare: '比較',
+    'Biome close-up': '生物群系特寫',
+    'Exit check': '課堂檢核',
+    CLIMATE: '氣候 CLIMATE',
+    ORGANISMS: '生物 ORGANISMS',
+    BIOME: '生物群系 BIOME',
+    'temperature + precipitation': '溫度 + 降水量',
+    'plants + animals': '植物 + 動物',
+    'similar land ecosystems': '相似的陸地生態系',
+    'A biome is a group of land ecosystems with similar climates and organisms.': '生物群系是由氣候和生物相似的陸地生態系組成。',
+    Question: '問題',
+    'Increasing annual precipitation': '年降水量增加',
+    'cm per year': '公分 / 年',
+    'MORE PRECIPITATION -> DIFFERENT ECOSYSTEM CONDITIONS': '降水量越多 -> 生態系條件越不同',
+    'annual precipitation (cm/year)': '年降水量（公分 / 年）',
+  }
+
+  return labels[label] ?? label
+}
+
 function SlideCanvas({
   slide,
   language,
   visibleRevealCount,
+  hideSource = false,
 }: {
   slide: LessonSlide
   language: LanguageMode
   visibleRevealCount: number
+  hideSource?: boolean
 }) {
   const visibleReveals = slide.revealMode === 'step-by-step' ? slide.reveals?.slice(0, visibleRevealCount) ?? [] : slide.reveals ?? []
   const layout = slide.layout ?? 'concept'
@@ -617,7 +666,7 @@ function SlideCanvas({
       {layout === 'comparison' && <ComparisonSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
       {layout === 'image-focus' && <ImageFocusSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
       {layout === 'question' && <QuestionSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
-      {slide.sourceId && <span className="slide-source">Source: {slide.sourceId}</span>}
+      {slide.sourceId && !hideSource && <span className="slide-source">Source: {slide.sourceId}</span>}
       <span className="slide-corner">IED SCIENCE</span>
     </article>
   )
@@ -626,7 +675,7 @@ function SlideCanvas({
 function SlideTitle({ slide, language, kicker }: { slide: LessonSlide; language: LanguageMode; kicker?: string }) {
   return (
     <div className="slide-title-block">
-      {kicker && <span className="slide-label">{kicker}</span>}
+      {kicker && <span className="slide-label">{studentLabel(kicker, language)}</span>}
       {(language === 'English' || language === 'Bilingual') && <h1>{slide.title.en}</h1>}
       {language === '繁體中文' && <h1 lang="zh-Hant">{slide.title.zhHant ?? slide.title.en}</h1>}
       {language === 'Bilingual' && slide.title.zhHant && <h2 lang="zh-Hant">{slide.title.zhHant}</h2>}
@@ -691,21 +740,21 @@ function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
       <section className="concept-map" aria-label="Climate and organisms form a biome">
         <div className="concept-map__equation">
           <article className="concept-factor concept-factor--climate">
-            <strong>CLIMATE</strong>
-            <span>temperature + precipitation</span>
+            <strong>{studentLabel('CLIMATE', language)}</strong>
+            <span>{studentLabel('temperature + precipitation', language)}</span>
           </article>
           <b aria-hidden="true">+</b>
           <article className="concept-factor concept-factor--organisms">
-            <strong>ORGANISMS</strong>
-            <span>plants + animals</span>
+            <strong>{studentLabel('ORGANISMS', language)}</strong>
+            <span>{studentLabel('plants + animals', language)}</span>
           </article>
           <b aria-hidden="true">=</b>
           <article className="concept-factor concept-factor--biome">
-            <strong>BIOME</strong>
-            <span>similar land ecosystems</span>
+            <strong>{studentLabel('BIOME', language)}</strong>
+            <span>{studentLabel('similar land ecosystems', language)}</span>
           </article>
         </div>
-        <div className="concept-definition">A biome is a group of land ecosystems with similar climates and organisms.</div>
+        <div className="concept-definition">{studentLabel('A biome is a group of land ecosystems with similar climates and organisms.', language)}</div>
       </section>
       <RevealStack items={visibleReveals} language={language} mode="statements" />
     </>
@@ -744,7 +793,7 @@ function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode={isClimate ? 'statements' : 'stack'} />
       </section>
-      <TeachingDiagram slide={slide} />
+      <TeachingDiagram slide={slide} language={language} />
     </>
   )
 }
@@ -758,7 +807,7 @@ function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
         <SlideTitle slide={slide} language={language} kicker={isRainfall ? 'Retrieval' : 'Compare'} />
         <SlideBody slide={slide} language={language} />
       </section>
-      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} /> : <GrasslandComparison />}
+      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison />}
       {!isRainfall && <RevealStack items={visibleReveals} language={language} mode="chips" />}
     </>
   )
@@ -795,7 +844,7 @@ function QuestionSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
       </section>
       {currentQuestion && (
         <section className="exit-question-focus" aria-live="polite">
-          <span>Question {visibleReveals.length}</span>
+          <span>{studentLabel('Question', language)} {visibleReveals.length}</span>
           <strong>{localizedText(currentQuestion.text, language)}</strong>
           {secondaryText(currentQuestion.text, language) && <small lang="zh-Hant">{secondaryText(currentQuestion.text, language)}</small>}
         </section>
@@ -840,30 +889,30 @@ function SciencePhoto({
   )
 }
 
-function TeachingDiagram({ slide }: { slide: LessonSlide }) {
+function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
   if (slide.id.includes('climate-drivers')) {
     return (
       <section className="climate-concept-diagram" aria-label="Conceptual temperature and precipitation biome diagram">
-        <div className="climate-question">What two climate factors help determine the biome?</div>
+        <div className="climate-question">{language === '繁體中文' ? '哪兩個氣候因素會幫助決定生物群系？' : 'What two climate factors help determine the biome?'}</div>
         <div className="climate-axis climate-axis--temperature" aria-hidden="true">
-          <span>cold</span>
+          <span>{language === '繁體中文' ? '冷' : 'cold'}</span>
           <i />
-          <span>hot</span>
+          <span>{language === '繁體中文' ? '熱' : 'hot'}</span>
         </div>
         <div className="climate-axis climate-axis--precipitation" aria-hidden="true">
-          <span>wet</span>
+          <span>{language === '繁體中文' ? '濕' : 'wet'}</span>
           <i />
-          <span>dry</span>
+          <span>{language === '繁體中文' ? '乾' : 'dry'}</span>
         </div>
         <div className="climate-field">
-          <span className="climate-marker climate-marker--tundra">cold + dry<br /><strong>tundra</strong></span>
-          <span className="climate-marker climate-marker--desert">hot + dry<br /><strong>desert</strong></span>
-          <span className="climate-marker climate-marker--grassland">seasonal rain<br /><strong>grassland</strong></span>
-          <span className="climate-marker climate-marker--rainforest">hot + wet<br /><strong>rain forest</strong></span>
+          <span className="climate-marker climate-marker--tundra">{language === '繁體中文' ? '冷 + 乾' : 'cold + dry'}<br /><strong>{language === '繁體中文' ? '凍原 tundra' : 'tundra'}</strong></span>
+          <span className="climate-marker climate-marker--desert">{language === '繁體中文' ? '熱 + 乾' : 'hot + dry'}<br /><strong>{language === '繁體中文' ? '沙漠 desert' : 'desert'}</strong></span>
+          <span className="climate-marker climate-marker--grassland">{language === '繁體中文' ? '季節性降雨' : 'seasonal rain'}<br /><strong>{language === '繁體中文' ? '草原 grassland' : 'grassland'}</strong></span>
+          <span className="climate-marker climate-marker--rainforest">{language === '繁體中文' ? '熱 + 濕' : 'hot + wet'}<br /><strong>{language === '繁體中文' ? '雨林 rain forest' : 'rain forest'}</strong></span>
         </div>
         <div className="climate-rule">
-          <strong>TEMPERATURE + PRECIPITATION</strong>
-          <span>give the climate clues for biome conditions.</span>
+          <strong>{language === '繁體中文' ? '溫度 + 降水量' : 'TEMPERATURE + PRECIPITATION'}</strong>
+          <span>{language === '繁體中文' ? '提供判斷生物群系條件的氣候線索。' : 'give the climate clues for biome conditions.'}</span>
         </div>
       </section>
     )
@@ -874,9 +923,9 @@ function TeachingDiagram({ slide }: { slide: LessonSlide }) {
       <section className="teaching-visual-stack" aria-label="Desert image and water balance">
         <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram slide-photo--short" />
         <div className="desert-balance" aria-label="Desert evaporation and precipitation comparison">
-          <div><span>water in</span><strong>&lt; 25 cm</strong><small>rain per year</small></div>
+          <div><span>{language === '繁體中文' ? '水分進入' : 'water in'}</span><strong>&lt; 25 cm</strong><small>{language === '繁體中文' ? '每年降雨' : 'rain per year'}</small></div>
           <b>&lt;</b>
-          <div><span>water out</span><strong>evaporation</strong><small>exceeds precipitation</small></div>
+          <div><span>{language === '繁體中文' ? '水分流失' : 'water out'}</span><strong>{language === '繁體中文' ? '蒸發 evaporation' : 'evaporation'}</strong><small>{language === '繁體中文' ? '超過降水量' : 'exceeds precipitation'}</small></div>
         </div>
       </section>
     )
@@ -887,9 +936,9 @@ function TeachingDiagram({ slide }: { slide: LessonSlide }) {
       <section className="teaching-visual-stack" aria-label="Tundra landscape and permafrost cross-section">
         <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram slide-photo--short" />
         <div className="permafrost-diagram" aria-label="Permafrost cross-section diagram">
-          <div className="permafrost-surface"><span>summer surface</span><strong>marshy ground</strong></div>
-          <div className="permafrost-active"><span>active layer</span><strong>brief thaw</strong></div>
-          <div className="permafrost-layer"><span>permafrost</span><strong>frozen soil all year</strong></div>
+          <div className="permafrost-surface"><span>{language === '繁體中文' ? '夏季表層' : 'summer surface'}</span><strong>{language === '繁體中文' ? '濕軟地面' : 'marshy ground'}</strong></div>
+          <div className="permafrost-active"><span>{language === '繁體中文' ? '活動層' : 'active layer'}</span><strong>{language === '繁體中文' ? '短暫融化' : 'brief thaw'}</strong></div>
+          <div className="permafrost-layer"><span>{language === '繁體中文' ? '永凍土 permafrost' : 'permafrost'}</span><strong>{language === '繁體中文' ? '全年凍結的土壤' : 'frozen soil all year'}</strong></div>
         </div>
       </section>
     )
@@ -924,14 +973,14 @@ function GrasslandComparison() {
   )
 }
 
-function RainfallSpectrum({ visibleCount }: { visibleCount: number }) {
+function RainfallSpectrum({ visibleCount, language }: { visibleCount: number; language: LanguageMode }) {
   const maxRainfall = Math.max(...rainfallComparisonData.map((point) => point.representativeCm))
 
   return (
     <section className="rainfall-spectrum" aria-label="Annual precipitation chart in centimeters per year">
       <div className="rainfall-chart-title">
-        <strong>Increasing annual precipitation</strong>
-        <span>cm per year</span>
+        <strong>{studentLabel('Increasing annual precipitation', language)}</strong>
+        <span>{studentLabel('cm per year', language)}</span>
       </div>
       <div className="rainfall-axis" aria-hidden="true"><span>300</span><span>200</span><span>100</span><span>0</span></div>
       <div className="rainfall-plot">
@@ -953,7 +1002,7 @@ function RainfallSpectrum({ visibleCount }: { visibleCount: number }) {
           </article>
         ))}
       </div>
-      <div className="rainfall-direction" aria-hidden="true">MORE PRECIPITATION -&gt; DIFFERENT ECOSYSTEM CONDITIONS</div>
+      <div className="rainfall-direction" aria-hidden="true">{studentLabel('MORE PRECIPITATION -> DIFFERENT ECOSYSTEM CONDITIONS', language)}</div>
     </section>
   )
 }

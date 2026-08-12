@@ -87,6 +87,7 @@
   place-items: center;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
   background: #05090c;
 }
 
@@ -105,7 +106,7 @@
 }
 
 .unified-stage .slide-source {
-  bottom: 4%;
+  display: none;
 }
 
 .unified-stage--rainfall .v2-rainfall-chart {
@@ -125,7 +126,7 @@
   color: rgba(238, 248, 242, 0.6);
   font-size: clamp(0.62rem, 0.8vw, 0.86rem);
   font-weight: 850;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 160ms ease;
 }
 
@@ -170,6 +171,11 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   cursor: pointer;
+}
+
+.unified-presenter-controls button:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .unified-stage:hover .unified-presenter-meta,

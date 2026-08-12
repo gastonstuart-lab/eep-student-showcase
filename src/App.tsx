@@ -603,7 +603,7 @@ function Shell() {
         </header>
       )}
 
-      {!isFirebaseConfigured && !introRoute && <FirebaseNotice />}
+      {import.meta.env.DEV && !isFirebaseConfigured && !introRoute && <FirebaseNotice />}
 
       <main className={protectedWorkspaceRoute ? 'page-transition route-main route-main--workspace' : 'page-transition route-main'} id="main-content" key={location.pathname} tabIndex={-1}>
         {!protectedWorkspaceRoute && !introRoute && <BackNavigation />}
@@ -2182,6 +2182,21 @@ function PasswordChangePage() {
 
 function FirebaseMissingPanel() {
   const { t } = useLanguage()
+
+  if (!import.meta.env.DEV) {
+    return (
+      <div className="missing-config">
+        <PageHeading
+          eyebrow="Teacher access"
+          title="Teacher tools are temporarily unavailable"
+          body="The public learning hub is still available. Teacher login will return when the secure classroom services are connected for this preview."
+        />
+        <Link className="secondary-button" to="/ied">
+          {t('returnToPublicHub')}
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="missing-config">
