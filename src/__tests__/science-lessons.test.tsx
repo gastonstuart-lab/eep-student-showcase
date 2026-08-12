@@ -4,6 +4,7 @@ import { ScienceLessonsApp } from '../science-lessons/ScienceLessonsApp'
 import { rainfallComparisonData } from '../science-lessons/curriculum/biomeCharts'
 import { findLesson, scienceLessons, scienceVisualAssets } from '../science-lessons/data'
 import { BiomesV2Prototype } from '../science-lessons/presentation-v2/BiomesV2Prototype'
+import { PresentationShell } from '../science-lessons/presentation-v2/PresentationShell'
 import { validateScienceCurriculum } from '../science-lessons/validation'
 
 const biomes = findLesson('j1-ch2-4-biomes-real-pilot')
@@ -120,5 +121,104 @@ describe('Biomes presentation V2 prototype', () => {
     expect(container.querySelector('.v2-stage')).toHaveAttribute('data-language', 'Bilingual')
     expect(supportLayer).toHaveClass('is-visible')
     expect(englishPlane?.querySelector('.v2-title-block h1')).toHaveTextContent('What is a biome?')
+  })
+
+  it('uses V2 scenes inside the unified presenter and falls back without moving English content into Chinese support', () => {
+    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const fallbackSlide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-six-biomes')
+
+    expect(v2Slide).toBeDefined()
+    expect(fallbackSlide).toBeDefined()
+
+    const { container, rerender } = render(
+      <PresentationShell
+        slide={v2Slide!}
+        language="Bilingual"
+        revealIndex={3}
+        totalSlides={biomes.slides.length}
+        slideNumber={2}
+        onExit={() => undefined}
+        fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
+      />,
+    )
+
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-renderer', 'v2')
+    expect(container.querySelector('.v2-english-plane')).toHaveTextContent('What is a biome?')
+    expect(container.querySelector('.v2-support-layer')).toHaveClass('is-visible')
+    expect(container.querySelector('.v2-english-plane')?.contains(container.querySelector('.v2-support-layer'))).toBe(false)
+
+    rerender(
+      <PresentationShell
+        slide={fallbackSlide!}
+        language="Bilingual"
+        revealIndex={1}
+        totalSlides={biomes.slides.length}
+        slideNumber={4}
+        onExit={() => undefined}
+        fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
+      />,
+    )
+
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-renderer', 'v1-fallback')
+    expect(screen.getByTestId('fallback')).toHaveTextContent('Six major land biomes')
+    expect(container.querySelector('.v2-support-layer')).toHaveClass('is-visible')
+  })
+
+  it('supports staged notes, show all notes, and return to presentation', () => {
+    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+
+    render(
+      <PresentationShell
+        slide={v2Slide!}
+        language="English"
+        revealIndex={3}
+        totalSlides={biomes.slides.length}
+        slideNumber={2}
+        onExit={() => undefined}
+        fallback={(slide) => <div>{slide.title.en}</div>}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Notes' }))
+
+    expect(screen.getByRole('heading', { name: 'What is a biome?' })).toBeInTheDocument()
+    expect(screen.getByText(/A biome is a group of land ecosystems/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Climate means temperature/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal next note' }))
+
+    expect(screen.getByText(/Climate means temperature/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all' }))
+
+    expect(screen.getByText(/Key vocabulary/i)).toBeInTheDocument()
+    expect(screen.getByText(/a living thing/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Return to presentation' }))
+
+    expect(screen.getByText('Climate')).toBeInTheDocument()
+  })
+
+  it('pins a translation bubble without placing it inside the English plane', () => {
+    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const { container } = render(
+      <PresentationShell
+        slide={v2Slide!}
+        language="Bilingual"
+        revealIndex={3}
+        totalSlides={biomes.slides.length}
+        slideNumber={2}
+        onExit={() => undefined}
+        fallback={(slide) => <div>{slide.title.en}</div>}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'biome' }))
+
+    const bubble = container.querySelector('.translation-bubble')
+
+    expect(bubble).toHaveTextContent('biome')
+    expect(bubble).toHaveTextContent('生物群系')
+    expect(container.querySelector('.v2-english-plane')?.contains(bubble)).toBe(false)
   })
 })

@@ -18,6 +18,8 @@ import {
   type YearLevel,
 } from './data'
 import { BiomesV2Prototype } from './presentation-v2/BiomesV2Prototype'
+import { PresentationShell } from './presentation-v2/PresentationShell'
+import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
@@ -402,7 +404,9 @@ function SlideViewer({
   const [isPresenting, setIsPresenting] = useState(false)
   const stageAreaRef = useRef<HTMLElement>(null)
   const slide = lesson.slides[slideIndex] ?? lesson.slides[0]
-  const totalReveals = slide.revealMode === 'step-by-step' ? (slide.reveals?.length ?? 0) : 0
+  const enhancedPresentationScene = biomesV2SceneBySlideId[slide.id]
+  const v1TotalReveals = slide.revealMode === 'step-by-step' ? (slide.reveals?.length ?? 0) : 0
+  const totalReveals = isPresenting && enhancedPresentationScene ? enhancedPresentationScene.maxStep : v1TotalReveals
 
   const previous = useCallback(() => {
     if (revealIndex > 0) {
@@ -427,10 +431,16 @@ function SlideViewer({
   }
 
   useEffect(() => {
-    const syncPresentationState = () => setIsPresenting(document.fullscreenElement === stageAreaRef.current)
+    const syncPresentationState = () => {
+      const nextIsPresenting = document.fullscreenElement === stageAreaRef.current
+      setIsPresenting(nextIsPresenting)
+      if (!nextIsPresenting) {
+        setRevealIndex((current) => Math.min(current, v1TotalReveals))
+      }
+    }
     document.addEventListener('fullscreenchange', syncPresentationState)
     return () => document.removeEventListener('fullscreenchange', syncPresentationState)
-  }, [])
+  }, [v1TotalReveals])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -471,6 +481,12 @@ function SlideViewer({
     await stageAreaRef.current?.requestFullscreen?.()
   }
 
+  const exitPresentation = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.()
+    }
+  }
+
   return (
     <main className="viewer-shell">
       <header className="viewer-toolbar">
@@ -508,6 +524,20 @@ function SlideViewer({
         </aside>
 
         <section className={`viewer-stage-area${isPresenting ? ' is-presenting' : ''}`} ref={stageAreaRef}>
+          {isPresenting ? (
+            <PresentationShell
+              slide={slide}
+              language={language}
+              revealIndex={revealIndex}
+              totalSlides={lesson.slides.length}
+              slideNumber={slideIndex + 1}
+              onExit={exitPresentation}
+              fallback={(fallbackSlide, fallbackRevealIndex) => (
+                <SlideCanvas slide={fallbackSlide} language="English" visibleRevealCount={fallbackRevealIndex} />
+              )}
+            />
+          ) : (
+            <>
           <div className="viewer-stage">
             <SlideCanvas slide={slide} language={language} visibleRevealCount={revealIndex} />
           </div>
@@ -516,6 +546,8 @@ function SlideViewer({
             <span>Slide {slideIndex + 1} of {lesson.slides.length}{totalReveals > 0 ? ` · Reveal ${revealIndex} of ${totalReveals}` : ''}</span>
             <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1 && revealIndex === totalReveals}>Next →</button>
           </div>
+            </>
+          )}
         </section>
 
         <aside className="viewer-inspector">
