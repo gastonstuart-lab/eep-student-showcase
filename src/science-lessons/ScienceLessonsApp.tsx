@@ -638,6 +638,7 @@ function studentLabel(label: string, language: LanguageMode) {
     'cm per year': '公分 / 年',
     'MORE PRECIPITATION -> DIFFERENT ECOSYSTEM CONDITIONS': '降水量越多 -> 生態系條件越不同',
     'annual precipitation (cm/year)': '年降水量（公分 / 年）',
+    'Climate shapes life': '氣候塑造生命',
   }
 
   return labels[label] ?? label
@@ -679,7 +680,7 @@ function SlideTitle({ slide, language, kicker }: { slide: LessonSlide; language:
       {(language === 'English' || language === 'Bilingual') && <h1>{slide.title.en}</h1>}
       {language === '繁體中文' && <h1 lang="zh-Hant">{slide.title.zhHant ?? slide.title.en}</h1>}
       {language === 'Bilingual' && slide.title.zhHant && <h2 lang="zh-Hant">{slide.title.zhHant}</h2>}
-      {slide.emphasis && <strong className="slide-emphasis">{slide.emphasis}</strong>}
+      {slide.emphasis && <strong className="slide-emphasis">{studentLabel(slide.emphasis, language)}</strong>}
     </div>
   )
 }

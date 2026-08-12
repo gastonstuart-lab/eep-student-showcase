@@ -77,6 +77,36 @@ async function clickFirst(page, role, name) {
   await waitReady(page)
 }
 
+async function chooseSlide(page, index) {
+  await page.locator('.viewer-thumbnails > button').nth(index).click()
+  await waitReady(page)
+}
+
+async function openBiomesTeacherWorkspace(page) {
+  await page.goto(`${baseUrl}/science-lessons.html`)
+  await waitReady(page)
+  await page.getByLabel('Year level').getByRole('button', { name: /J1/ }).click()
+  await page.getByLabel('Semester').getByRole('button', { name: /Fall/ }).click()
+  await clickFirst(page, 'button', /Open J1/)
+  await clickFirst(page, 'button', 'Present lesson')
+}
+
+async function setPresentationLanguage(page, language) {
+  await clickFirst(page, 'button', language)
+}
+
+async function enterPresentation(page) {
+  await clickFirst(page, 'button', 'Present')
+  await page.locator('.classroom-presentation-overlay').waitFor({ state: 'visible' })
+  await waitReady(page)
+}
+
+async function exitPresentation(page) {
+  await page.keyboard.press('Escape')
+  await page.locator('.classroom-presentation-overlay').waitFor({ state: 'hidden' })
+  await waitReady(page)
+}
+
 async function captureStandardScreens() {
   const page = await createPage(1440, 900)
 
@@ -125,28 +155,65 @@ async function captureStandardScreens() {
 async function capturePresentationScreens() {
   const page = await createPage(1366, 768)
 
-  await page.goto(`${baseUrl}/science-lessons.html`)
-  await waitReady(page)
-  await page.getByLabel('Year level').getByRole('button', { name: /J1/ }).click()
-  await page.getByLabel('Semester').getByRole('button', { name: /Fall/ }).click()
-  await clickFirst(page, 'button', /Open J1/)
-  await clickFirst(page, 'button', 'Present lesson')
+  await openBiomesTeacherWorkspace(page)
 
-  await clickFirst(page, 'button', 'Bilingual')
-  await clickFirst(page, 'button', 'Present')
-  await page.locator('.classroom-presentation-overlay').waitFor({ state: 'visible' })
+  await setPresentationLanguage(page, 'English')
+  await chooseSlide(page, 0)
+  await enterPresentation(page)
+  await screenshot(page, 'presentation-english-title-first-1366x768', 'English Presentation Mode at 1366x768: title / first state', { fullPage: false })
   await page.keyboard.press('ArrowRight')
   await waitReady(page)
-  await screenshot(page, 'presentation-mode-bilingual-1366x768', 'Classroom Presentation Mode at 1366x768 in Bilingual mode', { fullPage: false })
+  await screenshot(page, 'presentation-english-title-reveal-1366x768', 'English Presentation Mode at 1366x768: intermediate progressive reveal', { fullPage: false })
+  await exitPresentation(page)
 
-  await page.keyboard.press('Escape')
+  await setPresentationLanguage(page, 'Bilingual')
+  await chooseSlide(page, 1)
+  await enterPresentation(page)
+  await page.keyboard.press('ArrowRight')
   await waitReady(page)
-  await clickFirst(page, 'button', '繁體中文')
-  await clickFirst(page, 'button', 'Present')
-  await page.locator('.classroom-presentation-overlay').waitFor({ state: 'visible' })
+  await screenshot(page, 'presentation-bilingual-concept-1366x768', 'Bilingual Presentation Mode at 1366x768: concept slide with Chinese support area', { fullPage: false })
+  await exitPresentation(page)
+
+  await chooseSlide(page, 2)
+  await enterPresentation(page)
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await waitReady(page)
+  await screenshot(page, 'presentation-bilingual-diagram-1366x768', 'Bilingual Presentation Mode at 1366x768: diagram slide', { fullPage: false })
+  await exitPresentation(page)
+
+  await chooseSlide(page, 4)
+  await enterPresentation(page)
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await waitReady(page)
+  await screenshot(page, 'presentation-bilingual-image-content-1366x768', 'Bilingual Presentation Mode at 1366x768: image/content slide', { fullPage: false })
+  await exitPresentation(page)
+
+  await chooseSlide(page, 11)
+  await enterPresentation(page)
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await waitReady(page)
+  await screenshot(page, 'presentation-bilingual-graph-data-1366x768', 'Bilingual Presentation Mode at 1366x768: graph/data slide', { fullPage: false })
+  await exitPresentation(page)
+
+  await setPresentationLanguage(page, '繁體中文')
+  await chooseSlide(page, 0)
+  await enterPresentation(page)
+  await screenshot(page, 'presentation-traditional-chinese-title-first-1366x768', 'Traditional Chinese Presentation Mode at 1366x768: title / first state', { fullPage: false })
+  await page.keyboard.press('ArrowRight')
+  await waitReady(page)
+  await screenshot(page, 'presentation-traditional-chinese-title-reveal-1366x768', 'Traditional Chinese Presentation Mode at 1366x768: intermediate progressive reveal', { fullPage: false })
+  await exitPresentation(page)
+
+  await chooseSlide(page, 11)
+  await enterPresentation(page)
+  await page.keyboard.press('Space')
   await page.keyboard.press('Space')
   await waitReady(page)
-  await screenshot(page, 'presentation-mode-traditional-chinese-1366x768', 'Classroom Presentation Mode at 1366x768 in Traditional Chinese mode', { fullPage: false })
+  await screenshot(page, 'presentation-traditional-chinese-graph-data-1366x768', 'Traditional Chinese Presentation Mode at 1366x768: graph/data slide', { fullPage: false })
 
   await page.close()
 }

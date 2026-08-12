@@ -16,7 +16,7 @@ interface PresentationShellProps {
   onNext?: () => void
   canPrevious?: boolean
   canNext?: boolean
-  fallback: (slide: LessonSlide, revealIndex: number) => ReactNode
+  fallback: (slide: LessonSlide, revealIndex: number, language: LanguageMode) => ReactNode
 }
 
 export function PresentationShell({
@@ -40,9 +40,10 @@ export function PresentationShell({
   const [pinnedSupportId, setPinnedSupportId] = useState<string | null>(null)
   const v2Scene = biomesV2SceneBySlideId[slide.id]
   const useEnhancedScene = Boolean(v2Scene && language !== '繁體中文')
-  const support = presentationSupport(slide, language, v2Scene?.support, v2Scene?.zh)
-  const supportVisible = language !== 'English' && Boolean(support.primary || support.secondary)
-  const renderer = useEnhancedScene && v2Scene ? v2Scene.render(Math.min(revealIndex, v2Scene.maxStep)) : fallback(slide, revealIndex)
+  const fallbackLanguage = language === 'Bilingual' ? 'English' : language
+  const support = presentationSupport(slide, language, v2Scene?.zh)
+  const supportVisible = language === 'Bilingual' && Boolean(support.primary || support.secondary)
+  const renderer = useEnhancedScene && v2Scene ? v2Scene.render(Math.min(revealIndex, v2Scene.maxStep)) : fallback(slide, revealIndex, fallbackLanguage)
   const sceneId = useEnhancedScene ? v2Scene?.id ?? 'fallback' : 'fallback'
   const activeSupport = useEnhancedScene ? v2Scene?.supportTerms.find((term) => term.id === (pinnedSupportId ?? activeSupportId)) : undefined
   const studentNotes = useEnhancedScene ? v2Scene?.notes : undefined
@@ -187,7 +188,6 @@ function StudentNotesDiagram({ diagram }: { diagram?: string }) {
 function presentationSupport(
   slide: LessonSlide,
   language: LanguageMode,
-  v2EnglishSupport?: string,
   v2ChineseSupport?: string,
 ) {
   if (language === 'English') return { primary: '', secondary: '', lang: 'en' }
@@ -195,9 +195,9 @@ function presentationSupport(
   const chinese = v2ChineseSupport ?? slide.body.zhHant ?? slide.title.zhHant
   if (language === 'Bilingual') {
     return {
-      primary: v2EnglishSupport ?? slide.body.en,
-      secondary: chinese,
-      lang: 'en',
+      primary: chinese,
+      secondary: '',
+      lang: 'zh-Hant',
     }
   }
 
