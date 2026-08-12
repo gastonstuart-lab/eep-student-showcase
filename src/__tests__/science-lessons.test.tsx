@@ -2,12 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ScienceLessonsApp } from '../science-lessons/ScienceLessonsApp'
 import { rainfallComparisonData } from '../science-lessons/curriculum/biomeCharts'
+import { biomesHomeworkCoverage, biomesQuizCoverage } from '../science-lessons/curriculum/j1/ch2-4-biomes-assessment'
 import { findLesson, scienceLessons, scienceVisualAssets } from '../science-lessons/data'
 import { BiomesV2Prototype } from '../science-lessons/presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from '../science-lessons/presentation-v2/PresentationShell'
 import { validateScienceCurriculum } from '../science-lessons/validation'
 
-const biomes = findLesson('j1-ch2-4-biomes-real-pilot')
+const biomesLesson1 = findLesson('j1-ch2-4-biomes-lesson-1')
+const biomesLesson2 = findLesson('j1-ch2-4-biomes-lesson-2')
+const biomesLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-ch2-biomes')
 
 describe('Science Lessons curriculum', () => {
   it('keeps lessons filterable and ordered by year, semester, and lesson order', () => {
@@ -24,21 +27,75 @@ describe('Science Lessons curriculum', () => {
     expect(scienceLessons.some((lesson) => lesson.semester === 'Spring / Summer')).toBe(true)
   })
 
-  it('loads the Biomes gold-standard pilot with required slides and resources', () => {
-    expect(biomes.title).toContain('Biomes')
-    expect(biomes.slides).toHaveLength(13)
-    expect(biomes.resources.map((resource) => resource.id)).toEqual(
-      expect.arrayContaining([
-        'j1-ch2-4-ppt-source',
-        'j1-ch2-4-homework',
-        'j1-ch2-4-quiz',
-        'j1-ch2-4-student-notes',
-      ]),
-    )
+  it('loads exactly two canonical Biomes lessons in teaching order', () => {
+    expect(biomesLessons.map((lesson) => lesson.id)).toEqual([
+      'j1-ch2-4-biomes-lesson-1',
+      'j1-ch2-4-biomes-lesson-2',
+    ])
+    expect(biomesLesson1.title).toBe('What Is a Biome? Climate and Major Examples')
+    expect(biomesLesson2.title).toBe('Forests, Tundra, Mountains and Ice')
+    expect(biomesLesson1.slides).toHaveLength(11)
+    expect(biomesLesson2.slides).toHaveLength(10)
+  })
+
+  it('attaches the authoritative Biomes resources to both canonical lessons', () => {
+    for (const lesson of biomesLessons) {
+      expect(lesson.sourceReferences.find((source) => source.id === 'src-j1-ch2-4-ppt')?.slideRange).toContain('Slides 99-116')
+      expect(lesson.resources.map((resource) => resource.id)).toEqual(
+        expect.arrayContaining([
+          'j1-ch2-4-ppt-source',
+          'j1-ch2-4-homework',
+          'j1-ch2-4-quiz',
+          'j1-ch2-4-student-notes',
+        ]),
+      )
+    }
+  })
+
+  it('represents required Biomes source concepts before assessment', () => {
+    const allText = biomesLessons.flatMap((lesson) => lesson.slides).map((slide) => [
+      slide.title.en,
+      slide.body.en,
+      slide.emphasis ?? '',
+      ...(slide.reveals?.map((reveal) => reveal.text.en) ?? []),
+    ].join(' ')).join(' ')
+
+    for (const concept of [
+      'temperature',
+      'precipitation',
+      'six major biomes',
+      'canopy',
+      'understory',
+      'less than 25 cm',
+      'Prairie',
+      'Savanna',
+      'Deciduous',
+      'coniferous',
+      'Permafrost',
+      'migrate south',
+      'Mountains',
+    ]) {
+      expect(allText).toMatch(new RegExp(concept, 'i'))
+    }
+  })
+
+  it('maps homework and quiz coverage 10 out of 10', () => {
+    const slideIds = new Set(biomesLessons.flatMap((lesson) => lesson.slides.map((slide) => slide.id)))
+    const lessonIds = new Set(biomesLessons.map((lesson) => lesson.id))
+
+    expect(biomesHomeworkCoverage).toHaveLength(10)
+    expect(biomesQuizCoverage).toHaveLength(10)
+    expect(biomesHomeworkCoverage.map((item) => item.question)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    expect(biomesQuizCoverage.map((item) => item.question)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
+    for (const item of [...biomesHomeworkCoverage, ...biomesQuizCoverage]) {
+      expect(item.taughtInLessonIds.every((lessonId) => lessonIds.has(lessonId))).toBe(true)
+      expect(item.taughtInSlideIds.every((slideId) => slideIds.has(slideId))).toBe(true)
+    }
   })
 
   it('registers every Biomes media asset with provenance and a Science public path', () => {
-    const assetIds = biomes.slides.flatMap((slide) => slide.media?.assetId ? [slide.media.assetId] : [])
+    const assetIds = biomesLessons.flatMap((lesson) => lesson.slides.flatMap((slide) => slide.media?.assetId ? [slide.media.assetId] : []))
 
     expect(assetIds.length).toBeGreaterThan(0)
     for (const assetId of assetIds) {
@@ -48,6 +105,16 @@ describe('Science Lessons curriculum', () => {
       expect(asset?.alt.length).toBeGreaterThan(12)
       expect(asset?.attribution.length).toBeGreaterThan(3)
       expect(asset?.origin).not.toBe('temporary')
+    }
+  })
+
+  it('includes Traditional Chinese content for student-facing Biomes slides and reveals', () => {
+    for (const slide of biomesLessons.flatMap((lesson) => lesson.slides)) {
+      expect(slide.title.zhHant?.trim()).toBeTruthy()
+      expect(slide.body.zhHant?.trim()).toBeTruthy()
+      for (const reveal of slide.reveals ?? []) {
+        expect(reveal.text.zhHant?.trim()).toBeTruthy()
+      }
     }
   })
 
@@ -73,7 +140,7 @@ describe('Science Lessons teacher flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Continue last lesson/i }))
 
     expect(screen.getByRole('heading', { name: /Chapter 2.4: Biomes/i })).toBeInTheDocument()
-    expect(screen.getByText(/Slide 1 of 13/i)).toBeInTheDocument()
+    expect(screen.getByText(/Slide 1 of 11/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
 
@@ -82,7 +149,7 @@ describe('Science Lessons teacher flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
 
-    expect(screen.getByText(/Slide 2 of 13/i)).toBeInTheDocument()
+    expect(screen.getByText(/Slide 2 of 11/i)).toBeInTheDocument()
   })
 
   it('supports English, bilingual, and Traditional Chinese presentation modes', () => {
@@ -124,8 +191,8 @@ describe('Biomes presentation V2 prototype', () => {
   })
 
   it('uses V2 scenes inside the unified presenter and falls back without moving English content into Chinese support', () => {
-    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
-    const fallbackSlide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-six-biomes')
+    const v2Slide = biomesLesson1.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const fallbackSlide = biomesLesson1.slides.find((slide) => slide.id === 'j1-ch2-4-six-biomes')
 
     expect(v2Slide).toBeDefined()
     expect(fallbackSlide).toBeDefined()
@@ -135,7 +202,7 @@ describe('Biomes presentation V2 prototype', () => {
         slide={v2Slide!}
         language="Bilingual"
         revealIndex={3}
-        totalSlides={biomes.slides.length}
+        totalSlides={biomesLesson1.slides.length}
         slideNumber={2}
         onExit={() => undefined}
         fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
@@ -152,7 +219,7 @@ describe('Biomes presentation V2 prototype', () => {
         slide={fallbackSlide!}
         language="Bilingual"
         revealIndex={1}
-        totalSlides={biomes.slides.length}
+        totalSlides={biomesLesson1.slides.length}
         slideNumber={4}
         onExit={() => undefined}
         fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
@@ -164,15 +231,51 @@ describe('Biomes presentation V2 prototype', () => {
     expect(container.querySelector('.v2-support-layer')).toHaveClass('is-visible')
   })
 
+  it('renders Presentation Mode for both canonical Biomes lessons', () => {
+    const lesson1Slide = biomesLesson1.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const lesson2Slide = biomesLesson2.slides.find((slide) => slide.id === 'j1-ch2-4-tundra')
+
+    const { container, rerender } = render(
+      <PresentationShell
+        slide={lesson1Slide!}
+        language="English"
+        revealIndex={1}
+        totalSlides={biomesLesson1.slides.length}
+        slideNumber={3}
+        onExit={() => undefined}
+        fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
+      />,
+    )
+
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-slide-id', 'j1-ch2-4-biome-definition')
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-renderer', 'v2')
+
+    rerender(
+      <PresentationShell
+        slide={lesson2Slide!}
+        language="English"
+        revealIndex={2}
+        totalSlides={biomesLesson2.slides.length}
+        slideNumber={5}
+        onExit={() => undefined}
+        fallback={(slide) => <div data-testid="fallback">{slide.title.en}</div>}
+      />,
+    )
+
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-slide-id', 'j1-ch2-4-tundra')
+    expect(container.querySelector('.presentation-shell')).toHaveAttribute('data-renderer', 'v1-fallback')
+    expect(screen.getByTestId('fallback')).toHaveTextContent('Tundra biomes')
+  })
+
   it('supports staged notes, show all notes, and return to presentation', () => {
-    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const v2Slide = biomesLesson1.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
 
     render(
       <PresentationShell
         slide={v2Slide!}
         language="English"
         revealIndex={3}
-        totalSlides={biomes.slides.length}
+        totalSlides={biomesLesson1.slides.length}
         slideNumber={2}
         onExit={() => undefined}
         fallback={(slide) => <div>{slide.title.en}</div>}
@@ -200,13 +303,13 @@ describe('Biomes presentation V2 prototype', () => {
   })
 
   it('pins a translation bubble without placing it inside the English plane', () => {
-    const v2Slide = biomes.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
+    const v2Slide = biomesLesson1.slides.find((slide) => slide.id === 'j1-ch2-4-biome-definition')
     const { container } = render(
       <PresentationShell
         slide={v2Slide!}
         language="Bilingual"
         revealIndex={3}
-        totalSlides={biomes.slides.length}
+        totalSlides={biomesLesson1.slides.length}
         slideNumber={2}
         onExit={() => undefined}
         fallback={(slide) => <div>{slide.title.en}</div>}

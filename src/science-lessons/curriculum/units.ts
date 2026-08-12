@@ -5,7 +5,7 @@ export const scienceUnits: ScienceUnit[] = [
     id: 'j1-ch2-biomes',
     number: 'Chapter 2.4',
     title: 'Biomes',
-    description: 'Real pilot unit: climate factors, major land biomes, adaptations and ecosystem conditions.',
+    description: 'Production unit: climate factors, major land biomes, adaptations and ecosystem conditions.',
     year: 'J1',
     semester: 'Fall',
     accent: 'cyan',
