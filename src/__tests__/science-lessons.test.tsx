@@ -12,8 +12,11 @@ const biomesLesson1 = findLesson('j1-ch2-4-biomes-lesson-1')
 const biomesLesson2 = findLesson('j1-ch2-4-biomes-lesson-2')
 const activationLesson = findLesson('activation-energy-catalysts')
 const energyChangeLesson = findLesson('endo-exothermic')
+const concentrationLesson = findLesson('j1-concentration-saturation')
+const solubilityLesson = findLesson('j1-solubility-curves')
 const biomesLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-ch2-biomes')
 const reactionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-fall-reactions')
+const solutionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-spring-solutions')
 
 describe('Science Lessons curriculum', () => {
   it('keeps lessons filterable and ordered by year, semester, and lesson order', () => {
@@ -302,6 +305,153 @@ describe('J1 Chemical Reactions production unit', () => {
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
     expect(screen.getAllByText(/activation energy/i).length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Exit' }))
+
+    expect(screen.queryByRole('dialog', { name: /Classroom presentation mode/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('J1 Solutions and Solubility production unit', () => {
+  it('replaces the recovered pilot with two ordered Spring / Summer production lessons', () => {
+    expect(solutionLessons.map((lesson) => lesson.id)).toEqual([
+      'j1-concentration-saturation',
+      'j1-solubility-curves',
+    ])
+    expect(solutionLessons.every((lesson) => lesson.year === 'J1')).toBe(true)
+    expect(solutionLessons.every((lesson) => lesson.semester === 'Spring / Summer')).toBe(true)
+    expect(solutionLessons.every((lesson) => lesson.status === 'Published')).toBe(true)
+    expect(concentrationLesson.lessonOrder).toBe(1)
+    expect(solubilityLesson.lessonOrder).toBe(2)
+    expect(concentrationLesson.duration).toBe(50)
+    expect(solubilityLesson.duration).toBe(50)
+  })
+
+  it('upgrades the Solutions sequence with production slide flow and metadata', () => {
+    expect(concentrationLesson.title).toBe('Concentration, Solutes and Saturation')
+    expect(solubilityLesson.title).toBe('Solubility and Solubility Curves')
+    expect(concentrationLesson.slides).toHaveLength(8)
+    expect(solubilityLesson.slides).toHaveLength(8)
+
+    for (const lesson of solutionLessons) {
+      expect(lesson.sourceReferences.map((source) => source.id)).toEqual([
+        'src-j1-ch3-solutions-ppt',
+        'src-j1-ch3-solutions-pilot',
+      ])
+      expect(lesson.resources.map((resource) => resource.id)).toEqual([
+        'j1-ch3-solutions-source-ppt',
+        'j1-ch3-solubility-curve-practice',
+        'j1-ch3-solubility-review-quiz',
+      ])
+      expect(lesson.objectives.length).toBeGreaterThanOrEqual(4)
+      expect(lesson.slides.every((slide) => slide.teacherNote.trim().length > 30)).toBe(true)
+      expect(lesson.slides.every((slide) => slide.title.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.every((slide) => slide.body.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.some((slide) => slide.revealMode === 'step-by-step' && (slide.reveals?.length ?? 0) >= 3)).toBe(true)
+    }
+  })
+
+  it('covers the recovered concentration, saturation, solubility and graph-reading concepts', () => {
+    const allText = solutionLessons.flatMap((lesson) => lesson.slides).map((slide) => [
+      slide.title.en,
+      slide.body.en,
+      slide.emphasis ?? '',
+      ...(slide.reveals?.map((reveal) => reveal.text.en) ?? []),
+    ].join(' ')).join(' ')
+
+    for (const concept of [
+      'solute',
+      'solvent',
+      'concentration',
+      'volume',
+      'dilute',
+      'concentrated',
+      'saturated',
+      'unsaturated',
+      'solubility',
+      'temperature',
+      'x-axis',
+      'y-axis',
+      'curve',
+    ]) {
+      expect(allText).toMatch(new RegExp(concept, 'i'))
+    }
+  })
+
+  it('opens the Solutions Teacher Workspace from J1 Spring / Summer and advances concentration reveals', () => {
+    render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+
+    expect(screen.getByText(/Concentration, Solutes and Saturation/i)).toBeInTheDocument()
+    expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
+    expect(screen.getByText(/Source references/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+
+    expect(screen.getByText(/Reveal 1 of 3/i)).toBeInTheDocument()
+    expect(screen.getByText(/Solute: the substance that dissolves/i)).toBeInTheDocument()
+  })
+
+  it('renders English, bilingual, and Traditional Chinese for representative Solutions slides', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[2])
+    fireEvent.click(screen.getByRole('button', { name: 'English' }))
+
+    expect(screen.getByRole('heading', { name: /What is concentration/i })).toBeInTheDocument()
+    expect(screen.queryByText(/什麼是濃度/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bilingual' }))
+
+    expect(screen.getByText(/什麼是濃度/)).toBeInTheDocument()
+
+    fireEvent.click(container.querySelectorAll('.viewer-language > button')[2])
+
+    expect(screen.getByRole('heading', { name: /什麼是濃度/ })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /What is concentration/i })).not.toBeInTheDocument()
+    expect(container.querySelector('.slide-canvas')).toHaveTextContent('相同體積')
+    expect(container.querySelector('.slide-canvas')).not.toHaveTextContent('same volume')
+  })
+
+  it('renders the large solubility curve and staged crosshair content', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[4])
+
+    expect(screen.getByRole('heading', { name: /Use a graph-reading crosshair/i })).toBeInTheDocument()
+    expect(container.querySelector('.solubility-curve-board')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+
+    expect(screen.getByText(/Reveal 4 of 4/i)).toBeInTheDocument()
+    expect(container.querySelector('.solubility-read-line--vertical')).toHaveClass('is-visible')
+    expect(container.querySelector('.solubility-read-line--horizontal')).toHaveClass('is-visible')
+    expect(container.querySelector('.solubility-answer')).toHaveTextContent(/temperature -> curve -> y-axis/i)
+  })
+
+  it('renders Presentation Mode for the Solutions production unit', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
+
+    expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/solubility/i).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
     fireEvent.click(screen.getByRole('button', { name: 'Exit' }))

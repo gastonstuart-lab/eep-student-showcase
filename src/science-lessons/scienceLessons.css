@@ -3693,6 +3693,381 @@ button:disabled {
   margin-top: 11px;
 }
 
+.solution-hero-scene {
+  position: relative;
+  overflow: hidden;
+  min-height: 100%;
+  background:
+    linear-gradient(140deg, rgba(3, 132, 150, 0.2), transparent 48%),
+    linear-gradient(180deg, #f4fbfb, #dff2f1);
+  border-radius: 18px;
+}
+
+.solution-hero-scene--graph {
+  display: grid;
+  grid-template-columns: 0.72fr 1.28fr;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+}
+
+.solution-hero-beaker,
+.solution-beaker,
+.solution-mini-beaker {
+  position: relative;
+  overflow: hidden;
+  border: 4px solid rgba(45, 95, 112, 0.55);
+  border-top: 0;
+  border-radius: 0 0 24px 24px;
+  background: rgba(255, 255, 255, 0.54);
+  box-shadow: inset 0 -20px 30px rgba(4, 85, 112, 0.08);
+}
+
+.solution-hero-beaker {
+  position: absolute;
+  left: 12%;
+  bottom: 12%;
+  width: 43%;
+  max-width: 260px;
+  aspect-ratio: 0.78;
+}
+
+.solution-hero-scene--graph .solution-hero-beaker {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: none;
+}
+
+.solution-liquid,
+.solution-mini-liquid {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 68%;
+  background: linear-gradient(180deg, rgba(84, 206, 213, 0.56), rgba(16, 140, 170, 0.72));
+}
+
+.solution-liquid::before,
+.solution-mini-liquid::before {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  left: 0;
+  height: 16px;
+  content: "";
+  background: rgba(180, 248, 245, 0.82);
+  border-radius: 50%;
+}
+
+.solution-particle,
+.solution-dot {
+  position: absolute;
+  z-index: 2;
+  width: 13px;
+  height: 13px;
+  background: #f39d2c;
+  border: 2px solid rgba(96, 57, 6, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(168, 94, 13, 0.18);
+}
+
+.solution-particle--1 { left: 26%; bottom: 25%; }
+.solution-particle--2 { left: 42%; bottom: 43%; }
+.solution-particle--3 { left: 61%; bottom: 30%; }
+.solution-particle--4 { left: 70%; bottom: 56%; }
+
+.solution-undissolved,
+.solution-mini-sediment {
+  position: absolute;
+  z-index: 3;
+  right: 18%;
+  bottom: 7%;
+  left: 18%;
+  height: 11px;
+  background: repeating-linear-gradient(90deg, #d98723 0 10px, #f0b357 10px 18px);
+  border-radius: 999px;
+}
+
+.solution-hero-card {
+  position: absolute;
+  top: 13%;
+  right: 10%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: min(42%, 310px);
+  padding: 18px;
+  color: #123b47;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(5, 115, 140, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 18px 38px rgba(25, 80, 94, 0.13);
+}
+
+.solution-hero-scene--graph .solution-hero-card {
+  top: auto;
+  right: auto;
+  bottom: 8%;
+  left: 7%;
+  width: 40%;
+}
+
+.solution-hero-card strong {
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  line-height: 1.1;
+}
+
+.solution-hero-card span {
+  color: #45646c;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.solution-concept-map {
+  background: linear-gradient(180deg, #f5fbfb, #e5f4f1);
+}
+
+.solution-concept-map__flow .concept-factor--solution-solute {
+  background: #fff5df;
+  border-color: #f0c879;
+}
+
+.solution-concept-map__flow .concept-factor--solution-solvent {
+  background: #e8f8f8;
+  border-color: #86d5d4;
+}
+
+.solution-concept-map__flow .concept-factor--solution-final {
+  background: #e9f2ff;
+  border-color: #9fbfe6;
+}
+
+.solution-sequence,
+.solution-beaker-comparison {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.solution-beaker-comparison {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 270px;
+}
+
+.solution-sequence article,
+.solution-beaker-comparison article {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  color: #203f48;
+  text-align: center;
+  background: #f8fcfb;
+  border: 1px solid rgba(69, 124, 135, 0.18);
+  border-radius: 14px;
+}
+
+.solution-beaker-comparison article {
+  opacity: 0.38;
+  transform: translateY(6px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.solution-beaker-comparison article.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.solution-sequence strong,
+.solution-beaker-comparison strong {
+  font-size: 0.94rem;
+}
+
+.solution-sequence span,
+.solution-beaker-comparison article > span {
+  color: #617781;
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.solution-mini-beaker {
+  width: min(92px, 100%);
+  aspect-ratio: 0.76;
+}
+
+.solution-beaker {
+  width: min(160px, 70%);
+  aspect-ratio: 0.78;
+}
+
+.solution-dot--0 { left: 25%; bottom: 26%; }
+.solution-dot--1 { left: 54%; bottom: 32%; }
+.solution-dot--2 { left: 38%; bottom: 48%; }
+.solution-dot--3 { left: 66%; bottom: 57%; }
+.solution-dot--4 { left: 48%; bottom: 68%; }
+
+.solubility-curve-board {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 300px;
+  padding: 16px;
+  background: linear-gradient(180deg, #fbfefe, #e9f5f4);
+  border: 1px solid rgba(50, 112, 122, 0.16);
+  border-radius: 16px;
+}
+
+.solution-hero-scene--graph .solubility-curve-board {
+  min-height: 330px;
+}
+
+.solubility-curve-board--compact {
+  min-height: 310px;
+}
+
+.solubility-chart-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #183f49;
+}
+
+.solubility-chart-title strong {
+  font-size: 1rem;
+}
+
+.solubility-chart-title span {
+  color: #68818a;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.solubility-plot {
+  position: relative;
+  min-height: 0;
+}
+
+.solubility-plot svg {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  overflow: visible;
+}
+
+.solubility-axis {
+  position: absolute;
+  z-index: 2;
+  color: #284d57;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.solubility-axis--x {
+  right: 5%;
+  bottom: 1%;
+}
+
+.solubility-axis--y {
+  top: 44%;
+  left: -7px;
+  transform: rotate(-90deg);
+  transform-origin: left center;
+}
+
+.solubility-grid {
+  fill: none;
+  stroke: rgba(50, 96, 112, 0.18);
+  stroke-width: 2;
+}
+
+.solubility-main-curve,
+.solubility-second-curve {
+  fill: none;
+  opacity: 0;
+  stroke-linecap: round;
+  stroke-width: 9;
+  transition: opacity 180ms ease;
+}
+
+.solubility-main-curve {
+  stroke: #f08f2c;
+}
+
+.solubility-second-curve {
+  stroke: #2aa6c4;
+  stroke-width: 7;
+}
+
+.solubility-main-curve.is-visible,
+.solubility-second-curve.is-visible,
+.solubility-read-line.is-visible,
+.solubility-read-point.is-visible {
+  opacity: 1;
+}
+
+.solubility-read-line {
+  opacity: 0;
+  stroke: #263f4c;
+  stroke-dasharray: 10 8;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.solubility-read-point {
+  fill: #fff;
+  opacity: 0;
+  stroke: #263f4c;
+  stroke-width: 5;
+}
+
+.solubility-plot text {
+  fill: #33545f;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.solubility-zone {
+  position: absolute;
+  z-index: 2;
+  padding: 5px 8px;
+  color: #284d57;
+  font-size: 0.62rem;
+  font-weight: 850;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(51, 103, 113, 0.12);
+  border-radius: 8px;
+}
+
+.solubility-zone--above {
+  top: 18%;
+  right: 10%;
+}
+
+.solubility-zone--below {
+  right: 24%;
+  bottom: 18%;
+}
+
+.solubility-answer {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  color: #174653;
+  font-size: 0.78rem;
+  font-weight: 850;
+  background: #dff6f3;
+  border-radius: 9px;
+}
+
 @media (max-width: 1180px) {
   .science-topbar {
     grid-template-columns: 1fr auto;
@@ -3803,6 +4178,12 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .viewer-workspace {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
   .viewer-thumbnails,
   .editor-sidebar {
     display: none;
@@ -3828,6 +4209,21 @@ button:disabled {
 
   .slide-canvas {
     grid-template-columns: 1fr 38%;
+  }
+
+  .solution-hero-scene--graph,
+  .solution-sequence,
+  .solution-beaker-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .solution-hero-scene--graph .solution-hero-card {
+    position: static;
+    width: auto;
+  }
+
+  .solution-hero-scene--graph .solution-hero-beaker {
+    display: none;
   }
 
   .editor-media-block {
@@ -3924,16 +4320,129 @@ button:disabled {
   }
 
   .slide-canvas {
-    display: block;
-    aspect-ratio: 4 / 3;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    aspect-ratio: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 18px;
+  }
+
+  .slide-hero-copy {
+    position: relative;
+    inset: auto;
+    width: auto;
+    padding: 0;
+    background: transparent;
+  }
+
+  .slide-canvas h1,
+  .slide-layout--diagram .slide-title-block h1,
+  .slide-layout--comparison .slide-title-block h1,
+  .slide-layout--image-focus .slide-title-block h1 {
+    font-size: 2rem;
+    line-height: 1.05;
+  }
+
+  .slide-canvas h2 {
+    font-size: 0.95rem;
+  }
+
+  .slide-canvas p {
+    font-size: 0.76rem;
+    line-height: 1.42;
+  }
+
+  .slide-emphasis {
+    font-size: 1.05rem;
+    line-height: 1.18;
+  }
+
+  .slide-source {
+    position: static;
+    align-self: end;
+    font-size: 0.46rem;
+  }
+
+  .slide-corner {
+    position: static;
+    align-self: end;
+    font-size: 0.5rem;
   }
 
   .slide-canvas__content {
-    padding: 8%;
+    padding: 0;
   }
 
   .slide-canvas .science-visual {
     display: none;
+  }
+
+  .slide-canvas .solution-hero-scene,
+  .slide-canvas .solution-sequence,
+  .slide-canvas .solution-beaker-comparison,
+  .slide-canvas .solubility-curve-board {
+    margin: 12px 0;
+  }
+
+  .solution-hero-scene {
+    min-height: 240px;
+  }
+
+  .solution-hero-scene--graph {
+    padding: 0;
+  }
+
+  .solution-hero-beaker {
+    right: 12%;
+    left: auto;
+    width: 38%;
+  }
+
+  .solution-hero-card {
+    top: 10%;
+    right: auto;
+    left: 8%;
+    width: 48%;
+    padding: 12px;
+  }
+
+  .solution-sequence,
+  .solution-beaker-comparison {
+    gap: 8px;
+  }
+
+  .solution-sequence article,
+  .solution-beaker-comparison article {
+    padding: 10px;
+  }
+
+  .solution-mini-beaker,
+  .solution-beaker {
+    width: 82px;
+  }
+
+  .solution-beaker-comparison {
+    min-height: 0;
+  }
+
+  .solubility-curve-board {
+    min-height: 300px;
+    padding: 12px;
+  }
+
+  .solubility-chart-title {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .solubility-plot svg {
+    min-height: 230px;
+  }
+
+  .solubility-plot text {
+    font-size: 19px;
   }
 
   .viewer-navigation button {

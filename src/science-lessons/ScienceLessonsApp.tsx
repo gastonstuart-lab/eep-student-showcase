@@ -683,9 +683,29 @@ function studentLabel(label: string, language: LanguageMode) {
     'successful collisions': '成功碰撞',
     'reaction energy profile': '反應能量圖',
     'energy transfer': '能量轉移',
+    'solute + solvent -> solution': '溶質 + 溶劑 -> 溶液',
+    'same volume, different solute amount': '相同體積，不同溶質量',
+    'relative amount of solute': '溶質的相對多少',
+    'solute amount compared with volume': '溶質量與體積比較',
+    'maximum dissolved solute': '最大已溶解溶質量',
+    'can dissolve more?': '還能再溶解嗎？',
+    'use solute and volume': '使用溶質與體積',
+    'maximum dissolved at a temperature': '某溫度下最大可溶解量',
+    'temperature + solubility': '溫度 + 溶解度',
+    'x-axis temperature, y-axis mass': 'x 軸溫度，y 軸質量',
+    'temperature -> curve -> solubility': '溫度 -> 曲線 -> 溶解度',
+    'same temperature, different curves': '相同溫度，不同曲線',
+    'below, on, above': '曲線下、曲線上、曲線上方',
+    'axis, curve, value, interpretation': '座標軸、曲線、數值、解釋',
+    'Solution model': '溶液模型',
+    'Graph reading': '圖表讀取',
   }
 
   return labels[label] ?? label
+}
+
+function isSolutionSlide(slide: LessonSlide) {
+  return slide.id.includes('j1-ch3-')
 }
 
 function SlideCanvas({
@@ -764,12 +784,13 @@ function RevealStack({
 
 function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-change')
+  const solutionSlide = isSolutionSlide(slide)
 
   return (
     <>
-      {isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
+      {solutionSlide ? <SolutionHeroScene slide={slide} language={language} /> : isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
       <section className="slide-hero-copy">
-        <SlideTitle slide={slide} language={language} kicker={isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
+        <SlideTitle slide={slide} language={language} kicker={solutionSlide || isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode="prompts" />
       </section>
@@ -779,6 +800,7 @@ function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 
 function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-system')
+  const solutionSlide = isSolutionSlide(slide)
 
   return (
     <>
@@ -786,9 +808,67 @@ function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
         <SlideTitle slide={slide} language={language} kicker="Core idea" />
         <SlideBody slide={slide} language={language} />
       </section>
-      {isReactionSlide ? <ReactionConceptMap slide={slide} language={language} /> : <BiomeConceptMap language={language} />}
+      {solutionSlide ? <SolutionConceptMap slide={slide} language={language} /> : isReactionSlide ? <ReactionConceptMap slide={slide} language={language} /> : <BiomeConceptMap language={language} />}
       <RevealStack items={visibleReveals} language={language} mode="statements" />
     </>
+  )
+}
+
+function SolutionHeroScene({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const graphMode = slide.id.includes('solubility')
+
+  return (
+    <section className={`solution-hero-scene ${graphMode ? 'solution-hero-scene--graph' : ''}`} aria-label="Solutions and solubility teaching model">
+      <div className="solution-hero-beaker">
+        <span className="solution-liquid" />
+        <span className="solution-particle solution-particle--1" />
+        <span className="solution-particle solution-particle--2" />
+        <span className="solution-particle solution-particle--3" />
+        <span className="solution-particle solution-particle--4" />
+        <span className="solution-undissolved" />
+      </div>
+      <div className="solution-hero-card">
+        <strong>{graphMode ? (language === '繁體中文' ? '溶解度曲線' : 'solubility curve') : (language === '繁體中文' ? '溶液模型' : 'solution model')}</strong>
+        <span>{graphMode ? (language === '繁體中文' ? '溫度對應最大可溶解量' : 'temperature maps to maximum dissolved amount') : (language === '繁體中文' ? '溶質分散在溶劑中' : 'solute spreads through solvent')}</span>
+      </div>
+      {graphMode && <SolubilityCurveBoard language={language} visibleCount={4} />}
+    </section>
+  )
+}
+
+function SolutionConceptMap({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const graphMode = slide.id.includes('temperature-solubility')
+  const factors = graphMode
+    ? [
+        { className: 'concept-factor--solution-solvent', title: language === '繁體中文' ? '溫度' : 'TEMPERATURE', subtitle: language === '繁體中文' ? 'x 軸讀取' : 'read on x-axis' },
+        { className: 'concept-factor--solution-solute', title: language === '繁體中文' ? '曲線' : 'CURVE', subtitle: language === '繁體中文' ? '指定物質' : 'substance named' },
+        { className: 'concept-factor--solution-final', title: language === '繁體中文' ? '溶解度' : 'SOLUBILITY', subtitle: language === '繁體中文' ? 'y 軸最大質量' : 'maximum mass on y-axis' },
+      ]
+    : [
+        { className: 'concept-factor--solution-solute', title: language === '繁體中文' ? '溶質' : 'SOLUTE', subtitle: language === '繁體中文' ? '被溶解的物質' : 'substance that dissolves' },
+        { className: 'concept-factor--solution-solvent', title: language === '繁體中文' ? '溶劑' : 'SOLVENT', subtitle: language === '繁體中文' ? '使溶質溶解' : 'does the dissolving' },
+        { className: 'concept-factor--solution-final', title: language === '繁體中文' ? '溶液' : 'SOLUTION', subtitle: language === '繁體中文' ? '均勻分散' : 'evenly spread mixture' },
+      ]
+
+  return (
+    <section className="concept-map solution-concept-map" aria-label="Solution concept map">
+      <div className="concept-map__equation solution-concept-map__flow">
+        {factors.map((factor, index) => (
+          <Fragment key={factor.title}>
+            <article className={`concept-factor ${factor.className}`}>
+              <strong>{factor.title}</strong>
+              <span>{factor.subtitle}</span>
+            </article>
+            {index < factors.length - 1 && <b aria-hidden="true">{graphMode ? '→' : index === 0 ? '+' : '='}</b>}
+          </Fragment>
+        ))}
+      </div>
+      <div className="concept-definition">
+        {graphMode
+          ? (language === '繁體中文' ? '閱讀溶解度曲線時，要先確認物質，再用溫度找到最大可溶解量。' : 'When reading a solubility curve, identify the substance first, then use temperature to find the maximum dissolved amount.')
+          : (language === '繁體中文' ? '濃度比較的是已溶解溶質量與溶液體積的關係。' : 'Concentration compares dissolved solute amount with solution volume.')}
+      </div>
+    </section>
   )
 }
 
@@ -896,11 +976,12 @@ function VocabularySlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isClimate = slide.id.includes('climate-drivers')
   const isReaction = slide.id.includes('reactions') || slide.id.includes('exothermic') || slide.id.includes('endothermic')
+  const solutionSlide = isSolutionSlide(slide)
 
   return (
     <>
       <section className="slide-diagram-copy">
-        <SlideTitle slide={slide} language={language} kicker={isReaction ? 'reaction energy profile' : 'Explain the pattern'} />
+        <SlideTitle slide={slide} language={language} kicker={solutionSlide ? 'Solution model' : isReaction ? 'reaction energy profile' : 'Explain the pattern'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode={isClimate ? 'statements' : 'stack'} />
       </section>
@@ -912,15 +993,16 @@ function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
 function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isRainfall = slide.id.includes('rainfall-spectrum')
   const isReaction = slide.id.includes('reactions') || slide.id.includes('energy-profile')
+  const solutionSlide = isSolutionSlide(slide)
 
   return (
     <>
       <section className="slide-comparison-heading">
-        <SlideTitle slide={slide} language={language} kicker={isReaction ? 'energy transfer' : isRainfall ? 'Retrieval' : 'Compare'} />
+        <SlideTitle slide={slide} language={language} kicker={solutionSlide && slide.visual === 'graph' ? 'Graph reading' : isReaction ? 'energy transfer' : isRainfall ? 'Retrieval' : 'Compare'} />
         <SlideBody slide={slide} language={language} />
       </section>
-      {isReaction ? <ReactionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
-      {!isRainfall && !isReaction && <RevealStack items={visibleReveals} language={language} mode="chips" />}
+      {solutionSlide ? <SolutionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isReaction ? <ReactionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
+      {!isRainfall && !isReaction && !solutionSlide && <RevealStack items={visibleReveals} language={language} mode="chips" />}
     </>
   )
 }
@@ -1003,6 +1085,10 @@ function SciencePhoto({
 }
 
 function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  if (isSolutionSlide(slide)) {
+    return <SolutionTeachingDiagram slide={slide} language={language} />
+  }
+
   if (slide.id.includes('energy-profile') || slide.id.includes('exothermic') || slide.id.includes('endothermic')) {
     return <ReactionEnergyDiagram slide={slide} language={language} />
   }
@@ -1066,6 +1152,129 @@ function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: La
   }
 
   return <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram" />
+}
+
+function SolutionTeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  if (slide.visual === 'graph') {
+    return <SolubilityCurveBoard language={language} visibleCount={3} compact />
+  }
+
+  const saturation = slide.id.includes('saturation') || slide.id.includes('solubility-definition')
+  const states = saturation
+    ? [
+        { title: language === '繁體中文' ? '加入溶質' : 'add solute', detail: language === '繁體中文' ? '溶解' : 'dissolves', particles: 5 },
+        { title: language === '繁體中文' ? '繼續加入' : 'add more', detail: language === '繁體中文' ? '仍可溶解' : 'still dissolves', particles: 8 },
+        { title: language === '繁體中文' ? '達到最大值' : 'maximum reached', detail: language === '繁體中文' ? '固體留下' : 'solid remains', particles: 10, sediment: true },
+      ]
+    : [
+        { title: language === '繁體中文' ? '溶質' : 'solute', detail: language === '繁體中文' ? '被溶解' : 'dissolves', particles: 4 },
+        { title: language === '繁體中文' ? '溶劑' : 'solvent', detail: language === '繁體中文' ? '使其溶解' : 'does dissolving', particles: 2 },
+        { title: language === '繁體中文' ? '溶液' : 'solution', detail: language === '繁體中文' ? '均勻分散' : 'spread evenly', particles: 8 },
+      ]
+
+  return (
+    <section className={`solution-sequence ${saturation ? 'solution-sequence--saturation' : ''}`} aria-label="Solution particle sequence">
+      {states.map((state) => (
+        <article key={state.title}>
+          <div className="solution-mini-beaker">
+            <span className="solution-mini-liquid" />
+            {Array.from({ length: state.particles }, (_, index) => <span className={`solution-dot solution-dot--${index % 5}`} key={index} />)}
+            {state.sediment && <span className="solution-mini-sediment" />}
+          </div>
+          <strong>{state.title}</strong>
+          <span>{state.detail}</span>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function SolutionComparison({ slide, language, visibleCount }: { slide: LessonSlide; language: LanguageMode; visibleCount: number }) {
+  if (slide.visual === 'graph') {
+    return <SolubilityCurveBoard language={language} visibleCount={visibleCount} showComparison={slide.id.includes('compare-curves')} showZones={slide.id.includes('below-above')} />
+  }
+
+  const saturation = slide.id.includes('saturated') || slide.id.includes('saturation')
+  const cards = saturation
+    ? [
+        { title: language === '繁體中文' ? '未飽和' : 'Unsaturated', detail: language === '繁體中文' ? '還能再溶解' : 'can dissolve more', particles: 6 },
+        { title: language === '繁體中文' ? '飽和' : 'Saturated', detail: language === '繁體中文' ? '已達最大值' : 'maximum reached', particles: 10, sediment: true },
+      ]
+    : [
+        { title: language === '繁體中文' ? '稀溶液' : 'Dilute', detail: language === '繁體中文' ? '溶質較少' : 'less solute', particles: 4 },
+        { title: language === '繁體中文' ? '濃溶液' : 'Concentrated', detail: language === '繁體中文' ? '溶質較多' : 'more solute', particles: 10 },
+      ]
+
+  return (
+    <section className="solution-beaker-comparison" aria-label="Solution concentration comparison">
+      {cards.map((card, index) => (
+        <article className={index < Math.max(1, visibleCount) ? 'is-visible' : ''} key={card.title}>
+          <div className="solution-beaker">
+            <span className="solution-liquid" />
+            {Array.from({ length: card.particles }, (_, particleIndex) => <span className={`solution-dot solution-dot--${particleIndex % 5}`} key={particleIndex} />)}
+            {card.sediment && <span className="solution-mini-sediment" />}
+          </div>
+          <strong>{card.title}</strong>
+          <span>{card.detail}</span>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function SolubilityCurveBoard({
+  language,
+  visibleCount,
+  compact = false,
+  showComparison = false,
+  showZones = false,
+}: {
+  language: LanguageMode
+  visibleCount: number
+  compact?: boolean
+  showComparison?: boolean
+  showZones?: boolean
+}) {
+  const showVertical = visibleCount >= 1
+  const showCurve = visibleCount >= 2
+  const showHorizontal = visibleCount >= 3
+  const showAnswer = visibleCount >= 4
+
+  return (
+    <section className={`solubility-curve-board ${compact ? 'solubility-curve-board--compact' : ''}`} aria-label="Large solubility curve teaching graph">
+      <div className="solubility-chart-title">
+        <strong>{language === '繁體中文' ? '溶解度曲線' : 'Solubility curve'}</strong>
+        <span>{language === '繁體中文' ? '示意圖：用來源圖表讀取精確數值' : 'schematic: use source graph for exact values'}</span>
+      </div>
+      <div className="solubility-plot">
+        <span className="solubility-axis solubility-axis--x">{language === '繁體中文' ? '溫度' : 'Temperature'}</span>
+        <span className="solubility-axis solubility-axis--y">{language === '繁體中文' ? '最大溶質質量' : 'Maximum mass of solute'}</span>
+        {showZones && (
+          <>
+            <span className="solubility-zone solubility-zone--above">{language === '繁體中文' ? '上方：多餘固體' : 'above: extra solid'}</span>
+            <span className="solubility-zone solubility-zone--below">{language === '繁體中文' ? '下方：未飽和' : 'below: unsaturated'}</span>
+          </>
+        )}
+        <svg viewBox="0 0 700 420" role="img" aria-label={language === '繁體中文' ? '用溫度讀取溶解度曲線' : 'Read a solubility curve from temperature to solubility'}>
+          <path className="solubility-grid" d="M92 65 H650 M92 135 H650 M92 205 H650 M92 275 H650 M92 345 H650 M170 45 V360 M275 45 V360 M380 45 V360 M485 45 V360 M590 45 V360" />
+          <path className={`solubility-main-curve ${showCurve ? 'is-visible' : ''}`} d="M105 318 C190 286 250 250 320 212 C405 165 492 130 635 74" />
+          {showComparison && <path className={`solubility-second-curve ${showCurve ? 'is-visible' : ''}`} d="M108 258 C205 246 300 226 398 196 C500 166 580 136 635 106" />}
+          <line className={`solubility-read-line solubility-read-line--vertical ${showVertical ? 'is-visible' : ''}`} x1="380" y1="350" x2="380" y2="184" />
+          <line className={`solubility-read-line solubility-read-line--horizontal ${showHorizontal ? 'is-visible' : ''}`} x1="92" y1="184" x2="380" y2="184" />
+          <circle className={`solubility-read-point ${showCurve ? 'is-visible' : ''}`} cx="380" cy="184" r="9" />
+          <text x="360" y="386">{language === '繁體中文' ? '溫度' : 'temperature'}</text>
+          <text x="18" y="188">{language === '繁體中文' ? '溶解度' : 'solubility'}</text>
+          <text x="505" y="88">{language === '繁體中文' ? '來源曲線 A' : 'source curve A'}</text>
+          {showComparison && <text x="495" y="128">{language === '繁體中文' ? '來源曲線 B' : 'source curve B'}</text>}
+        </svg>
+      </div>
+      {showAnswer && (
+        <div className="solubility-answer">
+          {language === '繁體中文' ? '讀法：溫度 -> 曲線 -> y 軸最大質量' : 'Read: temperature -> curve -> y-axis maximum mass'}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function ReactionEnergyDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
