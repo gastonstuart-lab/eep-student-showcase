@@ -1,0 +1,57 @@
+name: Science Lessons Preview Artifact
+
+on:
+  push:
+    branches:
+      - agent/science-lessons-foundation
+  pull_request:
+    paths:
+      - 'science-lessons.html'
+      - 'src/science-lessons/**'
+      - 'src/hubs.ts'
+      - 'vite.config.ts'
+      - '.github/workflows/science-lessons-preview-artifact.yml'
+  workflow_dispatch:
+
+jobs:
+  build-preview-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Assemble deployable package
+        run: |
+          mkdir -p preview-package
+          cp -R dist preview-package/dist
+          cp firebase.json preview-package/firebase.json
+          cp .firebaserc preview-package/.firebaserc
+          cat > preview-package/DEPLOY.txt <<'EOF'
+          This package was built by GitHub Actions from agent/science-lessons-foundation.
+          It contains only Firebase Hosting output and configuration.
+
+          From this folder, deploy a temporary preview only with:
+          firebase hosting:channel:deploy science-lessons-review --only hosting:iedhub
+
+          Do not run firebase deploy.
+          EOF
+
+      - name: Upload preview package
+        uses: actions/upload-artifact@v4
+        with:
+          name: science-lessons-preview-package
+          path: preview-package
+          if-no-files-found: error
+          retention-days: 7
