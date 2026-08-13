@@ -10,7 +10,10 @@ import { validateScienceCurriculum } from '../science-lessons/validation'
 
 const biomesLesson1 = findLesson('j1-ch2-4-biomes-lesson-1')
 const biomesLesson2 = findLesson('j1-ch2-4-biomes-lesson-2')
+const activationLesson = findLesson('activation-energy-catalysts')
+const energyChangeLesson = findLesson('endo-exothermic')
 const biomesLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-ch2-biomes')
+const reactionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-fall-reactions')
 
 describe('Science Lessons curriculum', () => {
   it('keeps lessons filterable and ordered by year, semester, and lesson order', () => {
@@ -193,6 +196,117 @@ describe('Science Lessons teacher flow', () => {
 
     expect(screen.getByText('\u9077\u5f99 + \u539a\u6bdb')).toBeInTheDocument()
     expect(screen.queryByText('migration + thick fur')).not.toBeInTheDocument()
+  })
+})
+
+describe('J1 Chemical Reactions production unit', () => {
+  it('appears in the correct J1 Fall order after the production Biomes lessons', () => {
+    expect(reactionLessons.map((lesson) => lesson.id)).toEqual([
+      'activation-energy-catalysts',
+      'endo-exothermic',
+    ])
+    expect(reactionLessons.every((lesson) => lesson.year === 'J1')).toBe(true)
+    expect(reactionLessons.every((lesson) => lesson.semester === 'Fall')).toBe(true)
+    expect(reactionLessons.every((lesson) => lesson.status === 'Published')).toBe(true)
+    expect(activationLesson.lessonOrder).toBeGreaterThan(biomesLesson2.lessonOrder)
+    expect(energyChangeLesson.lessonOrder).toBe(activationLesson.lessonOrder + 1)
+  })
+
+  it('upgrades both Chemical Reactions lessons with production slide flow and metadata', () => {
+    expect(activationLesson.slides).toHaveLength(8)
+    expect(energyChangeLesson.slides).toHaveLength(8)
+
+    for (const lesson of reactionLessons) {
+      expect(lesson.objectives.length).toBeGreaterThanOrEqual(4)
+      expect(lesson.sourceReferences.map((source) => source.id)).toEqual([
+        'src-j1-ch2-reactions-ppt',
+        'src-j1-ch2-reactions-pilot',
+      ])
+      expect(lesson.resources.map((resource) => resource.id)).toEqual([
+        'j1-ch2-reactions-source-ppt',
+        'j1-ch2-reactions-board-plan',
+      ])
+      expect(lesson.slides.every((slide) => slide.teacherNote.trim().length > 20)).toBe(true)
+      expect(lesson.slides.every((slide) => slide.title.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.every((slide) => slide.body.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.some((slide) => slide.revealMode === 'step-by-step' && (slide.reveals?.length ?? 0) >= 3)).toBe(true)
+    }
+  })
+
+  it('includes the intended production concepts without dropping recovered pilot material', () => {
+    const allText = reactionLessons.flatMap((lesson) => lesson.slides).map((slide) => [
+      slide.title.en,
+      slide.body.en,
+      slide.emphasis ?? '',
+      ...(slide.reveals?.map((reveal) => reveal.text.en) ?? []),
+    ].join(' ')).join(' ')
+
+    for (const concept of [
+      'Activation energy',
+      'catalyst',
+      'successful collision',
+      'not used up',
+      'Endothermic',
+      'Exothermic',
+      'system',
+      'surroundings',
+      'products lower',
+      'products higher',
+    ]) {
+      expect(allText).toMatch(new RegExp(concept, 'i'))
+    }
+  })
+
+  it('opens the Chemical Reactions Teacher Workspace and advances a representative reveal', () => {
+    render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+
+    expect(screen.getByRole('heading', { name: /Activation energy and catalysts/i })).toBeInTheDocument()
+    expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
+    expect(screen.getByText(/Source references/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+
+    expect(screen.getByText(/Reveal 1 of 2/i)).toBeInTheDocument()
+  })
+
+  it('supports English, bilingual, and Traditional Chinese for the Chemical Reactions workspace', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+    fireEvent.click(screen.getByRole('button', { name: 'English' }))
+
+    expect(screen.getByRole('heading', { name: /Activation energy and catalysts/i })).toBeInTheDocument()
+    expect(screen.queryByText(/活化能與催化劑/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bilingual' }))
+
+    expect(screen.getByText(/活化能與催化劑/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '繁體中文' }))
+
+    expect(screen.getByRole('heading', { name: /活化能與催化劑/ })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Activation energy and catalysts/i })).not.toBeInTheDocument()
+    expect(container.querySelector('.slide-canvas')).toHaveTextContent('反應開始的推力')
+  })
+
+  it('renders Presentation Mode for the Chemical Reactions production unit', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+    fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
+
+    expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/activation energy/i).length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Exit' }))
+
+    expect(screen.queryByRole('dialog', { name: /Classroom presentation mode/i })).not.toBeInTheDocument()
   })
 })
 

@@ -20,12 +20,21 @@ export const scienceUnits: ScienceUnit[] = [
   },
   {
     id: 'j1-fall-reactions',
-    number: 'Demo Unit',
+    number: 'Chapter 2',
     title: 'Chemical Reactions',
-    description: 'Demo content kept functional while real J1 curriculum is imported.',
+    description: 'Production unit: activation energy, catalysts, and energy transfer in endothermic and exothermic reactions.',
     year: 'J1',
     semester: 'Fall',
     accent: 'violet',
+    sourceReferences: [
+      {
+        id: 'src-j1-ch2-reactions-ppt',
+        type: 'presentation',
+        title: 'Copy of J1 PPT.pptx',
+        location: 'Google Drive / J1Science',
+        notes: 'Recovered J1 source presentation for the Chemical Reactions sequence; exact slide range still requires final source mapping.',
+      },
+    ],
   },
   {
     id: 'j1-spring-solutions',

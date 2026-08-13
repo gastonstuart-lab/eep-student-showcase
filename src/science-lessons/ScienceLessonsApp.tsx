@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { rainfallComparisonData } from './curriculum/biomeCharts'
 import {
@@ -664,6 +664,25 @@ function studentLabel(label: string, language: LanguageMode) {
     'prove it with source evidence': '\u7528\u539f\u59cb\u6559\u6750\u8b49\u64da\u8aaa\u660e',
     'Desert': '\u6c99\u6f20 Desert',
     'Rain forest': '\u96e8\u6797 Rain forest',
+    'reaction starting push': '反應開始的推力',
+    'energy + orientation': '能量 + 方向',
+    'minimum energy for products': '形成生成物的最低能量',
+    'reactants -> barrier -> products': '反應物 -> 障礙 -> 生成物',
+    'lower activation energy': '降低活化能',
+    'helps, then remains': '幫助反應，然後保持不變',
+    'more successful collisions': '更多成功碰撞',
+    'use all three terms': '使用三個關鍵詞',
+    'energy moves': '能量移動',
+    'track energy direction': '追蹤能量方向',
+    'energy leaves the system': '能量離開系統',
+    'energy enters the system': '能量進入系統',
+    'products lower or higher?': '生成物較低還是較高？',
+    'use energy direction': '使用能量方向',
+    'products lower than reactants': '生成物低於反應物',
+    'system + surroundings + energy': '系統 + 周圍環境 + 能量',
+    'successful collisions': '成功碰撞',
+    'reaction energy profile': '反應能量圖',
+    'energy transfer': '能量轉移',
   }
 
   return labels[label] ?? label
@@ -744,11 +763,13 @@ function RevealStack({
 }
 
 function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-change')
+
   return (
     <>
-      <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />
+      {isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
       <section className="slide-hero-copy">
-        <SlideTitle slide={slide} language={language} kicker="Chapter 2.4" />
+        <SlideTitle slide={slide} language={language} kicker={isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode="prompts" />
       </section>
@@ -757,33 +778,96 @@ function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 }
 
 function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
+  const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-system')
+
   return (
     <>
       <section className="slide-concept-main">
         <SlideTitle slide={slide} language={language} kicker="Core idea" />
         <SlideBody slide={slide} language={language} />
       </section>
-      <section className="concept-map" aria-label="Climate and organisms form a biome">
-        <div className="concept-map__equation">
-          <article className="concept-factor concept-factor--climate">
-            <strong>{studentLabel('CLIMATE', language)}</strong>
-            <span>{studentLabel('temperature + precipitation', language)}</span>
-          </article>
-          <b aria-hidden="true">+</b>
-          <article className="concept-factor concept-factor--organisms">
-            <strong>{studentLabel('ORGANISMS', language)}</strong>
-            <span>{studentLabel('plants + animals', language)}</span>
-          </article>
-          <b aria-hidden="true">=</b>
-          <article className="concept-factor concept-factor--biome">
-            <strong>{studentLabel('BIOME', language)}</strong>
-            <span>{studentLabel('similar land ecosystems', language)}</span>
-          </article>
-        </div>
-        <div className="concept-definition">{studentLabel('A biome is a group of land ecosystems with similar climates and organisms.', language)}</div>
-      </section>
+      {isReactionSlide ? <ReactionConceptMap slide={slide} language={language} /> : <BiomeConceptMap language={language} />}
       <RevealStack items={visibleReveals} language={language} mode="statements" />
     </>
+  )
+}
+
+function ReactionHeroScene({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const energyChange = slide.id.includes('energy-change')
+
+  return (
+    <section className={`reaction-hero-scene ${energyChange ? 'reaction-hero-scene--energy' : ''}`} aria-label="Reaction particle model">
+      <div className="particle-track">
+        <span className="particle particle--one" />
+        <span className="particle particle--two" />
+        <span className="particle particle--three" />
+        <span className="particle particle--four" />
+      </div>
+      <div className="reaction-hero-barrier">
+        <strong>{energyChange ? (language === '繁體中文' ? '能量轉移' : 'energy transfer') : (language === '繁體中文' ? '活化能' : 'activation energy')}</strong>
+        <span>{energyChange ? (language === '繁體中文' ? '進入或離開系統' : 'into or out of system') : (language === '繁體中文' ? '反應開始前必須越過' : 'must be crossed before reaction starts')}</span>
+      </div>
+    </section>
+  )
+}
+
+function BiomeConceptMap({ language }: { language: LanguageMode }) {
+  return (
+    <section className="concept-map" aria-label="Climate and organisms form a biome">
+      <div className="concept-map__equation">
+        <article className="concept-factor concept-factor--climate">
+          <strong>{studentLabel('CLIMATE', language)}</strong>
+          <span>{studentLabel('temperature + precipitation', language)}</span>
+        </article>
+        <b aria-hidden="true">+</b>
+        <article className="concept-factor concept-factor--organisms">
+          <strong>{studentLabel('ORGANISMS', language)}</strong>
+          <span>{studentLabel('plants + animals', language)}</span>
+        </article>
+        <b aria-hidden="true">=</b>
+        <article className="concept-factor concept-factor--biome">
+          <strong>{studentLabel('BIOME', language)}</strong>
+          <span>{studentLabel('similar land ecosystems', language)}</span>
+        </article>
+      </div>
+      <div className="concept-definition">{studentLabel('A biome is a group of land ecosystems with similar climates and organisms.', language)}</div>
+    </section>
+  )
+}
+
+function ReactionConceptMap({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const isSystemSlide = slide.id.includes('energy-system')
+  const factors = isSystemSlide
+    ? [
+        { className: 'concept-factor--reactants', title: language === '繁體中文' ? '系統' : 'SYSTEM', subtitle: language === '繁體中文' ? '正在反應的化學物質' : 'reacting chemicals' },
+        { className: 'concept-factor--barrier', title: language === '繁體中文' ? '能量方向' : 'ENERGY DIRECTION', subtitle: language === '繁體中文' ? '進入或離開系統' : 'into or out of the system' },
+        { className: 'concept-factor--products', title: language === '繁體中文' ? '周圍環境' : 'SURROUNDINGS', subtitle: language === '繁體中文' ? '空氣、容器、手、溫度計' : 'air, container, hand, thermometer' },
+      ]
+    : [
+        { className: 'concept-factor--reactants', title: language === '繁體中文' ? '反應物' : 'REACTANTS', subtitle: language === '繁體中文' ? '具有儲存的化學能' : 'stored chemical energy' },
+        { className: 'concept-factor--barrier', title: language === '繁體中文' ? '活化能' : 'ACTIVATION ENERGY', subtitle: language === '繁體中文' ? '必須越過的最低能量' : 'minimum energy barrier' },
+        { className: 'concept-factor--products', title: language === '繁體中文' ? '生成物' : 'PRODUCTS', subtitle: language === '繁體中文' ? '成功碰撞後形成' : 'form after successful collisions' },
+      ]
+
+  return (
+    <section className="concept-map reaction-concept-map" aria-label="Reaction concept map">
+      <div className="concept-map__equation reaction-concept-map__flow">
+        {factors.map((factor, index) => (
+          <Fragment key={factor.title}>
+            <article className={`concept-factor ${factor.className}`}>
+              <strong>{factor.title}</strong>
+              <span>{factor.subtitle}</span>
+            </article>
+            {index < factors.length - 1 && <b aria-hidden="true">→</b>}
+          </Fragment>
+        ))}
+      </div>
+      <div className="concept-definition">
+        {isSystemSlide
+          ? (language === '繁體中文' ? '判斷吸熱或放熱時，要追蹤能量穿過系統邊界的方向。' : 'To classify endothermic or exothermic reactions, track energy across the system boundary.')
+          : (language === '繁體中文' ? '反應開始前，粒子必須以足夠能量碰撞並越過活化能障礙。' : 'Before a reaction starts, particles must collide with enough energy to pass the activation-energy barrier.')}
+      </div>
+    </section>
   )
 }
 
@@ -811,11 +895,12 @@ function VocabularySlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 
 function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isClimate = slide.id.includes('climate-drivers')
+  const isReaction = slide.id.includes('reactions') || slide.id.includes('exothermic') || slide.id.includes('endothermic')
 
   return (
     <>
       <section className="slide-diagram-copy">
-        <SlideTitle slide={slide} language={language} kicker="Explain the pattern" />
+        <SlideTitle slide={slide} language={language} kicker={isReaction ? 'reaction energy profile' : 'Explain the pattern'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode={isClimate ? 'statements' : 'stack'} />
       </section>
@@ -826,15 +911,16 @@ function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
 
 function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isRainfall = slide.id.includes('rainfall-spectrum')
+  const isReaction = slide.id.includes('reactions') || slide.id.includes('energy-profile')
 
   return (
     <>
       <section className="slide-comparison-heading">
-        <SlideTitle slide={slide} language={language} kicker={isRainfall ? 'Retrieval' : 'Compare'} />
+        <SlideTitle slide={slide} language={language} kicker={isReaction ? 'energy transfer' : isRainfall ? 'Retrieval' : 'Compare'} />
         <SlideBody slide={slide} language={language} />
       </section>
-      {isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
-      {!isRainfall && <RevealStack items={visibleReveals} language={language} mode="chips" />}
+      {isReaction ? <ReactionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
+      {!isRainfall && !isReaction && <RevealStack items={visibleReveals} language={language} mode="chips" />}
     </>
   )
 }
@@ -917,6 +1003,14 @@ function SciencePhoto({
 }
 
 function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  if (slide.id.includes('energy-profile') || slide.id.includes('exothermic') || slide.id.includes('endothermic')) {
+    return <ReactionEnergyDiagram slide={slide} language={language} />
+  }
+
+  if (slide.id.includes('catalyst-not-used')) {
+    return <CatalystCycleDiagram language={language} />
+  }
+
   if (slide.id.includes('climate-drivers')) {
     return (
       <section className="climate-concept-diagram" aria-label="Conceptual temperature and precipitation biome diagram">
@@ -972,6 +1066,77 @@ function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: La
   }
 
   return <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram" />
+}
+
+function ReactionEnergyDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const isExothermic = slide.id.includes('exothermic')
+  const isEndothermic = slide.id.includes('endothermic')
+
+  return (
+    <section className={`reaction-energy-diagram ${isExothermic ? 'reaction-energy-diagram--exo' : ''}${isEndothermic ? ' reaction-energy-diagram--endo' : ''}`} aria-label="Reaction energy profile diagram">
+      <div className="reaction-energy-axis reaction-energy-axis--y">{language === '繁體中文' ? '能量' : 'Energy'}</div>
+      <div className="reaction-energy-axis reaction-energy-axis--x">{language === '繁體中文' ? '反應進行' : 'Reaction progress'}</div>
+      <svg viewBox="0 0 640 360" role="img" aria-label={language === '繁體中文' ? '反應物越過活化能障礙形成生成物' : 'Reactants pass an activation energy barrier to form products'}>
+        <path className="energy-grid" d="M80 70 H590 M80 150 H590 M80 230 H590 M80 310 H590" />
+        <path className="energy-curve energy-curve--main" d={isEndothermic ? 'M90 250 C185 245 205 70 312 78 C435 88 455 150 565 142' : 'M90 220 C188 215 205 68 314 76 C420 84 455 280 565 278'} />
+        {slide.id.includes('catalyst-pathway') && <path className="energy-curve energy-curve--catalyst" d="M90 220 C185 214 220 145 318 148 C420 152 455 280 565 278" />}
+        <line className="energy-arrow" x1="165" y1="218" x2="165" y2="82" />
+        <text x="86" y={isEndothermic ? '244' : '214'}>{language === '繁體中文' ? '反應物' : 'Reactants'}</text>
+        <text x="280" y="58">{language === '繁體中文' ? '活化能' : 'Activation energy'}</text>
+        <text x="490" y={isEndothermic ? '136' : '272'}>{language === '繁體中文' ? '生成物' : 'Products'}</text>
+        {slide.id.includes('catalyst-pathway') && <text x="314" y="168">{language === '繁體中文' ? '催化路徑較低' : 'catalyst path lower'}</text>}
+      </svg>
+      {(isExothermic || isEndothermic) && (
+        <div className="energy-transfer-badge">
+          <strong>{isExothermic ? (language === '繁體中文' ? '放熱' : 'Exothermic') : (language === '繁體中文' ? '吸熱' : 'Endothermic')}</strong>
+          <span>{isExothermic ? (language === '繁體中文' ? '能量離開系統' : 'energy leaves system') : (language === '繁體中文' ? '能量進入系統' : 'energy enters system')}</span>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function CatalystCycleDiagram({ language }: { language: LanguageMode }) {
+  const labels = language === '繁體中文'
+    ? ['反應物接觸', '較容易形成生成物', '催化劑仍可再用']
+    : ['reactants interact', 'products form more easily', 'catalyst remains reusable']
+
+  return (
+    <section className="catalyst-cycle-diagram" aria-label="Catalyst reuse cycle">
+      {labels.map((label, index) => (
+        <article key={label} className={`catalyst-cycle-step catalyst-cycle-step--${index}`}>
+          <span>{index + 1}</span>
+          <strong>{label}</strong>
+        </article>
+      ))}
+      <div className="catalyst-core">{language === '繁體中文' ? '催化劑' : 'Catalyst'}</div>
+    </section>
+  )
+}
+
+function ReactionComparison({ slide, language, visibleCount }: { slide: LessonSlide; language: LanguageMode; visibleCount: number }) {
+  const catalystMode = slide.id.includes('catalyst')
+  const cards = catalystMode
+    ? [
+        { title: language === '繁體中文' ? '沒有催化劑' : 'Without catalyst', value: language === '繁體中文' ? '較高障礙' : 'higher barrier', className: 'reaction-compare-card--high' },
+        { title: language === '繁體中文' ? '有催化劑' : 'With catalyst', value: language === '繁體中文' ? '較低障礙' : 'lower barrier', className: 'reaction-compare-card--low' },
+      ]
+    : [
+        { title: language === '繁體中文' ? '放熱' : 'Exothermic', value: language === '繁體中文' ? '生成物較低' : 'products lower', className: 'reaction-compare-card--exo' },
+        { title: language === '繁體中文' ? '吸熱' : 'Endothermic', value: language === '繁體中文' ? '生成物較高' : 'products higher', className: 'reaction-compare-card--endo' },
+      ]
+
+  return (
+    <section className="reaction-comparison" aria-label="Reaction energy comparison">
+      {cards.map((card, index) => (
+        <article className={`${card.className} ${index < Math.max(1, visibleCount) ? 'is-visible' : ''}`} key={card.title}>
+          <span>{card.title}</span>
+          <strong>{card.value}</strong>
+          <i />
+        </article>
+      ))}
+    </section>
+  )
 }
 
 function GrasslandComparison({ language }: { language: LanguageMode }) {

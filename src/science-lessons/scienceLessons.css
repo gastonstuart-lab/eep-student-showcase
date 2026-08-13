@@ -1963,6 +1963,85 @@ button:disabled {
   border-top: 3px solid rgba(245, 212, 107, 0.78);
 }
 
+.reaction-concept-map .concept-factor--reactants {
+  --concept-accent: #8fd3ff;
+}
+
+.reaction-concept-map .concept-factor--barrier {
+  --concept-accent: #f5d46b;
+}
+
+.reaction-concept-map .concept-factor--products {
+  --concept-accent: #ff9a85;
+}
+
+.reaction-concept-map__flow {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.reaction-hero-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(143, 211, 255, 0.28), transparent 16rem),
+    radial-gradient(circle at 82% 72%, rgba(255, 154, 133, 0.24), transparent 16rem),
+    linear-gradient(135deg, #08111a 0%, #102538 52%, #261832 100%);
+}
+
+.particle-track {
+  position: absolute;
+  inset: 18% 10%;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.particle {
+  position: absolute;
+  width: 5.4rem;
+  height: 5.4rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), transparent 0.45rem),
+    linear-gradient(135deg, #8fd3ff, #3b7bd8);
+  box-shadow: 0 0 34px rgba(143, 211, 255, 0.42);
+}
+
+.particle--one { top: 14%; left: 10%; }
+.particle--two { top: 52%; left: 24%; background: linear-gradient(135deg, #f5d46b, #f28f3f); }
+.particle--three { top: 18%; right: 22%; background: linear-gradient(135deg, #ff9a85, #e14d67); }
+.particle--four { right: 10%; bottom: 16%; background: linear-gradient(135deg, #9fe6b8, #2fa872); }
+
+.reaction-hero-barrier {
+  position: absolute;
+  top: 17%;
+  left: 50%;
+  display: grid;
+  gap: 0.25rem;
+  width: min(18rem, 42%);
+  padding: 1.1rem 1.2rem;
+  color: #071118;
+  background: #f5d46b;
+  transform: translateX(-50%) rotate(-3deg);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.32);
+}
+
+.reaction-hero-barrier strong {
+  font-size: 1.28rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.reaction-hero-barrier span {
+  font-size: 0.76rem;
+  font-weight: 850;
+  line-height: 1.12;
+}
+
+.reaction-hero-scene--energy .reaction-hero-barrier {
+  background: #8fd3ff;
+}
+
 
 .slide-layout--vocabulary {
   padding: 5.5%;
@@ -2131,6 +2210,212 @@ button:disabled {
   gap: 0.8rem 1rem;
   min-height: 430px;
   padding: 0.25rem 0 0;
+}
+
+.reaction-energy-diagram {
+  position: relative;
+  z-index: 2;
+  min-height: 430px;
+  padding: 1rem 1rem 2.4rem 2.4rem;
+  color: #ffffff;
+}
+
+.reaction-energy-diagram svg {
+  display: block;
+  width: 100%;
+  height: min(430px, 52vh);
+  overflow: visible;
+}
+
+.energy-grid {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 2;
+}
+
+.energy-curve {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 12;
+}
+
+.energy-curve--main {
+  stroke: #f5d46b;
+}
+
+.energy-curve--catalyst {
+  stroke: #7be0d1;
+  stroke-dasharray: 18 14;
+}
+
+.energy-arrow {
+  stroke: #ffffff;
+  stroke-width: 4;
+}
+
+.reaction-energy-diagram text {
+  fill: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.reaction-energy-axis {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reaction-energy-axis--y {
+  top: 45%;
+  left: 0.2rem;
+  transform: rotate(-90deg);
+}
+
+.reaction-energy-axis--x {
+  right: 1rem;
+  bottom: 0.55rem;
+}
+
+.energy-transfer-badge {
+  position: absolute;
+  right: 1rem;
+  bottom: 2.5rem;
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.7rem 0.85rem;
+  color: #06121a;
+  background: #8fd3ff;
+}
+
+.reaction-energy-diagram--exo .energy-transfer-badge {
+  background: #ffb36b;
+}
+
+.reaction-energy-diagram--endo .energy-transfer-badge {
+  background: #8fd3ff;
+}
+
+.energy-transfer-badge strong {
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.energy-transfer-badge span {
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.catalyst-cycle-diagram {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 410px;
+}
+
+.catalyst-cycle-step {
+  min-height: 170px;
+  padding: 1rem;
+  color: #071118;
+  background: #ffffff;
+  border-top: 8px solid #7be0d1;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+}
+
+.catalyst-cycle-step span {
+  display: inline-grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  font-weight: 950;
+  place-items: center;
+  background: #0a7c8f;
+  border-radius: 50%;
+}
+
+.catalyst-cycle-step strong {
+  display: block;
+  font-size: 1.16rem;
+  font-weight: 950;
+  line-height: 1.04;
+}
+
+.catalyst-core {
+  position: absolute;
+  left: 50%;
+  bottom: 2rem;
+  padding: 0.8rem 1.2rem;
+  color: #071118;
+  font-size: 1.15rem;
+  font-weight: 950;
+  background: #f5d46b;
+  transform: translateX(-50%);
+}
+
+.reaction-comparison {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.reaction-comparison article {
+  display: grid;
+  gap: 0.8rem;
+  min-height: 310px;
+  padding: 1.15rem;
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent),
+    #102538;
+  border-top: 8px solid var(--reaction-card-accent, #f5d46b);
+  opacity: 0.34;
+  transform: translateY(0.5rem);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.reaction-comparison article.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reaction-compare-card--high,
+.reaction-compare-card--exo {
+  --reaction-card-accent: #ffb36b;
+}
+
+.reaction-compare-card--low,
+.reaction-compare-card--endo {
+  --reaction-card-accent: #8fd3ff;
+}
+
+.reaction-comparison span {
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reaction-comparison strong {
+  align-self: center;
+  font-size: 2rem;
+  font-weight: 950;
+  line-height: 0.98;
+}
+
+.reaction-comparison i {
+  height: 7rem;
+  background:
+    linear-gradient(90deg, transparent 15%, var(--reaction-card-accent) 15% 20%, transparent 20%),
+    radial-gradient(circle at 72% 36%, var(--reaction-card-accent), transparent 0.7rem),
+    linear-gradient(135deg, transparent 0 47%, rgba(255, 255, 255, 0.7) 47% 50%, transparent 50%);
+  opacity: 0.82;
 }
 
 .climate-question {
