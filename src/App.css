@@ -108,7 +108,7 @@ html {
 .hub-route-card span {
   position: relative;
   z-index: 1;
-  color: #008f5d;
+  color: #007a50;
   text-transform: uppercase;
   width: fit-content;
   margin-bottom: auto;
@@ -129,7 +129,7 @@ html {
 
 .hub-route-card p {
   position: relative;
-  color: #607d95;
+  color: #526f86;
   margin-bottom: 0.75rem;
   z-index: 1;
 }
@@ -285,12 +285,12 @@ html {
 }
 
 .programme-esl {
-  border-top: 3px solid #0f8f83;
+  border-top: 3px solid #0b756b;
   background: linear-gradient(160deg, #ffffff 0%, #f5faf8 100%);
 }
 
 .programme-esl .programme-card-action {
-  background: #0f8f83;
+  background: #0b756b;
   color: #ffffff;
 }
 
@@ -449,7 +449,7 @@ html {
 
 .programme-action-esl,
 .programme-action-science {
-  background: #0f8f83;
+  background: #0b756b;
 }
 
 .programme-action-esl:hover,
@@ -721,7 +721,7 @@ html {
 }
 
 .hub-band p {
-  color: #607d95;
+  color: #526f86;
   margin-bottom: 0;
 }
 
@@ -920,7 +920,7 @@ html {
 }
 
 .ied-home-hero .secondary-button {
-  background: #0f8f83 !important;
+  background: #0b756b !important;
   color: #ffffff !important;
   flex: 0 1 12rem;
   min-height: 54px;
@@ -953,7 +953,7 @@ html {
 }
 
 .hero-action-esl {
-  background: #0f8f83;
+  background: #0b756b;
   color: #ffffff;
 }
 
@@ -1029,7 +1029,7 @@ html {
 }
 
 .hub-card span {
-  color: #008f5d;
+  color: #007a50;
   text-transform: uppercase;
   margin-bottom: auto;
   font-size: 0.76rem;
@@ -1042,7 +1042,7 @@ html {
 }
 
 .hub-card p {
-  color: #607d95;
+  color: #526f86;
   margin-bottom: 0;
 }
 
@@ -1236,7 +1236,7 @@ html {
 }
 
 .content-admin-context span {
-  color: #607d95;
+  color: #526f86;
   margin-left: 0.4rem;
 }
 
@@ -1255,7 +1255,7 @@ html {
 }
 
 .content-manager-heading p {
-  color: #607d95;
+  color: #526f86;
   margin: 0.2rem 0 0;
 }
 
@@ -1325,7 +1325,7 @@ html {
 }
 
 .empty-manager-state p {
-  color: #607d95;
+  color: #526f86;
   margin: 0;
 }
 
@@ -2090,7 +2090,7 @@ main.route-main:focus {
 
 .content-preview-section p,
 .display-layout-section p {
-  color: #607d95;
+  color: #526f86;
   margin: 0.2rem 0 0;
 }
 
@@ -2118,14 +2118,14 @@ main.route-main:focus {
 }
 
 .field-help {
-  color: #607d95;
+  color: #526f86;
   font-size: 0.86rem;
   font-weight: 600;
 }
 
 .eyebrow {
   margin: 0 0 0.75rem;
-  color: #008f5d;
+  color: #007a50;
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -2183,7 +2183,7 @@ h2 {
 
 .eyebrow .translation-line {
   margin-top: 0.14rem;
-  color: #008f5d;
+  color: #007a50;
   font-size: 0.9em;
   letter-spacing: 0;
 }
@@ -2227,7 +2227,7 @@ h2 .translation-line {
 
 .primary-button {
   color: #ffffff;
-  background: #008f5d;
+  background: #007a50;
 }
 
 .primary-button.blue {
@@ -2324,7 +2324,7 @@ h2 .translation-line {
 .carousel-caption span {
   display: inline-flex;
   margin-bottom: 0.35rem;
-  color: #008f5d;
+  color: #007a50;
   font-size: 0.74rem;
   font-weight: 950;
   text-transform: uppercase;
@@ -2338,7 +2338,7 @@ h2 .translation-line {
 
 .carousel-caption p {
   margin: 0;
-  color: #607d95;
+  color: #526f86;
   font-weight: 850;
 }
 
@@ -2768,7 +2768,7 @@ h2 .translation-line {
 
 .meta,
 .muted {
-  color: #607d95;
+  color: #526f86;
 }
 
 .sidebar {
@@ -2818,7 +2818,7 @@ h2 .translation-line {
 .spotlight-item small {
   display: block;
   margin-top: 0.2rem;
-  color: #607d95;
+  color: #526f86;
   line-height: 1.25;
 }
 
@@ -2848,7 +2848,7 @@ h2 .translation-line {
 
 .impact-strip p {
   margin-bottom: 0;
-  color: #607d95;
+  color: #526f86;
 }
 
 .impact-strip article {
@@ -2896,7 +2896,7 @@ h2 .translation-line {
 }
 
 .detail-list dt {
-  color: #008f5d;
+  color: #007a50;
   font-weight: 900;
 }
 
@@ -3053,7 +3053,7 @@ h2 .translation-line {
 
 .ied-stats p {
   margin: 0.35rem 0 0;
-  color: #607d95;
+  color: #526f86;
   font-weight: 850;
 }
 
@@ -3093,7 +3093,7 @@ h2 .translation-line {
 
 .about-showcase-link p:last-child {
   margin-bottom: 0;
-  color: #607d95;
+  color: #526f86;
 }
 
 .project-form {
@@ -3194,6 +3194,8 @@ h2 .translation-line {
 
 .prezi-frame {
   position: relative;
+  box-sizing: border-box;
+  max-width: 100%;
   min-height: 18rem;
   overflow: hidden;
   border: 1px solid #b7d9ee;
@@ -3225,7 +3227,7 @@ h2 .translation-line {
 }
 
 .prezi-placeholder span {
-  color: #607d95;
+  color: #526f86;
   font-weight: 800;
 }
 
@@ -3272,7 +3274,7 @@ textarea {
   --color-ied-2: #18a7d8;
   --color-eep: #2554c7;
   --color-eep-2: #6a64d9;
-  --color-esl: #0f8f83;
+  --color-esl: #0b756b;
   --color-esl-2: #25b8c7;
   --color-gold: #f4bf45;
   --color-science: #00a2c7;
