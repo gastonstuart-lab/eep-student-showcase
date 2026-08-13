@@ -14,9 +14,12 @@ const activationLesson = findLesson('activation-energy-catalysts')
 const energyChangeLesson = findLesson('endo-exothermic')
 const concentrationLesson = findLesson('j1-concentration-saturation')
 const solubilityLesson = findLesson('j1-solubility-curves')
+const j2HabitatLesson = findLesson('j2-aquatic-habitats')
+const j2FoodWebLesson = findLesson('j2-aquatic-food-webs')
 const biomesLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-ch2-biomes')
 const reactionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-fall-reactions')
 const solutionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-spring-solutions')
+const j2EcosystemLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j2-fall-ecosystems')
 
 describe('Science Lessons curriculum', () => {
   it('keeps lessons filterable and ordered by year, semester, and lesson order', () => {
@@ -452,6 +455,148 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
     expect(screen.getAllByText(/solubility/i).length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Exit' }))
+
+    expect(screen.queryByRole('dialog', { name: /Classroom presentation mode/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('J2 Aquatic Ecosystems production unit', () => {
+  it('appears as the first ordered J2 Fall production sequence', () => {
+    expect(j2EcosystemLessons.map((lesson) => lesson.id)).toEqual([
+      'j2-aquatic-habitats',
+      'j2-aquatic-food-webs',
+    ])
+    expect(j2EcosystemLessons.every((lesson) => lesson.year === 'J2')).toBe(true)
+    expect(j2EcosystemLessons.every((lesson) => lesson.semester === 'Fall')).toBe(true)
+    expect(j2EcosystemLessons.every((lesson) => lesson.status === 'Published')).toBe(true)
+    expect(j2HabitatLesson.chapter).toBe('Ch.2.5')
+    expect(j2FoodWebLesson.lessonOrder).toBe(j2HabitatLesson.lessonOrder + 1)
+  })
+
+  it('upgrades recovered J2 ecosystem material with production metadata and bilingual slide content', () => {
+    expect(j2HabitatLesson.title).toBe('Aquatic Ecosystems and Habitat Factors')
+    expect(j2FoodWebLesson.title).toBe('Aquatic Food Webs and Ecosystem Change')
+    expect(j2HabitatLesson.slides).toHaveLength(8)
+    expect(j2FoodWebLesson.slides).toHaveLength(8)
+
+    for (const lesson of j2EcosystemLessons) {
+      expect(lesson.objectives.length).toBeGreaterThanOrEqual(4)
+      expect(lesson.sourceReferences.map((source) => source.id)).toEqual([
+        'src-j2-ch2-ecosystems-ppt',
+        'src-j2-ch2-ecosystems-pilot',
+      ])
+      expect(lesson.resources.map((resource) => resource.id)).toEqual([
+        'j2-ch2-ecosystems-source-ppt',
+        'j2-ch2-aquatic-food-web-challenge',
+        'j2-ch2-coastal-seas-clip',
+      ])
+      expect(lesson.slides.every((slide) => slide.teacherNote.trim().length > 25)).toBe(true)
+      expect(lesson.slides.every((slide) => slide.title.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.every((slide) => slide.body.zhHant?.trim())).toBe(true)
+      expect(lesson.slides.some((slide) => slide.revealMode === 'step-by-step' && (slide.reveals?.length ?? 0) >= 3)).toBe(true)
+    }
+  })
+
+  it('covers the recovered J2 aquatic ecosystem concepts without dropping pilot material', () => {
+    const allText = j2EcosystemLessons.flatMap((lesson) => lesson.slides).map((slide) => [
+      slide.title.en,
+      slide.body.en,
+      slide.emphasis ?? '',
+      ...(slide.reveals?.map((reveal) => reveal.text.en) ?? []),
+    ].join(' ')).join(' ')
+
+    for (const concept of [
+      'Aquatic ecosystems',
+      'freshwater',
+      'marine',
+      'habitat',
+      'biotic',
+      'abiotic',
+      'survival',
+      'food webs',
+      'producer',
+      'population',
+      'feeding link',
+      'predict',
+    ]) {
+      expect(allText).toMatch(new RegExp(concept, 'i'))
+    }
+  })
+
+  it('opens the J2 Teacher Workspace and advances a representative reveal', () => {
+    render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'J2' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+
+    expect(screen.getByText(/Aquatic Ecosystems and Habitat Factors/i)).toBeInTheDocument()
+    expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
+    expect(screen.getByText(/Source references/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+
+    expect(screen.getByText(/Reveal 1 of 3/i)).toBeInTheDocument()
+    expect(screen.getByText(/Freshwater and marine habitats are both aquatic ecosystems/i)).toBeInTheDocument()
+  })
+
+  it('supports English, bilingual and Traditional Chinese for J2 ecosystem slides without representative English label leakage', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'J2' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[1])
+    fireEvent.click(screen.getByRole('button', { name: 'English' }))
+
+    expect(screen.getByRole('heading', { name: /An ecosystem is a connected system/i })).toBeInTheDocument()
+    expect(screen.queryByText(/生態系是一個相互連結的系統/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bilingual' }))
+
+    expect(screen.getByText(/生態系是一個相互連結的系統/)).toBeInTheDocument()
+
+    fireEvent.click(container.querySelectorAll('.viewer-language > button')[2])
+
+    expect(screen.getByRole('heading', { name: /生態系是一個相互連結的系統/ })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /An ecosystem is a connected system/i })).not.toBeInTheDocument()
+    expect(container.querySelector('.slide-canvas')).toHaveTextContent('生物因子')
+    expect(container.querySelector('.slide-canvas')).not.toHaveTextContent('BIOTIC')
+  })
+
+  it('renders the J2 aquatic food-web visual and staged change reasoning', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'J2' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[3])
+
+    expect(screen.getByRole('heading', { name: /Prediction: remove one producer/i })).toBeInTheDocument()
+    expect(container.querySelector('.aquatic-food-web')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }))
+
+    expect(screen.getByText(/Reveal 3 of 3/i)).toBeInTheDocument()
+    expect(container.querySelector('.aquatic-web-change')).toHaveClass('is-visible')
+    expect(container.querySelectorAll('.aquatic-web-link.is-visible').length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('renders Presentation Mode for the J2 production unit', () => {
+    const { container } = render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'J2' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
+
+    expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/food webs/i).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
     fireEvent.click(screen.getByRole('button', { name: 'Exit' }))

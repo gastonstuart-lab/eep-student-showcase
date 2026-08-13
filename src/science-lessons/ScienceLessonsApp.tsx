@@ -699,6 +699,24 @@ function studentLabel(label: string, language: LanguageMode) {
     'axis, curve, value, interpretation': '座標軸、曲線、數值、解釋',
     'Solution model': '溶液模型',
     'Graph reading': '圖表讀取',
+    'organisms + environment': '生物 + 環境',
+    'biotic + abiotic factors': '生物因子 + 非生物因子',
+    'living or non-living?': '有生命還是沒有生命？',
+    'habitat conditions matter': '棲地條件很重要',
+    'survival and growth': '生存和生長',
+    'feeding, resources, conditions': '覓食、資源、條件',
+    'classify, then explain': '先分類，再解釋',
+    'biotic + abiotic': '生物因子 + 非生物因子',
+    'changes spread through food webs': '變化會在食物網中擴散',
+    'producer -> consumers': '生產者 -> 消費者',
+    'many feeding links': '許多覓食連結',
+    'predict two consequences': '預測兩個結果',
+    'one change, several effects': '一個變化，數個影響',
+    'change + link + effect': '變化 + 連結 + 影響',
+    'observe, classify, explain': '觀察、分類、解釋',
+    'prediction + feeding link': '預測 + 覓食連結',
+    'Aquatic model': '水域模型',
+    'Food-web reasoning': '食物網推理',
   }
 
   return labels[label] ?? label
@@ -706,6 +724,10 @@ function studentLabel(label: string, language: LanguageMode) {
 
 function isSolutionSlide(slide: LessonSlide) {
   return slide.id.includes('j1-ch3-')
+}
+
+function isJ2EcosystemSlide(slide: LessonSlide) {
+  return slide.id.includes('j2-ch2-')
 }
 
 function SlideCanvas({
@@ -721,9 +743,10 @@ function SlideCanvas({
 }) {
   const visibleReveals = slide.revealMode === 'step-by-step' ? slide.reveals?.slice(0, visibleRevealCount) ?? [] : slide.reveals ?? []
   const layout = slide.layout ?? 'concept'
+  const j2EcosystemSlide = isJ2EcosystemSlide(slide)
 
   return (
-    <article className={`slide-canvas slide-canvas--${slide.visual} slide-layout slide-layout--${layout}${slide.biomeKey ? ` slide-biome--${slide.biomeKey}` : ''}`}>
+    <article className={`slide-canvas slide-canvas--${slide.visual} slide-layout slide-layout--${layout}${j2EcosystemSlide ? ' slide-canvas--j2-ecosystems' : ''}${slide.biomeKey ? ` slide-biome--${slide.biomeKey}` : ''}`}>
       {layout === 'hero' && <HeroVisualSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
       {layout === 'concept' && <ConceptSlide slide={slide} language={language} visibleReveals={visibleReveals} />}
       {layout === 'vocabulary' && <VocabularySlide slide={slide} language={language} visibleReveals={visibleReveals} />}
@@ -785,12 +808,13 @@ function RevealStack({
 function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-change')
   const solutionSlide = isSolutionSlide(slide)
+  const j2EcosystemSlide = isJ2EcosystemSlide(slide)
 
   return (
     <>
-      {solutionSlide ? <SolutionHeroScene slide={slide} language={language} /> : isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
+      {j2EcosystemSlide ? <AquaticHeroScene slide={slide} language={language} /> : solutionSlide ? <SolutionHeroScene slide={slide} language={language} /> : isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
       <section className="slide-hero-copy">
-        <SlideTitle slide={slide} language={language} kicker={solutionSlide || isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
+        <SlideTitle slide={slide} language={language} kicker={j2EcosystemSlide || solutionSlide || isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode="prompts" />
       </section>
@@ -801,16 +825,74 @@ function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
 function ConceptSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isReactionSlide = slide.id.includes('reactions') || slide.id.includes('energy-system')
   const solutionSlide = isSolutionSlide(slide)
+  const j2EcosystemSlide = isJ2EcosystemSlide(slide)
 
   return (
     <>
       <section className="slide-concept-main">
         <SlideTitle slide={slide} language={language} kicker="Core idea" />
         <SlideBody slide={slide} language={language} />
+        {j2EcosystemSlide && <RevealStack items={visibleReveals} language={language} mode="statements" />}
       </section>
-      {solutionSlide ? <SolutionConceptMap slide={slide} language={language} /> : isReactionSlide ? <ReactionConceptMap slide={slide} language={language} /> : <BiomeConceptMap language={language} />}
-      <RevealStack items={visibleReveals} language={language} mode="statements" />
+      {j2EcosystemSlide ? <AquaticConceptMap slide={slide} language={language} /> : solutionSlide ? <SolutionConceptMap slide={slide} language={language} /> : isReactionSlide ? <ReactionConceptMap slide={slide} language={language} /> : <BiomeConceptMap language={language} />}
+      {!j2EcosystemSlide && <RevealStack items={visibleReveals} language={language} mode="statements" />}
     </>
+  )
+}
+
+function AquaticHeroScene({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const foodWeb = slide.id.includes('food-web')
+
+  return (
+    <section className={`aquatic-hero-scene ${foodWeb ? 'aquatic-hero-scene--food-web' : ''}`} aria-label="Aquatic ecosystem teaching scene">
+      <div className="aquatic-waterline" />
+      <span className="aquatic-fish aquatic-fish--one" />
+      <span className="aquatic-fish aquatic-fish--two" />
+      <span className="aquatic-plant aquatic-plant--one" />
+      <span className="aquatic-plant aquatic-plant--two" />
+      <span className="aquatic-sun" />
+      {foodWeb && <AquaticFoodWebDiagram language={language} visibleCount={3} compact />}
+      <div className="aquatic-hero-label">
+        <strong>{foodWeb ? (language === '繁體中文' ? '食物網' : 'food web') : (language === '繁體中文' ? '水域棲地' : 'aquatic habitat')}</strong>
+        <span>{foodWeb ? (language === '繁體中文' ? '追蹤覓食連結' : 'trace feeding links') : (language === '繁體中文' ? '生物和非生物因子互動' : 'biotic and abiotic factors interact')}</span>
+      </div>
+    </section>
+  )
+}
+
+function AquaticConceptMap({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  const foodWeb = slide.id.includes('food-web-model')
+  const factors = foodWeb
+    ? [
+        { className: 'concept-factor--aquatic-biotic', title: language === '繁體中文' ? '生產者' : 'PRODUCER', subtitle: language === '繁體中文' ? '食物來源開始' : 'starts food source' },
+        { className: 'concept-factor--aquatic-abiotic', title: language === '繁體中文' ? '消費者' : 'CONSUMERS', subtitle: language === '繁體中文' ? '透過覓食連結' : 'connected by feeding' },
+        { className: 'concept-factor--aquatic-system', title: language === '繁體中文' ? '食物網' : 'FOOD WEB', subtitle: language === '繁體中文' ? '多條相連路徑' : 'many connected paths' },
+      ]
+    : [
+        { className: 'concept-factor--aquatic-biotic', title: language === '繁體中文' ? '生物因子' : 'BIOTIC', subtitle: language === '繁體中文' ? '有生命的部分' : 'living parts' },
+        { className: 'concept-factor--aquatic-abiotic', title: language === '繁體中文' ? '非生物因子' : 'ABIOTIC', subtitle: language === '繁體中文' ? '沒有生命的部分' : 'non-living parts' },
+        { className: 'concept-factor--aquatic-system', title: language === '繁體中文' ? '生態系' : 'ECOSYSTEM', subtitle: language === '繁體中文' ? '互動的系統' : 'interacting system' },
+      ]
+
+  return (
+    <section className="concept-map aquatic-concept-map" aria-label="Aquatic ecosystem concept map">
+      <div className="concept-map__equation aquatic-concept-map__flow">
+        {factors.map((factor, index) => (
+          <Fragment key={factor.title}>
+            <article className={`concept-factor ${factor.className}`}>
+              <strong>{factor.title}</strong>
+              <span>{factor.subtitle}</span>
+            </article>
+            {index < factors.length - 1 && <b aria-hidden="true">{foodWeb ? '→' : index === 0 ? '+' : '='}</b>}
+          </Fragment>
+        ))}
+      </div>
+      <div className="concept-definition">
+        {foodWeb
+          ? (language === '繁體中文' ? '食物網顯示多條覓食連結，因此一個族群的變化可能影響多種生物。' : 'A food web shows many feeding links, so one population change can affect several organisms.')
+          : (language === '繁體中文' ? '水域生態系包含生物因子和非生物因子，兩者都會影響生物。' : 'Aquatic ecosystems include biotic and abiotic factors, and both affect organisms.')}
+      </div>
+    </section>
   )
 }
 
@@ -977,11 +1059,12 @@ function DiagramSlide({ slide, language, visibleReveals }: SlideLayoutProps) {
   const isClimate = slide.id.includes('climate-drivers')
   const isReaction = slide.id.includes('reactions') || slide.id.includes('exothermic') || slide.id.includes('endothermic')
   const solutionSlide = isSolutionSlide(slide)
+  const j2EcosystemSlide = isJ2EcosystemSlide(slide)
 
   return (
     <>
       <section className="slide-diagram-copy">
-        <SlideTitle slide={slide} language={language} kicker={solutionSlide ? 'Solution model' : isReaction ? 'reaction energy profile' : 'Explain the pattern'} />
+        <SlideTitle slide={slide} language={language} kicker={j2EcosystemSlide ? 'Aquatic model' : solutionSlide ? 'Solution model' : isReaction ? 'reaction energy profile' : 'Explain the pattern'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode={isClimate ? 'statements' : 'stack'} />
       </section>
@@ -994,15 +1077,16 @@ function ComparisonSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
   const isRainfall = slide.id.includes('rainfall-spectrum')
   const isReaction = slide.id.includes('reactions') || slide.id.includes('energy-profile')
   const solutionSlide = isSolutionSlide(slide)
+  const j2EcosystemSlide = isJ2EcosystemSlide(slide)
 
   return (
     <>
       <section className="slide-comparison-heading">
-        <SlideTitle slide={slide} language={language} kicker={solutionSlide && slide.visual === 'graph' ? 'Graph reading' : isReaction ? 'energy transfer' : isRainfall ? 'Retrieval' : 'Compare'} />
+        <SlideTitle slide={slide} language={language} kicker={j2EcosystemSlide ? 'Food-web reasoning' : solutionSlide && slide.visual === 'graph' ? 'Graph reading' : isReaction ? 'energy transfer' : isRainfall ? 'Retrieval' : 'Compare'} />
         <SlideBody slide={slide} language={language} />
       </section>
-      {solutionSlide ? <SolutionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isReaction ? <ReactionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
-      {!isRainfall && !isReaction && !solutionSlide && <RevealStack items={visibleReveals} language={language} mode="chips" />}
+      {j2EcosystemSlide ? <AquaticComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : solutionSlide ? <SolutionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isReaction ? <ReactionComparison slide={slide} language={language} visibleCount={visibleReveals.length} /> : isRainfall ? <RainfallSpectrum visibleCount={visibleReveals.length} language={language} /> : <GrasslandComparison language={language} />}
+      {!isRainfall && !isReaction && !solutionSlide && !j2EcosystemSlide && <RevealStack items={visibleReveals} language={language} mode="chips" />}
     </>
   )
 }
@@ -1085,6 +1169,10 @@ function SciencePhoto({
 }
 
 function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  if (isJ2EcosystemSlide(slide)) {
+    return <AquaticTeachingDiagram slide={slide} language={language} />
+  }
+
   if (isSolutionSlide(slide)) {
     return <SolutionTeachingDiagram slide={slide} language={language} />
   }
@@ -1152,6 +1240,117 @@ function TeachingDiagram({ slide, language }: { slide: LessonSlide; language: La
   }
 
   return <SciencePhoto slide={slide} className="slide-photo slide-photo--diagram" />
+}
+
+function AquaticTeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
+  if (slide.id.includes('food-chain') || slide.id.includes('population-change')) {
+    return <AquaticFoodWebDiagram language={language} visibleCount={slide.id.includes('population-change') ? 4 : 3} />
+  }
+
+  const factors = [
+    { title: language === '繁體中文' ? '生物因子' : 'Biotic', detail: language === '繁體中文' ? '魚、水生植物、藻類' : 'fish, aquatic plants, algae', className: 'aquatic-factor-card--biotic' },
+    { title: language === '繁體中文' ? '非生物因子' : 'Abiotic', detail: language === '繁體中文' ? '水、光、溫度' : 'water, light, temperature', className: 'aquatic-factor-card--abiotic' },
+    { title: language === '繁體中文' ? '棲地影響' : 'Habitat effect', detail: language === '繁體中文' ? '影響生存和生長' : 'affects survival and growth', className: 'aquatic-factor-card--effect' },
+  ]
+
+  return (
+    <section className="aquatic-factor-diagram" aria-label="Aquatic ecosystem factors">
+      <div className="aquatic-factor-pond">
+        <span className="aquatic-sun" />
+        <span className="aquatic-fish aquatic-fish--one" />
+        <span className="aquatic-fish aquatic-fish--two" />
+        <span className="aquatic-plant aquatic-plant--one" />
+        <span className="aquatic-plant aquatic-plant--two" />
+      </div>
+      <div className="aquatic-factor-list">
+        {factors.map((factor) => (
+          <article className={factor.className} key={factor.title}>
+            <strong>{factor.title}</strong>
+            <span>{factor.detail}</span>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function AquaticComparison({ slide, language, visibleCount }: { slide: LessonSlide; language: LanguageMode; visibleCount: number }) {
+  if (slide.id.includes('food') || slide.id.includes('producer')) {
+    return <AquaticFoodWebDiagram language={language} visibleCount={visibleCount} showChange={slide.id.includes('remove-producer')} />
+  }
+
+  if (slide.id.includes('freshwater-marine')) {
+    const habitats = [
+      { title: language === '繁體中文' ? '淡水' : 'Freshwater', detail: language === '繁體中文' ? '河流、湖泊、池塘' : 'rivers, lakes, ponds', className: 'aquatic-habitat-card--fresh' },
+      { title: language === '繁體中文' ? '海洋' : 'Marine', detail: language === '繁體中文' ? '海域和海洋' : 'seas and oceans', className: 'aquatic-habitat-card--marine' },
+    ]
+
+    return (
+      <section className="aquatic-habitat-comparison" aria-label="Freshwater and marine habitat comparison">
+        {habitats.map((habitat, index) => (
+          <article className={`${habitat.className} ${index < Math.max(1, visibleCount) ? 'is-visible' : ''}`} key={habitat.title}>
+            <span className="aquatic-water-surface" />
+            <strong>{habitat.title}</strong>
+            <small>{habitat.detail}</small>
+          </article>
+        ))}
+      </section>
+    )
+  }
+
+  const sortCards = [
+    { title: language === '繁體中文' ? '生物因子' : 'Biotic factors', detail: language === '繁體中文' ? '有生命：魚、植物、藻類' : 'living: fish, plants, algae', className: 'aquatic-sort-card--biotic' },
+    { title: language === '繁體中文' ? '非生物因子' : 'Abiotic factors', detail: language === '繁體中文' ? '無生命：水、光、溫度' : 'non-living: water, light, temperature', className: 'aquatic-sort-card--abiotic' },
+  ]
+
+  return (
+    <section className="aquatic-sort-comparison" aria-label="Biotic and abiotic factor sort">
+      {sortCards.map((card, index) => (
+        <article className={`${card.className} ${index < Math.max(1, visibleCount) ? 'is-visible' : ''}`} key={card.title}>
+          <strong>{card.title}</strong>
+          <span>{card.detail}</span>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function AquaticFoodWebDiagram({
+  language,
+  visibleCount,
+  compact = false,
+  showChange = false,
+}: {
+  language: LanguageMode
+  visibleCount: number
+  compact?: boolean
+  showChange?: boolean
+}) {
+  const nodes = [
+    { key: 'producer', label: language === '繁體中文' ? '藻類 / 水生植物' : 'algae / aquatic plants', className: 'aquatic-web-node--producer' },
+    { key: 'small', label: language === '繁體中文' ? '小型消費者' : 'small consumer', className: 'aquatic-web-node--small' },
+    { key: 'fish', label: language === '繁體中文' ? '魚' : 'fish', className: 'aquatic-web-node--fish' },
+    { key: 'predator', label: language === '繁體中文' ? '較大型掠食者' : 'larger predator', className: 'aquatic-web-node--predator' },
+  ]
+
+  return (
+    <section className={`aquatic-food-web ${compact ? 'aquatic-food-web--compact' : ''}`} aria-label="Aquatic food web diagram">
+      <div className="aquatic-web-canvas">
+        {nodes.map((node, index) => (
+          <article className={`aquatic-web-node ${node.className} ${index < Math.max(1, visibleCount) ? 'is-visible' : ''}${showChange && index === 0 ? ' is-reduced' : ''}`} key={node.key}>
+            <span>{node.label}</span>
+          </article>
+        ))}
+        <span className={`aquatic-web-link aquatic-web-link--one ${visibleCount >= 1 ? 'is-visible' : ''}`} />
+        <span className={`aquatic-web-link aquatic-web-link--two ${visibleCount >= 2 ? 'is-visible' : ''}`} />
+        <span className={`aquatic-web-link aquatic-web-link--three ${visibleCount >= 3 ? 'is-visible' : ''}`} />
+        {showChange && <span className={`aquatic-web-change ${visibleCount >= 1 ? 'is-visible' : ''}`}>{language === '繁體中文' ? '減少' : 'decrease'}</span>}
+      </div>
+      <div className="aquatic-web-caption">
+        {language === '繁體中文' ? '用箭頭追蹤覓食連結，再預測影響。' : 'Trace feeding links with arrows, then predict effects.'}
+      </div>
+    </section>
+  )
 }
 
 function SolutionTeachingDiagram({ slide, language }: { slide: LessonSlide; language: LanguageMode }) {
