@@ -8,6 +8,7 @@ import {
 import type { ProjectInput } from '../types'
 
 const validProject: ProjectInput = {
+  sectionId: 'eep',
   title: 'Student Site',
   groupName: 'Team',
   className: 'EEP 8A',
@@ -21,6 +22,7 @@ const validProject: ProjectInput = {
   status: 'pending',
   featured: false,
   studentPick: false,
+  publiclyVisible: false,
 }
 
 describe('submission validation', () => {

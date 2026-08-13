@@ -34,6 +34,8 @@ interface ContentWizardProps {
   contentCount: number
   contentItems: ContentItem[]
   editingId?: string | null
+  forceDestinationChoice?: boolean
+  libraryUrl?: string
   userEmail: string
 }
 
@@ -107,7 +109,7 @@ function WizardField({
   )
 }
 
-export function ContentWizard({ config, contentCount, contentItems, editingId, userEmail }: ContentWizardProps) {
+export function ContentWizard({ config, contentCount, contentItems, editingId, forceDestinationChoice = false, libraryUrl, userEmail }: ContentWizardProps) {
   const { adminUser, user } = useAuth()
   const navigate = useNavigate()
   const editingItem = editingId ? contentItems.find((item) => item.id === editingId) : undefined
@@ -115,10 +117,13 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
   const canCreateThisSection = canCreateContentForAdmin(adminUser, config.sectionId)
   const canEditThisItem = isEditing ? canEditContentItem(adminUser, editingItem) : true
   const destinations = useMemo(() => getCreatableHubConfigs(adminUser), [adminUser])
-  const initialDraft = useMemo(
-    () => editingItem ? draftFromContentItem(editingItem, userEmail) : defaultDraftFor(config, userEmail),
-    [config, editingItem, userEmail],
-  )
+  const initialDraft = useMemo(() => {
+    if (editingItem) return draftFromContentItem(editingItem, userEmail)
+    const draft = defaultDraftFor(config, userEmail)
+    return forceDestinationChoice
+      ? { ...draft, sectionId: '', sectionName: '' }
+      : draft
+  }, [config, editingItem, forceDestinationChoice, userEmail])
   const [step, setStep] = useState<ContentWizardStep>('type')
   const [draft, setDraft] = useState<ContentItemInput>(initialDraft)
   const [publishingChoice, setPublishingChoice] = useState<PublishingChoice>(() => publishingChoiceForDraft(initialDraft))
@@ -131,6 +136,8 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   const recoveryStorageKey = recoveryKey(user?.uid ?? userEmail, config.sectionId, editingId)
   const selectedDestination = hubConfigById[draft.sectionId] ?? config
+  const destinationLabel = draft.sectionId ? selectedDestination.sectionName : 'Choose destination hub'
+  const closeUrl = libraryUrl ?? workspaceHubViewUrl(config.sectionId, 'library')
   const canPublish = canPublishForDraft(adminUser, draft)
   const previewItem = contentItemPreviewFromInput({
     ...draft,
@@ -227,7 +234,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
   }
 
   const closeToLibrary = () => {
-    navigate(workspaceHubViewUrl(config.sectionId, 'library'))
+    navigate(closeUrl)
   }
 
   const save = async () => {
@@ -300,7 +307,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
   const startOver = () => {
     localStorage.removeItem(recoveryStorageKey)
     setRecoveredDraft(null)
-    setDraft(defaultDraftFor(config, userEmail))
+    setDraft(initialDraft)
     setDirty(false)
     setErrors({})
   }
@@ -309,14 +316,14 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
     <section className="content-wizard-page" aria-labelledby="content-wizard-heading">
       <div className="content-wizard-topline">
         <div>
-          <p className="eyebrow">{selectedDestination.sectionName}</p>
+          <p className="eyebrow">{destinationLabel}</p>
           <h1 ref={headingRef} id="content-wizard-heading" tabIndex={-1}>
             {isEditing ? 'Edit Content' : 'Create Content'}
           </h1>
           <p>{step === 'type' ? 'Choose the best format, then add only the fields this content needs.' : contentWizardStepLabels[step]}</p>
         </div>
         <div className="content-wizard-topline-actions">
-          <Link className="secondary-button" to={workspaceHubViewUrl(config.sectionId, 'library')}>Content Library</Link>
+          <Link className="secondary-button" to={closeUrl}>Content Library</Link>
           <Link className="small-button" to={selectedDestination.route}>Public Hub</Link>
         </div>
       </div>
@@ -344,23 +351,36 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
       <div className={step === 'type' ? 'content-wizard-layout content-wizard-layout--type' : 'content-wizard-layout'}>
         <main className="content-wizard-card">
           {step === 'type' && (
-            <fieldset className="wizard-type-grid">
-              <legend>Choose content type</legend>
-              {contentTypeOptions.map((option) => (
-                <label className={draft.type === option.type ? 'wizard-type-card is-selected' : 'wizard-type-card'} key={option.type}>
-                  <input
-                    checked={draft.type === option.type}
-                    name="content-type"
-                    onChange={() => updateDraft(applyTypeDefaults(draft, option.type))}
-                    type="radio"
-                    value={option.type}
-                  />
-                  <span className={`content-type-icon content-type-icon--${option.type}`} aria-hidden="true" />
-                  <strong>{option.title}</strong>
-                  <small>{option.help}</small>
-                </label>
-              ))}
-            </fieldset>
+            <>
+              {destinations.length > 1 && (
+                <WizardField id="sectionId" label="Destination hub" hint="Choose where this content will be published before selecting the format." error={errors.sectionId}>
+                  <select id={fieldId('sectionId')} value={draft.sectionId} onChange={(event) => {
+                    const nextHub = hubConfigById[event.target.value]
+                    if (nextHub) updateDraft({ sectionId: nextHub.sectionId, sectionName: nextHub.sectionName, department: nextHub.department })
+                  }}>
+                    {forceDestinationChoice && <option value="">Choose destination hub</option>}
+                    {destinations.map((destination) => <option key={destination.sectionId} value={destination.sectionId}>{destination.sectionName}</option>)}
+                  </select>
+                </WizardField>
+              )}
+              <fieldset className="wizard-type-grid">
+                <legend>Choose content type</legend>
+                {contentTypeOptions.map((option) => (
+                  <label className={draft.type === option.type ? 'wizard-type-card is-selected' : 'wizard-type-card'} key={option.type}>
+                    <input
+                      checked={draft.type === option.type}
+                      name="content-type"
+                      onChange={() => updateDraft(applyTypeDefaults(draft, option.type))}
+                      type="radio"
+                      value={option.type}
+                    />
+                    <span className={`content-type-icon content-type-icon--${option.type}`} aria-hidden="true" />
+                    <strong>{option.title}</strong>
+                    <small>{option.help}</small>
+                  </label>
+                ))}
+              </fieldset>
+            </>
           )}
 
           {step === 'essentials' && (
@@ -425,6 +445,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
                     const nextHub = hubConfigById[event.target.value]
                     if (nextHub) updateDraft({ sectionId: nextHub.sectionId, sectionName: nextHub.sectionName, department: nextHub.department })
                   }}>
+                    {forceDestinationChoice && <option value="">Choose destination hub</option>}
                     {destinations.map((destination) => <option key={destination.sectionId} value={destination.sectionId}>{destination.sectionName}</option>)}
                   </select>
                 </WizardField>
@@ -487,7 +508,7 @@ export function ContentWizard({ config, contentCount, contentItems, editingId, u
               <h2>{saveResult.title}</h2>
               <p>{saveResult.sectionName} - {saveResult.status}{saveResult.publishDate ? ` on ${saveResult.publishDate}` : ''}</p>
               <div className="wizard-success-actions">
-                <Link className="primary-button blue" to={workspaceHubViewUrl(config.sectionId, 'library')}>View Content Library</Link>
+                <Link className="primary-button blue" to={workspaceHubViewUrl(saveResult.sectionName === selectedDestination.sectionName ? selectedDestination.sectionId : config.sectionId, 'library')}>View Content Library</Link>
                 {saveResult.status === 'published' && <Link className="secondary-button" to={selectedDestination.route}>View Public Hub</Link>}
                 <button className="secondary-button" type="button" onClick={startOver}>Create Another</button>
                 <button className="small-button" type="button" onClick={() => navigate(`${workspaceHubViewUrl(config.sectionId, 'create')}&edit=${saveResult.id}`)}>Edit Content</button>

@@ -5,7 +5,7 @@ import { watchProjects } from './data'
 import type { Project, ProjectStatus } from './types'
 import { firestoreInitialLoadTimeoutMessage, firestoreInitialLoadTimeoutMs } from './utils/firestoreStatus'
 
-export function useProjects(status?: ProjectStatus, enabled = true) {
+export function useProjects(status?: ProjectStatus, enabled = true, sectionId?: string) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(isFirebaseConfigured && enabled)
   const [error, setError] = useState('')
@@ -36,13 +36,14 @@ export function useProjects(status?: ProjectStatus, enabled = true) {
         setLoading(false)
       },
       status,
+      sectionId,
     )
 
     return () => {
       window.clearTimeout(timeout)
       unsubscribe()
     }
-  }, [enabled, status])
+  }, [enabled, status, sectionId])
 
   return { projects, loading, error }
 }

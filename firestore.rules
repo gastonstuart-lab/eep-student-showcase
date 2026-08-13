@@ -68,11 +68,49 @@ service cloud.firestore {
     function canManageProjects() {
       return isSuperAdmin()
         || (
-          hasSectionAccess('eep')
+          hasAnyProjectSectionAccess()
           && (
             hasPermission('manageProjects')
             || hasLegacySectionAccess('eep')
           )
+        );
+    }
+
+    function hasAnyProjectSectionAccess() {
+      return hasSectionAccess('eep')
+        || hasSectionAccess('esl-science')
+        || hasSectionAccess('esl-language-arts')
+        || hasSectionAccess('esl-performance-arts')
+        || hasSectionAccess('esl-social-studies');
+    }
+
+    function canManageProjectSection(sectionId) {
+      return isSuperAdmin()
+        || (
+          hasSectionAccess(sectionId)
+          && (
+            hasPermission('manageProjects')
+            || hasLegacySectionAccess(sectionId)
+          )
+        );
+    }
+
+    function projectSection(data) {
+      return data.get('sectionId', 'eep');
+    }
+
+    function isSubmissionHub(sectionId) {
+      return sectionId in ['eep', 'esl-science', 'esl-language-arts', 'esl-performance-arts', 'esl-social-studies'];
+    }
+
+    function submissionsAreOpen(sectionId) {
+      return (
+          sectionId == 'eep'
+          && !exists(/databases/$(database)/documents/hubPages/$(sectionId))
+        )
+        || (
+          exists(/databases/$(database)/documents/hubPages/$(sectionId))
+          && get(/databases/$(database)/documents/hubPages/$(sectionId)).data.submissionsEnabled == true
         );
     }
 
@@ -310,12 +348,16 @@ service cloud.firestore {
         'impact',
         'googleSitesUrl',
         'imageUrl',
+        'sectionId',
         'status',
         'featured',
         'studentPick',
+        'publiclyVisible',
         'createdAt',
         'updatedAt'
       ])
+      && isSubmissionHub(request.resource.data.sectionId)
+      && submissionsAreOpen(request.resource.data.sectionId)
       && isShortString(request.resource.data.title, 120)
       && isShortString(request.resource.data.groupName, 120)
       && isShortString(request.resource.data.className, 80)
@@ -337,14 +379,21 @@ service cloud.firestore {
       && request.resource.data.status == 'pending'
       && request.resource.data.featured == false
       && request.resource.data.studentPick == false
+      && request.resource.data.publiclyVisible == false
       && request.resource.data.createdAt == request.time
       && request.resource.data.updatedAt == request.time;
     }
 
     match /projects/{projectId} {
-      allow read: if resource.data.status == 'approved' || canManageProjects();
-      allow create: if isValidProjectCreate() || canManageProjects();
-      allow update, delete: if canManageProjects();
+      allow read: if canManageProjectSection(projectSection(resource.data));
+      allow read: if resource.data.keys().hasAny(['status'])
+        && resource.data.status == 'approved'
+        && resource.data.get('publiclyVisible', true) == true;
+      allow create: if isValidProjectCreate() || canManageProjectSection(projectSection(request.resource.data));
+      allow update: if canManageProjectSection(projectSection(resource.data))
+        && projectSection(resource.data) == projectSection(request.resource.data)
+        && request.resource.data.get('status', resource.data.status) in ['pending', 'approved', 'rejected', 'hidden', 'archived'];
+      allow delete: if canManageProjectSection(projectSection(resource.data));
     }
 
     match /contentItems/{contentItemId} {

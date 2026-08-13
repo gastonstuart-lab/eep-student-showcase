@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { EffectiveAdmin } from '../auth'
-import { hubConfigById } from '../hubs'
+import { hubConfigById, hubConfigs } from '../hubs'
 import type { ContentItem } from '../types'
 import { emptyStaffPermissions, fullStaffPermissions } from '../utils/authorization'
 import {
@@ -159,5 +159,16 @@ describe('content creator wizard model', () => {
     })
 
     expect(getCreatableHubConfigs(owner).length).toBeGreaterThan(4)
+  })
+
+  it('requires an explicit destination before saving from an all-hubs create context', () => {
+    const draft = defaultDraftFor(hubConfigs[0], 'staff@example.com')
+    const errors = validateWizardStep('publishing', { ...draft, sectionId: '', sectionName: '' }, {
+      publishingChoice: 'draft',
+      canPublish: true,
+      destinationCount: 3,
+    })
+
+    expect(errors.sectionId).toBe('Choose a destination hub.')
   })
 })

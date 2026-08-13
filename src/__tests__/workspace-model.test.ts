@@ -104,7 +104,8 @@ describe('workspace permission model', () => {
     })
     const nav = buildWorkspaceNav(owner, 'all')
 
-    expect(nav.find((item) => item.label === 'Create Content')?.to).toContain('?view=create')
+    expect(nav.find((item) => item.label === 'Create Content')?.to).toBe('/admin/hubs/all?view=create')
+    expect(nav.map((item) => item.label)).not.toContain('Content Library')
   })
 
   it('hides Create Content in a hub context without creation permission', () => {

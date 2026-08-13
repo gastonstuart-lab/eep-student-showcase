@@ -47,7 +47,6 @@ type ConfirmAction = 'enable' | 'disable' | 'archive' | 'save' | null
 
 function staffAccessErrorMessage(error: unknown) {
   const raw = error instanceof Error ? error.message : String(error || '')
-  console.error('Staff access error:', error)
   if (raw.toLowerCase().includes('backend') || raw.toLowerCase().includes('functions') || raw.toLowerCase().includes('internal')) {
     return 'Staff accounts could not be loaded. Try again or check the local emulator connection.'
   }
@@ -91,11 +90,10 @@ export function StaffAccessPage() {
       try {
         await getStaffBackendHealth()
         if (!cancelled) setBackendReady(true)
-      } catch (healthError) {
+      } catch {
         if (!cancelled) {
           setBackendReady(false)
           setMessage('Staff actions are temporarily unavailable. Try again or check the local emulator connection.')
-          console.error('Staff backend health check failed:', healthError)
         }
       }
     }

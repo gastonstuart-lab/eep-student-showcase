@@ -35,6 +35,10 @@ export function validateWizardStep(
     errors.type = 'Choose a content type.'
   }
 
+  if (step === 'type' && options.destinationCount > 1 && !draft.sectionId) {
+    errors.sectionId = 'Choose a destination hub.'
+  }
+
   if (step === 'essentials' || step === 'review') {
     if (!draft.title.trim()) errors.title = 'Add a title.'
     if (draft.title.length > 120) errors.title = 'Keep the title to 120 characters or fewer.'
@@ -60,6 +64,7 @@ export function validateWizardStep(
 
   if (step === 'publishing' || step === 'review') {
     if (options.destinationCount < 1) errors.sectionId = 'No permitted destination hub is available.'
+    if (options.destinationCount > 1 && !draft.sectionId) errors.sectionId = 'Choose a destination hub.'
     if (options.publishingChoice !== 'draft' && !options.canPublish) {
       errors.status = 'This account can save drafts but cannot publish or schedule.'
     }

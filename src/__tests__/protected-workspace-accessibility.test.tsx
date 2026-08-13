@@ -1,10 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import type { EffectiveAdmin } from '../auth'
 import { ConfirmDialog, MobileWorkspaceDrawer } from '../components/studio/ProtectedWorkspace'
+import { LanguageProvider } from '../i18n/LanguageContext'
 import { emptyStaffPermissions } from '../utils/authorization'
 
 function staff(patch: Partial<EffectiveAdmin> = {}): EffectiveAdmin {
@@ -42,6 +43,10 @@ function ConfirmDialogHarness() {
   )
 }
 
+function renderWithLanguage(ui: ReactElement) {
+  return render(<LanguageProvider>{ui}</LanguageProvider>)
+}
+
 function MobileDrawerHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
   const [open, setOpen] = useState(true)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
@@ -63,7 +68,7 @@ function MobileDrawerHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
 describe('protected workspace accessibility primitives', () => {
   it('closes ConfirmDialog with Escape and restores focus', async () => {
     const user = userEvent.setup()
-    render(<ConfirmDialogHarness />)
+    renderWithLanguage(<ConfirmDialogHarness />)
     const trigger = screen.getByRole('button', { name: 'Trigger' })
     await user.click(trigger)
 
@@ -75,7 +80,7 @@ describe('protected workspace accessibility primitives', () => {
 
   it('keeps ConfirmDialog focus inside while open', async () => {
     const user = userEvent.setup()
-    render(<ConfirmDialogHarness />)
+    renderWithLanguage(<ConfirmDialogHarness />)
     await user.click(screen.getByRole('button', { name: 'Trigger' }))
 
     await user.keyboard('{Shift>}{Tab}{/Shift}')
@@ -87,7 +92,7 @@ describe('protected workspace accessibility primitives', () => {
   it('closes the mobile drawer with Escape and restores focus', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
-    render(<MobileDrawerHarness onClose={onClose} />)
+    renderWithLanguage(<MobileDrawerHarness onClose={onClose} />)
 
     await waitFor(() => expect(screen.getByRole('button', { name: /close navigation/i })).toHaveFocus())
     await user.keyboard('{Escape}')
@@ -98,7 +103,7 @@ describe('protected workspace accessibility primitives', () => {
 
   it('keeps mobile drawer focus inside while open', async () => {
     const user = userEvent.setup()
-    render(<MobileDrawerHarness />)
+    renderWithLanguage(<MobileDrawerHarness />)
     const drawer = screen.getByRole('dialog', { name: /teacher workspace navigation/i })
 
     await user.tab()
@@ -108,7 +113,7 @@ describe('protected workspace accessibility primitives', () => {
   })
 
   it('keeps subject drawer navigation on the exact active hub route', () => {
-    render(<MobileDrawerHarness />)
+    renderWithLanguage(<MobileDrawerHarness />)
 
     expect(screen.getByRole('link', { name: 'Content Library' })).toHaveAttribute('href', '/admin/hubs/esl-science?view=library')
   })

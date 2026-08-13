@@ -45,6 +45,7 @@ export function validateProjectSubmission(project: ProjectInput, permission: boo
 
 export function projectSubmissionFingerprint(project: ProjectInput) {
   return [
+    project.sectionId,
     project.title,
     project.groupName,
     project.className,
