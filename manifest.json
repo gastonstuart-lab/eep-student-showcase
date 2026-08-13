@@ -1,0 +1,267 @@
+{
+  "generatedAt": "2026-08-13T20:22:25.788Z",
+  "source": {
+    "baseUrl": "http://127.0.0.1:4173",
+    "branch": "codex/science-lessons-integration",
+    "commit": "52d4040887bed586e44f82706c2f3380a688ac24"
+  },
+  "safety": {
+    "authenticatedContent": false,
+    "credentialsIncluded": false,
+    "environmentValuesIncluded": false,
+    "note": "Capture script only visits public, unauthenticated routes and avoids admin/login surfaces."
+  },
+  "viewports": {
+    "standard": {
+      "width": 1440,
+      "height": 900
+    },
+    "presentation": {
+      "width": 1366,
+      "height": 768
+    }
+  },
+  "screenshots": [
+    {
+      "filename": "screenshots/01-ied-entry-point.png",
+      "url": "http://127.0.0.1:4173/",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "IED public entry point",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/02-science-hub-entry.png",
+      "url": "http://127.0.0.1:4173/esl/science",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Public ESL Science Hub entry point",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/03-science-lessons-home.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Science Lessons homepage",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/04-j1-home-selected.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "J1 Fall selected on Science Lessons homepage",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/05-j1-fall-library-units.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "J1 Fall unit and lesson library",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/06-lesson-1-teacher-workspace.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Lesson 1 Teacher Workspace: What Is a Biome? Climate and Major Examples",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/07-j1-teacher-workspace-english.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Teacher Workspace in English mode",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/08-j1-teacher-workspace-bilingual.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Teacher Workspace in Bilingual mode",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/09-j1-teacher-workspace-traditional-chinese.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Teacher Workspace in Traditional Chinese mode",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/10-lesson-2-teacher-workspace.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Lesson 2 Teacher Workspace: Forests, Tundra, Mountains and Ice",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/11-j2-fall-library-units.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "J2 Fall unit and lesson library",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/12-j2-spring-summer-empty-state.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "J2 Spring / Summer curriculum-aware empty state",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/13-biomes-v2-public-prototype-route.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html?v2=biomes",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "description": "Public Biomes V2 prototype route for comparison",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/14-lesson-1-presentation-english-title-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 English Presentation Mode at 1366x768: title / first state",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/15-lesson-1-presentation-english-reveal-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 English Presentation Mode at 1366x768: intermediate progressive reveal",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/16-lesson-1-presentation-bilingual-question-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Bilingual Presentation Mode at 1366x768: question slide with Chinese support",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/17-lesson-1-presentation-bilingual-diagram-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Bilingual Presentation Mode at 1366x768: climate diagram slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/18-lesson-1-presentation-bilingual-six-biomes-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Bilingual Presentation Mode at 1366x768: six biomes content slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/19-lesson-1-presentation-bilingual-data-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Bilingual Presentation Mode at 1366x768: grassland rainfall data slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/20-lesson-1-presentation-traditional-chinese-desert-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Traditional Chinese Presentation Mode at 1366x768: desert representative slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/21-lesson-1-presentation-traditional-chinese-desert-reveal-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 1 Traditional Chinese Presentation Mode at 1366x768: desert reveal state",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/22-lesson-2-presentation-forest-content-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 2 Presentation Mode at 1366x768: forest content slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/23-lesson-2-presentation-tundra-permafrost-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 2 Presentation Mode at 1366x768: tundra/permafrost content slide",
+      "publicOnly": true
+    },
+    {
+      "filename": "screenshots/24-lesson-2-presentation-traditional-chinese-tundra-animals-1366x768.png",
+      "url": "http://127.0.0.1:4173/science-lessons.html",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "description": "Lesson 2 Traditional Chinese Presentation Mode at 1366x768: tundra animals representative slide",
+      "publicOnly": true
+    }
+  ],
+  "consoleErrors": []
+}
