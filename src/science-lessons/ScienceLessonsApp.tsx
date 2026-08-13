@@ -20,6 +20,7 @@ import {
 import { BiomesV2Prototype } from './presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from './presentation-v2/PresentationShell'
 import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
+import { AquaticEnhancedSlide } from './AquaticEnhancedSlide'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
@@ -744,6 +745,10 @@ function SlideCanvas({
   const visibleReveals = slide.revealMode === 'step-by-step' ? slide.reveals?.slice(0, visibleRevealCount) ?? [] : slide.reveals ?? []
   const layout = slide.layout ?? 'concept'
   const j2EcosystemSlide = isJ2EcosystemSlide(slide)
+
+  if (j2EcosystemSlide) {
+    return <AquaticEnhancedSlide slide={slide} language={language} visibleRevealCount={visibleRevealCount} hideSource={hideSource} />
+  }
 
   return (
     <article className={`slide-canvas slide-canvas--${slide.visual} slide-layout slide-layout--${layout}${j2EcosystemSlide ? ' slide-canvas--j2-ecosystems' : ''}${slide.biomeKey ? ` slide-biome--${slide.biomeKey}` : ''}`}>

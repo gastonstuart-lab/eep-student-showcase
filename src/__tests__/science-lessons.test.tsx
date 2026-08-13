@@ -527,7 +527,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
   })
 
   it('opens the J2 Teacher Workspace and advances a representative reveal', () => {
-    render(<ScienceLessonsApp />)
+    const { container } = render(<ScienceLessonsApp />)
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
@@ -536,6 +536,9 @@ describe('J2 Aquatic Ecosystems production unit', () => {
     expect(screen.getByText(/Aquatic Ecosystems and Habitat Factors/i)).toBeInTheDocument()
     expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
     expect(screen.getByText(/Source references/i)).toBeInTheDocument()
+    expect(container.querySelector('[data-aquatic-enhanced="true"]')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /KEY WORDS/i })).toBeInTheDocument()
+    expect(screen.getByText(/THINK!/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
 
@@ -563,8 +566,8 @@ describe('J2 Aquatic Ecosystems production unit', () => {
 
     expect(screen.getByRole('heading', { name: /生態系是一個相互連結的系統/ })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /An ecosystem is a connected system/i })).not.toBeInTheDocument()
-    expect(container.querySelector('.slide-canvas')).toHaveTextContent('生物因子')
-    expect(container.querySelector('.slide-canvas')).not.toHaveTextContent('BIOTIC')
+    expect(container.querySelector('[data-aquatic-enhanced="true"]')).toHaveTextContent('生物因子')
+    expect(container.querySelector('[data-aquatic-enhanced="true"]')).not.toHaveTextContent('BIOTIC')
   })
 
   it('renders the J2 aquatic food-web visual and staged change reasoning', () => {
@@ -576,15 +579,16 @@ describe('J2 Aquatic Ecosystems production unit', () => {
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[3])
 
     expect(screen.getByRole('heading', { name: /Prediction: remove one producer/i })).toBeInTheDocument()
-    expect(container.querySelector('.aquatic-food-web')).toBeInTheDocument()
+    expect(container.querySelector('[data-aquatic-enhanced="true"]')).toBeInTheDocument()
+    expect(container.querySelector('.aquatic-foodweb-board')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
     fireEvent.click(screen.getByRole('button', { name: /Next/i }))
 
     expect(screen.getByText(/Reveal 3 of 3/i)).toBeInTheDocument()
-    expect(container.querySelector('.aquatic-web-change')).toHaveClass('is-visible')
-    expect(container.querySelectorAll('.aquatic-web-link.is-visible').length).toBeGreaterThanOrEqual(3)
+    expect(container.querySelector('.aquatic-web-change')).toBeInTheDocument()
+    expect(container.querySelectorAll('.aquatic-web-arrow.is-visible').length).toBeGreaterThanOrEqual(3)
   })
 
   it('renders Presentation Mode for the J2 production unit', () => {
