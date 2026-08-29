@@ -390,3 +390,142 @@
   .j1-gold-population-ring,.j1-gold-community-labels{right:2%;width:39%}.j1-gold-population .j1-gold-organisation-card,.j1-gold-community-card{right:2%;width:39%;padding:9px}.j1-gold-community-card strong{font-size:14px}.j1-gold-community-card span{font-size:9px}
   .j1-gold-ecosystem-community,.j1-gold-ecosystem-abiotic{right:2%;width:18%}.j1-gold-ecosystem .j1-gold-ecosystem-flow{right:2%;max-width:39%;padding:9px;font-size:9px}
 }
+
+
+/* Approved-mockup proof: the raster artboard is the visual source of truth.
+   Interaction is layered over it so activating support never reflows the slide. */
+.j1-gold-player--approved-proof{
+  padding:0;
+  background:#02090b;
+  min-height:calc(100vh - 64px);
+}
+.j1-approved-proof{
+  position:relative;
+  width:min(100vw,calc((100vh - 64px) * 1.77683),1672px);
+  aspect-ratio:1672/941;
+  overflow:hidden;
+  background:#062527;
+  box-shadow:0 24px 70px rgba(0,0,0,.42);
+  isolation:isolate;
+}
+.j1-approved-proof__image{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  display:block;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.j1-approved-ui-hotspot,
+.j1-approved-translation-hotspot{
+  position:absolute;
+  z-index:14;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:transparent;
+  cursor:pointer;
+}
+.j1-approved-ui-hotspot:focus-visible,
+.j1-approved-translation-hotspot:focus-visible{
+  outline:4px solid rgba(168,200,75,.95);
+  outline-offset:2px;
+}
+.j1-approved-ui-hotspot--drawer{left:0;top:42%;width:2.2%;height:12.5%;border-radius:0 18px 18px 0}
+.j1-approved-ui-hotspot--chinese{right:1.7%;top:2.3%;width:8.6%;height:7.1%;border-radius:999px}
+.j1-approved-ui-hotspot--highlight{right:10.5%;bottom:2%;width:7.3%;height:12.4%;border-radius:50%}
+.j1-approved-ui-hotspot--fullscreen{right:2%;bottom:2%;width:7.3%;height:12.4%;border-radius:50%}
+.j1-approved-ui-hotspot--chinese.is-on{
+  box-shadow:0 0 0 4px rgba(168,200,75,.92),0 0 30px rgba(168,200,75,.45);
+}
+.j1-approved-ui-hotspot--highlight.is-off{
+  box-shadow:inset 0 0 0 4px rgba(5,29,32,.42);
+}
+.j1-approved-translation-hotspot{
+  z-index:12;
+  border-radius:12px;
+}
+.j1-approved-translation-hotspot--word{z-index:13}
+.j1-approved-translation-hotspot:disabled{
+  pointer-events:none;
+  cursor:default;
+}
+.j1-approved-proof.is-translation-ready .j1-approved-translation-hotspot:not(:disabled):hover{
+  box-shadow:inset 0 0 0 3px rgba(168,200,75,.78),0 0 20px rgba(168,200,75,.25);
+  background:rgba(168,200,75,.06);
+}
+.j1-approved-translation-overlay{
+  position:absolute;
+  z-index:11;
+  pointer-events:none;
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  padding:1.1% 1.3%;
+  font-weight:900;
+  line-height:1.2;
+  text-wrap:balance;
+  text-align:left;
+  box-shadow:0 9px 24px rgba(0,0,0,.18);
+}
+.j1-approved-translation-overlay--question{
+  background:rgba(4,31,33,.97);
+  color:#a8c84b;
+  border-radius:20px;
+  font-size:clamp(28px,3.65vw,62px);
+  letter-spacing:-.025em;
+  align-content:center;
+}
+.j1-approved-translation-overlay--copy{
+  background:rgba(5,42,40,.97);
+  color:#f7fbf5;
+  border-radius:18px;
+  font-size:clamp(18px,1.78vw,30px);
+  line-height:1.38;
+  align-content:center;
+}
+.j1-approved-translation-overlay--title{
+  background:rgba(5,38,37,.98);
+  color:#f7fbf5;
+  border-radius:18px;
+  font-size:clamp(36px,4.4vw,74px);
+  letter-spacing:-.04em;
+  align-content:center;
+}
+.j1-approved-translation-overlay--label{
+  background:#fff;
+  color:#09283c;
+  border-radius:9px;
+  font-size:clamp(15px,1.45vw,25px);
+  line-height:1;
+  padding:0 4px;
+  text-align:center;
+}
+.j1-approved-translation-overlay--center{
+  background:rgba(255,255,255,.97);
+  color:#09283c;
+  border:5px solid rgba(168,200,75,.62);
+  border-radius:50%;
+  font-size:clamp(15px,1.45vw,25px);
+  line-height:1.3;
+  text-align:center;
+  padding:12%;
+}
+.j1-gold-player--approved-proof.j1-gold-player--fullscreen{
+  min-height:100vh;
+}
+.j1-gold-player--approved-proof.j1-gold-player--fullscreen .j1-approved-proof{
+  width:min(100vw,177.683vh,1672px);
+}
+@media(max-width:900px){
+  .j1-gold-player--approved-proof{padding:0;overflow:hidden}
+  .j1-approved-proof{width:min(100vw,calc((100vh - 64px) * 1.77683))}
+  .j1-approved-translation-overlay--copy{font-size:clamp(12px,1.7vw,18px)}
+  .j1-approved-translation-overlay--question{font-size:clamp(19px,3.5vw,34px)}
+  .j1-approved-translation-overlay--title{font-size:clamp(24px,4vw,42px)}
+  .j1-approved-translation-overlay--label,.j1-approved-translation-overlay--center{font-size:clamp(10px,1.35vw,15px)}
+}
