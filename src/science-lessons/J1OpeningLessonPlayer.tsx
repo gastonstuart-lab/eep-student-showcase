@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ScienceLesson } from './data'
 import type { LessonSlide } from './types/lesson'
@@ -164,12 +164,11 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
 }
 
 export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesson; onBack: () => void }) {
-  const initialClasses = useMemo(loadClasses, [])
-  const [classes, setClasses] = useState<SavedClass[]>(initialClasses)
-  const [activeClassId, setActiveClassId] = useState(initialClasses[0]?.id ?? 'default')
+  const [classes, setClasses] = useState<SavedClass[]>(() => loadClasses())
+  const [activeClassId, setActiveClassId] = useState(() => loadClasses()[0]?.id ?? 'default')
   const activeClass = classes.find((item) => item.id === activeClassId) ?? classes[0]
-  const [slideIndex, setSlideIndex] = useState(activeClass?.slideIndex ?? 0)
-  const [revealIndex, setRevealIndex] = useState(activeClass?.revealIndex ?? 0)
+  const [slideIndex, setSlideIndex] = useState(() => activeClass?.slideIndex ?? 0)
+  const [revealIndex, setRevealIndex] = useState(() => activeClass?.revealIndex ?? 0)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [showChinese, setShowChinese] = useState(false)
   const [highlights, setHighlights] = useState(true)
@@ -184,39 +183,66 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   const isQuestion = slide.id.includes('question-')
   const kind = visualKindById[slide.id] ?? 'ecosystem'
 
-  useEffect(() => {
+  const persistPosition = (nextSlideIndex: number, nextRevealIndex: number) => {
     setClasses((current) => {
-      const nextClasses = current.map((item) => item.id === activeClassId ? { ...item, slideIndex, revealIndex } : item)
+      const nextClasses = current.map((item) => item.id === activeClassId
+        ? { ...item, slideIndex: nextSlideIndex, revealIndex: nextRevealIndex }
+        : item)
       saveClasses(nextClasses)
       return nextClasses
     })
-  }, [activeClassId, revealIndex, slideIndex])
+  }
 
-  const next = useCallback(() => {
-    if (revealIndex < reveals.length) { setRevealIndex((value) => value + 1); return }
-    if (slideIndex < lesson.slides.length - 1) { setSlideIndex((value) => value + 1); setRevealIndex(0) }
-  }, [lesson.slides.length, revealIndex, reveals.length, slideIndex])
+  const goToPosition = (nextSlideIndex: number, nextRevealIndex: number) => {
+    setSlideIndex(nextSlideIndex)
+    setRevealIndex(nextRevealIndex)
+    persistPosition(nextSlideIndex, nextRevealIndex)
+  }
 
-  const previous = useCallback(() => {
-    if (revealIndex > 0) { setRevealIndex((value) => value - 1); return }
+  const next = () => {
+    if (revealIndex < reveals.length) {
+      goToPosition(slideIndex, revealIndex + 1)
+      return
+    }
+    if (slideIndex < lesson.slides.length - 1) goToPosition(slideIndex + 1, 0)
+  }
+
+  const previous = () => {
+    if (revealIndex > 0) {
+      goToPosition(slideIndex, revealIndex - 1)
+      return
+    }
     if (slideIndex > 0) {
       const nextIndex = slideIndex - 1
-      setSlideIndex(nextIndex)
-      setRevealIndex(slideReveals(lesson.slides[nextIndex]).length)
+      goToPosition(nextIndex, slideReveals(lesson.slides[nextIndex]).length)
     }
-  }, [lesson.slides, revealIndex, slideIndex])
+  }
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
-      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); next() }
-      if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); previous() }
-      if (event.key === 'Escape') { setFocusMode(null); setDrawerOpen(false) }
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+        event.preventDefault()
+        if (revealIndex < reveals.length) goToPosition(slideIndex, revealIndex + 1)
+        else if (slideIndex < lesson.slides.length - 1) goToPosition(slideIndex + 1, 0)
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault()
+        if (revealIndex > 0) goToPosition(slideIndex, revealIndex - 1)
+        else if (slideIndex > 0) {
+          const nextIndex = slideIndex - 1
+          goToPosition(nextIndex, slideReveals(lesson.slides[nextIndex]).length)
+        }
+      }
+      if (event.key === 'Escape') {
+        setFocusMode(null)
+        setDrawerOpen(false)
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [next, previous])
+  })
 
   const switchClass = (id: string) => {
     const nextClass = classes.find((item) => item.id === id)
@@ -234,7 +260,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
     setClasses(nextClasses); saveClasses(nextClasses); setNewClassName(''); setActiveClassId(created.id); setSlideIndex(0); setRevealIndex(0)
   }
 
-  const goToSlide = (index: number) => { setSlideIndex(index); setRevealIndex(0); setDrawerOpen(false) }
+  const goToSlide = (index: number) => { goToPosition(index, 0); setDrawerOpen(false) }
   const toggleFullscreen = async () => {
     if (document.fullscreenElement) await document.exitFullscreen?.()
     else await stageRef.current?.requestFullscreen?.()
