@@ -1,0 +1,52 @@
+name: Science Live Firebase Preview
+
+on:
+  push:
+    branches:
+      - science-live-preview
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: science-live-firebase-preview
+  cancel-in-progress: true
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EEP_STUDENT_SHOWCASE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy Firebase preview channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "${RUNNER_TEMP}/firebase-service-account.json"
+            export GOOGLE_APPLICATION_CREDENTIALS="${RUNNER_TEMP}/firebase-service-account.json"
+            npx firebase-tools hosting:channel:deploy science-live-preview --only hosting:iedhub --project eep-student-showcase --expires 7d
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            npx firebase-tools hosting:channel:deploy science-live-preview --only hosting:iedhub --project eep-student-showcase --expires 7d --token "$FIREBASE_TOKEN"
+          else
+            echo "No Firebase deployment credential is configured in GitHub Actions."
+            exit 2
+          fi
