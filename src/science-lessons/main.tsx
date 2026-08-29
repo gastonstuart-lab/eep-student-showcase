@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ScienceLessonsApp } from './ScienceLessonsApp'
 import './scienceLessons.css'
+import './j1OpeningEnhanced.css'
 
 const root = document.getElementById('science-lessons-root')
 
