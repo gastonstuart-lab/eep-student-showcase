@@ -265,15 +265,6 @@ function ApprovedProofSlide({
 
 function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }) {
   const kind = visualKindById[slide.id] ?? 'ecosystem'
-  const approvedProof = APPROVED_PROOF_SLIDES[slide.id]
-
-  useEffect(() => { setTranslatedTargets([]) }, [slide.id])
-  useEffect(() => { if (!showChinese) setTranslatedTargets([]) }, [showChinese])
-
-  const toggleTranslatedTarget = (id: string) => {
-    if (!showChinese) return
-    setTranslatedTargets((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-  }
   const cls = motion ? ' is-motion' : ''
 
   if (kind === 'title') return (
@@ -463,6 +454,17 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   const visibleReveals = reveals.slice(0, revealIndex)
   const isQuestion = slide.id.includes('question-')
   const kind = visualKindById[slide.id] ?? 'ecosystem'
+  const approvedProof = APPROVED_PROOF_SLIDES[slide.id]
+
+  useEffect(() => { setTranslatedTargets([]) }, [slide.id])
+  useEffect(() => {
+    if (!showChinese) setTranslatedTargets([])
+  }, [showChinese])
+
+  const toggleTranslatedTarget = (id: string) => {
+    if (!showChinese) return
+    setTranslatedTargets((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  }
 
   const persistPosition = (nextSlideIndex: number, nextRevealIndex: number) => {
     setClasses((current) => {
