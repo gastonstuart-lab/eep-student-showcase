@@ -1,0 +1,49 @@
+name: Vendor Approved J1 Mockups
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: science-live-preview
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet pillow
+      - name: Download exact approved mockups
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/science-lessons/j1-opening/approved
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2F7e545db8-17d6-4a62-8b40-effc0e1b1403/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAALGezqTx0zxb5KUlpGLHlPXL_tD5YeyyT9XCDoW7xgZZ&exp=1788032648&osig=AAAAAAAAAAAAAAAAAAAAAD9fk6T7Z727o4Kudw3akKp4ZSRj9J6TfcfbZcPUwVN7&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/01-title.png
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2F19d5b466-f800-4b1d-8668-32b66be78e57/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAABFw1EeG5gzKU6WNlR4wlRPFLbdijMkYErQqBwwof_J_&exp=1788032636&osig=AAAAAAAAAAAAAAAAAAAAAOU4lFsR0Ddmz4kWLd5pa7qAdH6dEYMZAGyFg3RFnjYV&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/02-question.png
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2F06040c08-c159-4888-b3a3-3913cc45660f/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAAO-EpB_y-15FDlmUR6TwHnwzd0PWyoeQOKnIgC90Hfwk&exp=1788030560&osig=AAAAAAAAAAAAAAAAAAAAAAvc8tJ5LrCco0tuqNEWT1J7AzJv9OULab9Sw-ksIXhq&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/03-habitats.png
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2F36870809-dc73-4a59-bfc3-68748f769a81/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAAD5wVl2DtZbS6CnODmaaR2GTsUCwJ8zxCBH0PUkwe4v3&exp=1788032527&osig=AAAAAAAAAAAAAAAAAAAAALBugsR-CJ24otWK8ThL8Bs2V7G4T8WLpUPdJHU3DG_j&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/04-question-parts.png
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2Fb4e86a1c-d1b0-4fd6-9487-d5cec7403375/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAABuhTKjBpuHZ8dKjb0LtAvCL538GbSGY5QLmPq-nU721&exp=1788032992&osig=AAAAAAAAAAAAAAAAAAAAALnEXClgz9zQ7oDqaYhc_vZ4DvseLnhAC4YhdoY0gh_m&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/05-abiotic.png
+          curl -L --fail --retry 3 'https://media.canva.com/v2/image-resize/format:PNG/height:941/quality:100/uri:ifs%3A%2F%2FM%2F77b99a12-658a-4d8a-afb0-0d3963843984/watermark:F/width:1672?csig=AAAAAAAAAAAAAAAAAAAAADlXtIk1I309b79DibrKo7DZJbrakY8dZ2d3xOATeOQi&exp=1788032571&osig=AAAAAAAAAAAAAAAAAAAAAORn_DjfktJScLCa1Yh-btE2vqqqTvrm3r2a6BZgiPTe&signer=media-rpc&x-canva-quality=thumbnail' -o public/science-lessons/j1-opening/approved/06-biotic.png
+      - name: Verify mockup dimensions
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          for p in sorted(Path('public/science-lessons/j1-opening/approved').glob('*.png')):
+              im=Image.open(p)
+              print(p.name, im.size)
+              if im.width < 1500 or im.height < 800:
+                  raise SystemExit(f'{p.name} is too small: {im.size}')
+          PY
+      - name: Commit exact approved mockups
+        run: |
+          git config user.name "science-preview-bot"
+          git config user.email "science-preview-bot@users.noreply.github.com"
+          git add public/science-lessons/j1-opening/approved
+          git commit -m "Vendor exact approved J1 mockup artwork"
+          git push origin HEAD:science-live-preview
