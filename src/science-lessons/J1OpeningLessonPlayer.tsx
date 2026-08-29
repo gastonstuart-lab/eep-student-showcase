@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { ScienceLesson } from './data'
 import type { LessonSlide } from './types/lesson'
+import approvedQuestion from './approvedProofAssets/question'
+import approvedHabitats from './approvedProofAssets/habitats'
+import approvedAbiotic from './approvedProofAssets/abiotic'
 import './j1OpeningLessonPlayer.css'
 
 type SavedClass = { id: string; name: string; slideIndex: number; revealIndex: number }
@@ -169,7 +172,7 @@ type ApprovedProofSpec = {
 
 const APPROVED_PROOF_SLIDES: Record<string, ApprovedProofSpec> = {
   'j1-ch1-1-question-needs': {
-    src: asset('approved/02-question.webp'),
+    src: approvedQuestion,
     alt: 'Approved Question of the Day mockup with a pond habitat',
     patches: [
       { id:'question-full', kind:'sentence', zh:'生物的環境會滿足哪些需求？', variant:'question', style:{left:'3.7%',top:'31.5%',width:'44.2%',height:'41%'} },
@@ -177,7 +180,7 @@ const APPROVED_PROOF_SLIDES: Record<string, ApprovedProofSpec> = {
     ],
   },
   'j1-ch1-1-habitats': {
-    src: asset('approved/03-habitats.webp'),
+    src: approvedHabitats,
     alt: 'Approved Habitats mockup with polar, savanna and reef habitats',
     patches: [
       { id:'habitats-title', kind:'word', zh:'棲地', variant:'title', style:{left:'3.2%',top:'18.5%',width:'27%',height:'11.5%'} },
@@ -186,7 +189,7 @@ const APPROVED_PROOF_SLIDES: Record<string, ApprovedProofSpec> = {
     ],
   },
   'j1-ch1-1-abiotic-overview': {
-    src: asset('approved/05-abiotic.webp'),
+    src: approvedAbiotic,
     alt: 'Approved Abiotic Factors mockup with five nonliving habitat factors',
     patches: [
       { id:'abiotic-title', kind:'word', zh:'非生物因子', variant:'title', style:{left:'3.1%',top:'19.5%',width:'27%',height:'24.5%'} },
