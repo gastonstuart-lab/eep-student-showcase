@@ -172,7 +172,7 @@ describe('Science Lessons curriculum', () => {
     expect(screen.getByRole('heading', { name: /LIVING THINGS & THE ENVIRONMENT/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('button', { name: '→' }))
     expect(screen.getByRole('button', { name: /Expand slide text/i })).toHaveTextContent("What needs are met by an organism's environment?")
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
