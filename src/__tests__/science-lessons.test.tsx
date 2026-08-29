@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ScienceLessonsApp } from '../science-lessons/ScienceLessonsApp'
 import { rainfallComparisonData } from '../science-lessons/curriculum/biomeCharts'
@@ -16,10 +16,20 @@ const concentrationLesson = findLesson('j1-concentration-saturation')
 const solubilityLesson = findLesson('j1-solubility-curves')
 const j2HabitatLesson = findLesson('j2-aquatic-habitats')
 const j2FoodWebLesson = findLesson('j2-aquatic-food-webs')
+const j1OpeningLesson = findLesson('j1-ch1-1-habitats-ecosystems-opening')
+const j2OpeningLesson = findLesson('j2-ch1-1-elements-atoms-opening')
 const biomesLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-ch2-biomes')
 const reactionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-fall-reactions')
 const solutionLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j1-spring-solutions')
 const j2EcosystemLessons = scienceLessons.filter((lesson) => lesson.unitId === 'j2-fall-ecosystems')
+
+function presentLessonFromLibrary(title: RegExp) {
+  const lessonHeading = screen.getByRole('heading', { name: title })
+  const row = lessonHeading.closest('article')
+  if (!row) throw new Error(`Lesson row not found for ${String(title)}`)
+  fireEvent.click(within(row).getByRole('button', { name: 'Present lesson' }))
+}
+
 
 describe('Science Lessons curriculum', () => {
   it('keeps lessons filterable and ordered by year, semester, and lesson order', () => {
@@ -143,11 +153,36 @@ describe('Science Lessons curriculum', () => {
   })
 })
 
+
+  it('loads the new J1 and J2 opening lessons first in Fall teaching order', () => {
+    const j1Fall = scienceLessons.filter((lesson) => lesson.year === 'J1' && lesson.semester === 'Fall')
+    const j2Fall = scienceLessons.filter((lesson) => lesson.year === 'J2' && lesson.semester === 'Fall')
+
+    expect(j1Fall[0]?.id).toBe('j1-ch1-1-habitats-ecosystems-opening')
+    expect(j2Fall[0]?.id).toBe('j2-ch1-1-elements-atoms-opening')
+    expect(j1OpeningLesson.slides).toHaveLength(6)
+    expect(j2OpeningLesson.slides).toHaveLength(6)
+  })
+
+  it('opens both new opening lessons from the library', () => {
+    render(<ScienceLessonsApp />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    presentLessonFromLibrary(/Habitats and Ecosystems: Opening Lesson/i)
+    expect(screen.getByText(/What needs are met by an organism's environment/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'J2' }))
+    presentLessonFromLibrary(/Elements and Atoms: Opening Lesson/i)
+    expect(screen.getByText(/Why are elements sometimes called the building blocks of matter/i)).toBeInTheDocument()
+  })
+
 describe('Science Lessons teacher flow', () => {
   it('opens Biomes into the viewer and advances reveals before changing slides', () => {
     render(<ScienceLessonsApp />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Continue last lesson/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    presentLessonFromLibrary(/What Is a Biome\? Climate and Major Examples/i)
 
     expect(screen.getByRole('heading', { name: /Chapter 2.4: Biomes/i })).toBeInTheDocument()
     expect(screen.getByText(/Slide 1 of 11/i)).toBeInTheDocument()
@@ -165,7 +200,8 @@ describe('Science Lessons teacher flow', () => {
   it('supports English, bilingual, and Traditional Chinese presentation modes', () => {
     render(<ScienceLessonsApp />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Continue last lesson/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    presentLessonFromLibrary(/What Is a Biome\? Climate and Major Examples/i)
     fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
     expect(screen.getByRole('heading', { name: /Chapter 2.4: Biomes/i })).toBeInTheDocument()
@@ -183,7 +219,8 @@ describe('Science Lessons teacher flow', () => {
   it('keeps final Biomes QA labels correct in Traditional Chinese mode', () => {
     const { container } = render(<ScienceLessonsApp />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Continue last lesson/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
+    presentLessonFromLibrary(/What Is a Biome\? Climate and Major Examples/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[1])
 
     expect(screen.getAllByText(/Question of the Day/i).length).toBeGreaterThan(0)
@@ -196,7 +233,7 @@ describe('Science Lessons teacher flow', () => {
     expect(screen.queryByText('< 25 cm rain/year')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    presentLessonFromLibrary(/Forests, Tundra, Mountains and Ice/i)
     fireEvent.click(container.querySelectorAll('.viewer-language > button')[2])
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[6])
 
@@ -267,7 +304,7 @@ describe('J1 Chemical Reactions production unit', () => {
     render(<ScienceLessonsApp />)
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+    presentLessonFromLibrary(/Activation Energy and Catalysts/i)
 
     expect(screen.getByRole('heading', { name: /Activation energy and catalysts/i })).toBeInTheDocument()
     expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
@@ -282,7 +319,7 @@ describe('J1 Chemical Reactions production unit', () => {
     const { container } = render(<ScienceLessonsApp />)
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+    presentLessonFromLibrary(/Activation Energy and Catalysts/i)
     fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
     expect(screen.getByRole('heading', { name: /Activation energy and catalysts/i })).toBeInTheDocument()
@@ -303,7 +340,7 @@ describe('J1 Chemical Reactions production unit', () => {
     const { container } = render(<ScienceLessonsApp />)
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[2])
+    presentLessonFromLibrary(/Activation Energy and Catalysts/i)
     fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
@@ -387,7 +424,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
 
     expect(screen.getByText(/Concentration, Solutes and Saturation/i)).toBeInTheDocument()
     expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
@@ -404,7 +441,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[2])
     fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
@@ -428,7 +465,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[4])
 
     expect(screen.getByRole('heading', { name: /Use a graph-reading crosshair/i })).toBeInTheDocument()
@@ -450,7 +487,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
     fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
@@ -531,7 +568,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
 
     expect(screen.getByText(/Aquatic Ecosystems and Habitat Factors/i)).toBeInTheDocument()
     expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
@@ -551,7 +588,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[0])
+    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[1])
     fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
@@ -575,7 +612,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[3])
 
     expect(screen.getByRole('heading', { name: /Prediction: remove one producer/i })).toBeInTheDocument()
@@ -596,7 +633,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Present lesson' })[1])
+    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
     fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
