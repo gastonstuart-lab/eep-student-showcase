@@ -228,9 +228,13 @@ describe('Science Lessons curriculum', () => {
     expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '→' }))
-    expect(screen.getByRole('button', { name: /Expand slide text/i })).toHaveTextContent("What needs are met by an organism's environment?")
+    expect(screen.getByRole('img', { name: /Approved Question of the Day mockup/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Toggle Traditional Chinese click support/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Show Traditional Chinese for question-full/i }))
+    expect(screen.getByText('生物的環境會滿足哪些需求？')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Open teacher tools/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Back to lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
     presentLessonFromLibrary(/Chapter 1.*Section 1.*Elements and Atoms/i)
     expect(screen.getAllByText(/Chapter 1: ATOMS AND BONDING/i).length).toBeGreaterThan(0)
