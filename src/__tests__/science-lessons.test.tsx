@@ -165,6 +165,33 @@ describe('Science Lessons curriculum', () => {
     expect(j2OpeningLesson.slides[2]?.body.en).toBe('Why are elements sometimes called the building blocks of matter?')
   })
 
+  it('locks the J2 opening to the exact fifteen-slide source order', () => {
+    expect(j2OpeningLesson.slides.map((slide) => slide.id)).toEqual([
+      'j2-ch1-title',
+      'j2-ch1-1-title',
+      'j2-ch1-1-question-building-blocks',
+      'j2-ch1-1-building-blocks-matter',
+      'j2-ch1-1-elements-compounds-mixtures',
+      'j2-ch1-1-particles-elements',
+      'j2-ch1-1-question-theory',
+      'j2-ch1-1-theory-models',
+      'j2-ch1-1-dalton',
+      'j2-ch1-1-thomson',
+      'j2-ch1-1-rutherford',
+      'j2-ch1-1-bohr',
+      'j2-ch1-1-electron-cloud',
+      'j2-ch1-1-modern-model',
+      'j2-ch1-1-models-summary',
+    ])
+    expect(j2OpeningLesson.slides[6]?.body.en).toBe('How did the atomic theory develop and change?')
+    expect(j2OpeningLesson.slides[8]?.body.en).toBe('DALTON’S ATOMIC THEORY')
+    expect(j2OpeningLesson.slides[9]?.body.en).toBe('THOMSON AND SMALLER PARTS OF ATOMS')
+    expect(j2OpeningLesson.slides[10]?.body.en).toBe('RUTHERFORD AND THE NUCLEUS')
+    expect(j2OpeningLesson.slides[11]?.body.en).toBe('BOHR’S MODEL')
+    expect(j2OpeningLesson.slides[12]?.body.en).toBe('A CLOUD OF ELECTRONS')
+    expect(j2OpeningLesson.slides[13]?.body.en).toBe('THE MODERN ATOMIC MODEL')
+  })
+
   it('opens both new opening lessons from the library', () => {
     render(<ScienceLessonsApp />)
 
