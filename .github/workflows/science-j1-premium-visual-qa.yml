@@ -55,6 +55,16 @@ jobs:
           await page.locator('.j1-gold-player').waitFor();
           await page.waitForTimeout(1800);
 
+          const imageStatus = await page.locator('.j1-gold-player img').evaluateAll((imgs) =>
+            imgs.map((img) => ({src: img.currentSrc || img.src, complete: img.complete, width: img.naturalWidth, height: img.naturalHeight}))
+          );
+          const broken = imageStatus.filter((img) => !img.complete || img.width < 10 || img.height < 10);
+          if (broken.length) throw new Error('Broken J1 lesson images: ' + JSON.stringify(broken));
+
+          if (!(await page.locator('.j1-gold-player').evaluate((el) => el.classList.contains('j1-gold-player--motion')))) {
+            throw new Error('Interactive lesson should start with motion enabled');
+          }
+
           async function snap(name){
             await page.waitForTimeout(700);
             await page.screenshot({path:'j1-premium-qa/'+name+'.png', fullPage:true});
@@ -77,7 +87,17 @@ jobs:
           await page.getByRole('button',{name:/Open teacher tools/i}).click();
           await snap('07-teacher-drawer');
           await page.getByRole('button',{name:/中文 support/i}).click();
+          const chinese = page.locator('.j1-gold-chinese-layer');
+          await chinese.waitFor({state:'visible'});
+          const chineseText = (await chinese.innerText()).trim();
+          if (chineseText.length < 4) throw new Error('Traditional Chinese support did not render');
           await snap('08-chinese-support');
+
+          await page.getByRole('button',{name:/Toggle full screen/i}).click();
+          await page.waitForTimeout(300);
+          const fullscreenClass = await page.locator('.j1-gold-player').evaluate((el) => el.classList.contains('j1-gold-player--fullscreen'));
+          if (!fullscreenClass) throw new Error('Fullscreen presentation state did not activate');
+          await snap('09-fullscreen-state');
           await browser.close();
           EOF
           node capture-j1.mjs
