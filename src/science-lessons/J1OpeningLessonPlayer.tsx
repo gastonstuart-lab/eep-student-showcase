@@ -10,15 +10,14 @@ type FocusMode = 'copy' | 'visual' | null
 const STORAGE_KEY = 'science-lessons-j1-opening-classes-v1'
 
 const IMAGES = {
-  pond: 'https://images.unsplash.com/photo-1749046002654-4f152c16bd3b?auto=format&fit=crop&fm=jpg&q=82&w=2200',
-  beaver: 'https://www.fws.gov/sites/default/files/styles/large_square/public/2023-03/Beaver%20Grand%20Teton.jpg?h=fd32113b&itok=sLnPJtbM',
-  mouse: 'https://rare-gallery.com/mocahbig/467791-mammals-mice-animals-nuts.jpg',
-  polarBear: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Polar%20bear%20on%20sea%20ice%20%2852791040875%29.jpg',
-  elephants: 'https://images.unsplash.com/photo-1572546122810-4a47a6d7a106?auto=format&fit=crop&fm=jpg&q=82&w=1800',
-  coral: 'https://images.unsplash.com/photo-1575975632779-cbff9d3b56b0?auto=format&fit=crop&fm=jpg&q=82&w=1800',
-  wolf: 'https://images.unsplash.com/photo-1664573933415-4eda139225c2?auto=format&fit=crop&fm=jpg&q=82&w=2200',
-  sunlight: 'https://images.unsplash.com/photo-1734386011664-a17cc4ef6755?auto=format&fit=crop&fm=jpg&q=82&w=2200',
-  soil: 'https://images.unsplash.com/photo-1731119414875-799ff8cdbbdd?auto=format&fit=crop&fm=jpg&q=82&w=1800',
+  pond: '/science-lessons/j1-opening/pond.webp',
+  polarBear: '/science-lessons/j1-opening/polar.webp',
+  elephants: '/science-lessons/j1-opening/elephants.webp',
+  coral: '/science-lessons/j1-opening/coral.webp',
+  bear: '/science-lessons/j1-opening/bear-stream.webp',
+  wolf: '/science-lessons/j1-opening/wolf-stream.webp',
+  sunlight: '/science-lessons/j1-opening/pond.webp',
+  soil: '/science-lessons/j1-opening/pond.webp',
 }
 
 const STUDENT_REVEAL_EXCLUSIONS = new Set(['habitat-needs', 'abiotic-role'])
@@ -84,15 +83,15 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
     <div className={'j1-gold-visual j1-gold-visual--title' + cls}>
       <img className="j1-gold-bg" src={IMAGES.pond} alt="Duck and turtle sharing a pond habitat" />
       <div className="j1-gold-animal-orbs">
-        <img src={IMAGES.mouse} alt="Small woodland mouse" />
-        <img src={IMAGES.pond} alt="Turtle in a pond habitat" />
-        <img src={IMAGES.beaver} alt="Beaver in a wetland habitat" />
+        <img src={IMAGES.polarBear} alt="Polar bear in an icy habitat" />
+        <img src={IMAGES.elephants} alt="Elephants at a watering hole" />
+        <img src={IMAGES.coral} alt="Fish in a coral reef habitat" />
       </div>
     </div>
   )
 
   if (kind.startsWith('question-')) {
-    const src = kind === 'question-pond' ? IMAGES.pond : kind === 'question-wolf' ? IMAGES.wolf : IMAGES.sunlight
+    const src = kind === 'question-pond' ? IMAGES.pond : kind === 'question-wolf' ? IMAGES.bear : IMAGES.sunlight
     return <div className={'j1-gold-visual j1-gold-visual--question' + cls}><img className="j1-gold-bg" src={src} alt="Habitat scene" /><span className="j1-gold-question-mark">?</span></div>
   }
 
@@ -279,8 +278,8 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <div className="j1-gold-slide__visual-wrap" onClick={() => setFocusMode('visual')} role="button" tabIndex={0} aria-label="Expand slide visual"><J1GoldVisual slide={slide} motion={motion} /></div>
         <section className={'j1-gold-copy' + (isQuestion ? ' j1-gold-copy--question' : '')} onClick={() => setFocusMode('copy')} role="button" tabIndex={0} aria-label="Expand slide text">
           <span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slideIndex === 0 ? 'Chapter 1 · Section 1' : 'J1 · Slide ' + (slideIndex + 1)}</span>
-          <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : slide.title.en, highlights)}</h1>
-          <p className="j1-gold-main-copy">{highlightText(slide.body.en, highlights)}</p>
+          <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h1>
+          {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}
           {visibleReveals.length > 0 && <div className="j1-gold-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}</div>}
           {showChinese && <div className="j1-gold-translation" lang="zh-Hant">{zhSupport[slide.id] ?? slide.body.zhHant}</div>}
         </section>
@@ -324,7 +323,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <button className="j1-gold-focus__close" type="button" onClick={() => setFocusMode(null)}>Close ×</button>
         {focusMode === 'visual'
           ? <div className="j1-gold-focus__visual"><J1GoldVisual slide={slide} motion={motion} /></div>
-          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : slide.title.en, highlights)}</h2><p>{highlightText(slide.body.en, highlights)}</p>{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant">{zhSupport[slide.id] ?? slide.body.zhHant}</div>}</div>}
+          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant">{zhSupport[slide.id] ?? slide.body.zhHant}</div>}</div>}
       </div>}
     </main>
   )
