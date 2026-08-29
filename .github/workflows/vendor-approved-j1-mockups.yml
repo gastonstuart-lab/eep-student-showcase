@@ -52,3 +52,5 @@ jobs:
           git add public/science-lessons/j1-opening/approved
           git commit -m "Vendor exact approved J1 mockup artwork"
           git push origin HEAD:science-live-preview
+
+# proof-refresh-2026-08-30
