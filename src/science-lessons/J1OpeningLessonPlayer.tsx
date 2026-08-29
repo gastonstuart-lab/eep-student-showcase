@@ -20,7 +20,6 @@ const IMAGES = {
   wolf: asset('wolf-stream.webp'),
 }
 
-const STUDENT_REVEAL_EXCLUSIONS = new Set(['habitat-needs', 'abiotic-role'])
 const SOURCE_HIGHLIGHTS: Record<string, string[]> = {
   'j1-ch1-1-title': [],
   'j1-ch1-1-question-needs': [],
@@ -150,7 +149,7 @@ function highlightText(text: string, enabled: boolean, slideId: string): ReactNo
 }
 
 function slideReveals(slide: LessonSlide) {
-  return (slide.reveals ?? []).filter((item) => !STUDENT_REVEAL_EXCLUSIONS.has(item.id))
+  return slide.reveals ?? []
 }
 
 function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }) {
