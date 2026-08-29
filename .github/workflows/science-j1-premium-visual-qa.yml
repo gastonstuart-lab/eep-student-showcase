@@ -1,0 +1,88 @@
+name: J1 Premium Visual QA
+
+on:
+  push:
+    branches:
+      - science-live-preview
+    paths:
+      - 'src/science-lessons/J1OpeningLessonPlayer.tsx'
+      - 'src/science-lessons/j1OpeningLessonPlayer.css'
+      - 'src/science-lessons/ScienceLessonsApp.tsx'
+      - 'src/science-lessons/curriculum/j1/openingLessons.ts'
+      - '.github/workflows/science-j1-premium-visual-qa.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: science-j1-premium-visual-qa
+  cancel-in-progress: true
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview server
+        run: |
+          nohup npx vite preview --host 127.0.0.1 --port 4173 > /tmp/j1-preview.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/science-lessons.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/j1-preview.log
+          exit 1
+      - name: Capture J1 premium lesson
+        run: |
+          mkdir -p j1-premium-qa
+          cat > /tmp/capture-j1.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1440,height:900}, deviceScaleFactor:1});
+          await page.goto('http://127.0.0.1:4173/science-lessons.html', {waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Browse lesson library/i}).click();
+          const heading = page.getByRole('heading',{name:/Habitats and Ecosystems: Opening Lesson/i});
+          const row = heading.locator('xpath=ancestor::article');
+          await row.getByRole('button',{name:'Present lesson'}).click();
+          await page.locator('.j1-gold-player').waitFor();
+          await page.waitForTimeout(1800);
+
+          async function snap(name){
+            await page.waitForTimeout(700);
+            await page.screenshot({path:'j1-premium-qa/'+name+'.png', fullPage:true});
+          }
+
+          await snap('01-title');
+          await page.keyboard.press('ArrowRight');
+          await snap('02-question');
+          await page.keyboard.press('ArrowRight');
+          await snap('03-habitats');
+          await page.keyboard.press('ArrowRight');
+          await page.keyboard.press('ArrowRight');
+          await snap('04-question-parts');
+          await page.keyboard.press('ArrowRight');
+          await snap('05-abiotic');
+          await page.keyboard.press('ArrowRight');
+          await page.keyboard.press('ArrowRight');
+          await snap('06-biotic');
+
+          await page.getByRole('button',{name:/Open teacher tools/i}).click();
+          await snap('07-teacher-drawer');
+          await page.getByRole('button',{name:/中文 support/i}).click();
+          await snap('08-chinese-support');
+          await browser.close();
+          EOF
+          node /tmp/capture-j1.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: j1-premium-visual-qa
+          path: j1-premium-qa
+          retention-days: 7
