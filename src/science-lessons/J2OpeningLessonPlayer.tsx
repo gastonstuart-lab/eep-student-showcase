@@ -396,7 +396,7 @@ export function J2OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   }
 
   const titleText = isQuestion ? slide.body.en : slide.title.en
-  const bodyText = isQuestion ? '' : slide.body.en
+  const bodyText = isQuestion || slide.id === 'j2-ch1-1-models-summary' ? '' : slide.body.en
 
   return (
     <main className={'j2-source-player' + (motion ? ' j2-source-player--motion' : '') + (isFullscreen ? ' j2-source-player--fullscreen' : '')}>
