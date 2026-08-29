@@ -622,7 +622,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
       </div>}
 
       <aside className={'j1-gold-drawer' + (drawerOpen ? ' is-open' : '')} aria-label="Teacher tools">
-        <div className="j1-gold-drawer__header"><div><strong>Teacher tools</strong><span>Hidden during normal teaching</span></div><button type="button" onClick={() => setDrawerOpen(false)}>×</button></div>
+        <div className="j1-gold-drawer__header"><div><strong>Teacher tools</strong><span>Hidden during normal teaching</span></div><button type="button" onClick={() => setDrawerOpen(false)}>×</button></div>\n        <button className="j1-gold-drawer__back" type="button" onClick={onBack}>← Back to lesson library</button>
         <section>
           <label htmlFor="j1-class-select">Class</label>
           <select id="j1-class-select" value={activeClassId} onChange={(event) => switchClass(event.target.value)}>{classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
