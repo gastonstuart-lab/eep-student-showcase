@@ -120,7 +120,11 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
 
   if (kind === 'biotic') return (
     <div className={'j1-gold-visual j1-gold-visual--biotic' + cls}>
-      <img className="j1-gold-bg" src={IMAGES.wolf} alt="Wolf drinking from a stream in a living habitat" />
+      <img className="j1-gold-bg" src={IMAGES.wolf} alt="Gray wolf in a natural habitat" />
+      <div className="j1-gold-biotic-pictures" aria-hidden="true">
+        <figure><img src={IMAGES.coral} alt="" /><figcaption>fish</figcaption></figure>
+        <figure><img src={IMAGES.pond} alt="" /><figcaption>plants</figcaption></figure>
+      </div>
       <div className="j1-gold-biotic-tags"><span>Animals</span><span>Plants</span><span>Birds</span><span>Fish</span><span>Seeds</span></div>
     </div>
   )
