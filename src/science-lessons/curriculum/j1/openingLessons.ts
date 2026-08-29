@@ -4,7 +4,7 @@ const driveUrl = (id: string) => `https://drive.google.com/file/d/${id}/view`
 
 const sourceReferences = [
   {
-    id: 'src-j1-opening-source-ppt',
+    id: 'src-j1-ch1-s1-source-ppt',
     type: 'presentation' as const,
     title: 'Copy of J1 PPT.pptx',
     location: 'Google Drive / J1Science',
@@ -31,18 +31,18 @@ const resources = [
     title: 'Source PPT: Copy of J1 PPT.pptx',
     type: 'Presentation' as const,
     format: 'PPTX' as const,
-    detail: 'Drive source for Chapter 1 Section 1 opening',
+    detail: 'Authoritative source for Chapter 1 · Section 1, slides 1–15',
     href: 'https://docs.google.com/presentation/d/1STwllX6-z931Hsqst_A1FvN7xwLCVI0g/edit',
     driveFileId: '1STwllX6-z931Hsqst_A1FvN7xwLCVI0g',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
     teacherOnly: true,
   },
   {
     id: 'j1-opening-gold-preview',
-    title: 'Interactive gold preview: J1 opening',
+    title: 'Interactive preview: Chapter 1 · Section 1',
     type: 'Link' as const,
     format: 'Web' as const,
-    detail: 'Full fifteen-slide source-faithful rebuild with classroom controls',
+    detail: 'Full source slides 1–15 with classroom controls',
     href: '/science-j1-opening-gold.html',
     sourceId: 'src-j1-opening-gold-preview',
     teacherOnly: false,
@@ -68,7 +68,7 @@ const slides: LessonSlide[] = [
     layout: 'hero',
     emphasis: 'organisms + environment',
     teacherNote: 'Source slide 1. Open with the big theme before asking the first Question of the Day.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-question-needs',
@@ -77,7 +77,7 @@ const slides: LessonSlide[] = [
     visual: 'question',
     layout: 'question',
     teacherNote: 'Source slide 2. Let students predict before vocabulary appears.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-habitats',
@@ -92,7 +92,7 @@ const slides: LessonSlide[] = [
       { id: 'habitat-needs', text: { en: 'The four teaching anchors are food, water, shelter and reproduction.', zhHant: '四個教學重點是食物、水、庇護所和繁殖。' } },
     ],
     teacherNote: 'Source slide 3. Keep the original definition, but teach it visually through the four needs.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-question-parts',
@@ -101,7 +101,7 @@ const slides: LessonSlide[] = [
     visual: 'question',
     layout: 'question',
     teacherNote: 'Source slide 4. This question sets up abiotic and biotic factors.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-abiotic-overview',
@@ -116,7 +116,7 @@ const slides: LessonSlide[] = [
       { id: 'abiotic-role', text: { en: 'Nonliving does not mean unimportant: these conditions shape where life can survive.', zhHant: '沒有生命不代表不重要：這些條件會塑造生命能在哪裡生存。' } },
     ],
     teacherNote: 'Source slide 5. This needs a large factor diagram, not tiny bullets.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-biotic-factors',
@@ -131,7 +131,7 @@ const slides: LessonSlide[] = [
       { id: 'biotic-examples', text: { en: 'Animals and plants in the habitat are biotic factors. Examples include wolves, birds, plants, seeds and fish.', zhHant: '棲地中的動物和植物都是生物因子，例如狼、鳥、植物、種子和魚。' } },
     ],
     teacherNote: 'Source slide 6. Pair this with the abiotic slide so students classify examples.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-water',
@@ -146,7 +146,7 @@ const slides: LessonSlide[] = [
       { id: 'water-life', text: { en: 'All things need water to live.', zhHant: '所有生物都需要水才能生存。' } },
     ],
     teacherNote: 'Source slide 7. Teach water as both a body material and a photosynthesis requirement.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-sunlight',
@@ -161,7 +161,7 @@ const slides: LessonSlide[] = [
       { id: 'few-organisms', text: { en: 'Few organisms can live where sunlight cannot reach.', zhHant: '陽光無法到達的地方，只有少數生物能生存。' } },
     ],
     teacherNote: 'Source slide 8. Make the sunlight link to plants explicit.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-oxygen',
@@ -176,7 +176,7 @@ const slides: LessonSlide[] = [
       { id: 'oxygen-water', text: { en: 'Fish and water organisms get oxygen from the water around them.', zhHant: '魚類和水生生物從周圍的水中獲得氧氣。' } },
     ],
     teacherNote: 'Source slide 9. Show air oxygen and dissolved oxygen as two contexts.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-temperature',
@@ -190,7 +190,7 @@ const slides: LessonSlide[] = [
       { id: 'temperature-adapt', text: { en: 'Some animals can change their way of living to adapt to the temperatures of that environment: hot or cold.', zhHant: '有些動物能改變生活方式，以適應該環境的溫度：炎熱或寒冷。' } },
     ],
     teacherNote: 'Source slide 10. This should be a hot/cold contrast, not text alone.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-soil',
@@ -205,7 +205,7 @@ const slides: LessonSlide[] = [
       { id: 'soil-organisms', text: { en: 'The type of soil in an area influences the type of organisms living there.', zhHant: '一個地區的土壤類型會影響生活在那裡的生物種類。' } },
     ],
     teacherNote: 'Source slide 11. Use a soil cross-section visual so the mixture is visible.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-question-levels',
@@ -214,7 +214,7 @@ const slides: LessonSlide[] = [
     visual: 'question',
     layout: 'question',
     teacherNote: 'Source slide 12. The next three slides build population, community, ecosystem.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-populations',
@@ -228,7 +228,7 @@ const slides: LessonSlide[] = [
       { id: 'population-definition', text: { en: 'All the members of one species in an area are called the population.', zhHant: '同一地區中同一物種的所有成員稱為族群。' } },
     ],
     teacherNote: 'Source slide 13. Use repeated organisms of one species so population is visually obvious.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-communities',
@@ -243,7 +243,7 @@ const slides: LessonSlide[] = [
       { id: 'community-interaction', text: { en: 'The different populations must live close together to interact.', zhHant: '不同族群必須生活得夠近，才能互動。' } },
     ],
     teacherNote: 'Source slide 14. Contrast one species population with multi-species community.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
   {
     id: 'j1-ch1-1-ecosystems',
@@ -257,7 +257,7 @@ const slides: LessonSlide[] = [
       { id: 'ecology-definition', text: { en: 'The study of how living things interact with each other and with their environment is called ecology.', zhHant: '研究生物如何彼此互動以及如何與環境互動的學科稱為生態學。' } },
     ],
     teacherNote: 'Source slide 15. Finish with the hierarchy and connect ecology to interaction.',
-    sourceId: 'src-j1-opening-source-ppt',
+    sourceId: 'src-j1-ch1-s1-source-ppt',
   },
 ]
 
@@ -265,11 +265,11 @@ export const j1OpeningLessons: ScienceLesson[] = [
   {
     id: 'j1-ch1-1-habitats-ecosystems-opening',
     unitId: 'j1-fall-life-ecosystems',
-    title: 'Habitats and Ecosystems: Opening Lesson',
-    subtitle: 'Source-faithful Chapter 1 Section 1: habitat needs, abiotic and biotic factors, and ecosystem organisation',
+    title: 'Chapter 1 · Section 1 — Living Things and the Environment',
+    subtitle: 'Source slides 1–15: Living Things and the Environment, from habitats through levels of organization',
     year: 'J1',
     semester: 'Fall',
-    chapter: 'Ch.1.1',
+    chapter: 'Chapter 1 · Section 1',
     lessonOrder: -10,
     duration: 50,
     status: 'Published',
