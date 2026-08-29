@@ -23,7 +23,77 @@ const IMAGES = {
 }
 
 const STUDENT_REVEAL_EXCLUSIONS = new Set(['habitat-needs', 'abiotic-role'])
-const HIGHLIGHT_TERMS = ['abiotic factors','biotic factors','living parts','nonliving parts','food','water','shelter','organism','environment','habitat','sunlight','oxygen','temperature','soil','species','population','community','ecosystem','ecology']
+const SOURCE_HIGHLIGHTS: Record<string, string[]> = {
+  'j1-ch1-1-title': [],
+  'j1-ch1-1-question-needs': [],
+  'j1-ch1-1-habitats': [
+    'obtains food, water, shelter, and other things',
+    'needs to live, grow, and reproduce',
+    'environment that provides the things the organism needs to live, grow, and reproduce',
+  ],
+  'j1-ch1-1-question-parts': [],
+  'j1-ch1-1-abiotic-overview': [
+    'nonliving parts of an organism’s habitat',
+    'factors are',
+  ],
+  'j1-ch1-1-biotic-factors': [
+    'interacts with both the living and nonliving parts of its habitat',
+    'living parts of a habitat',
+    'Animals and plants',
+  ],
+  'j1-ch1-1-water': [
+    'need water, along with sunlight and carbon dioxide, to make their own food',
+    'makes up a large part of the bodies of most organisms',
+    'need water to live',
+  ],
+  'j1-ch1-1-sunlight': [
+    'needed for photosynthesis',
+    'don’t get sunlight, plants and algae cannot grow',
+    'Few organisms can live where sunlight cannot reach',
+  ],
+  'j1-ch1-1-oxygen': [
+    'living things need oxygen to live',
+    'land get oxygen from the air',
+    'water organisms get oxygen from the water around them',
+  ],
+  'j1-ch1-1-temperature': [
+    'determine the organisms that will live there',
+    'animals can change their way of living to adapt to the temperatures',
+  ],
+  'j1-ch1-1-soil': [
+    'mixture of rock pieces, nutrients, air, water, and the decaying remains of living things',
+    'different areas contain different amounts of these materials',
+    'soil in an area influences the type of organisms living there',
+  ],
+  'j1-ch1-1-question-levels': [],
+  'j1-ch1-1-populations': [
+    'group of organisms that are physically similar and can mate with each other',
+    'All the members of one species in a area',
+  ],
+  'j1-ch1-1-communities': [
+    'particular area contains more than one species of organisms',
+    'different populations that live together in an area',
+    'different populations must live close together to interact',
+  ],
+  'j1-ch1-1-ecosystems': [
+    'community of organisms that live in a particular area, along with their nonliving surroundings',
+    'study of how living things interact with each other and with their environment',
+  ],
+}
+
+const SOURCE_KEY_TERMS: Record<string, string[]> = {
+  'j1-ch1-1-habitats': ['organism', 'habitat'],
+  'j1-ch1-1-abiotic-overview': ['Abiotic factors'],
+  'j1-ch1-1-biotic-factors': ['biotic factors'],
+  'j1-ch1-1-water': ['WATER', 'photosynthesis'],
+  'j1-ch1-1-sunlight': ['Sunlight'],
+  'j1-ch1-1-oxygen': ['Oxygen'],
+  'j1-ch1-1-temperature': ['Temperature', 'HOT', 'COLD'],
+  'j1-ch1-1-soil': ['Soil'],
+  'j1-ch1-1-populations': ['species', 'population'],
+  'j1-ch1-1-communities': ['community'],
+  'j1-ch1-1-ecosystems': ['ecology'],
+}
 
 const visualKindById: Record<string, string> = {
   'j1-ch1-1-title':'title','j1-ch1-1-question-needs':'question-pond','j1-ch1-1-habitats':'habitats',
@@ -64,13 +134,21 @@ function saveClasses(classes: SavedClass[]) {
   try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(classes)) } catch { /* never block teaching */ }
 }
 
-function highlightText(text: string, enabled: boolean): ReactNode {
-  if (!enabled) return text
-  const escaped = HIGHLIGHT_TERMS.map((term) => term.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&')).join('|')
+function highlightText(text: string, enabled: boolean, slideId: string): ReactNode {
+  const highlightPhrases = enabled ? (SOURCE_HIGHLIGHTS[slideId] ?? []) : []
+  const keyTerms = SOURCE_KEY_TERMS[slideId] ?? []
+  const phrases = [...highlightPhrases, ...keyTerms].sort((a, b) => b.length - a.length)
+  if (!phrases.length) return text
+
+  const escaped = phrases.map((phrase) => phrase.replace(/[.*+?^$(){}|[\\]\\\\]/g, '\\$&')).join('|')
   const pieces = text.split(new RegExp('(' + escaped + ')', 'gi'))
-  return pieces.map((piece, index) => HIGHLIGHT_TERMS.some((term) => term.toLowerCase() === piece.toLowerCase())
-    ? <mark key={piece + '-' + index}>{piece}</mark>
-    : piece)
+  return pieces.map((piece, index) => {
+    const isHighlight = highlightPhrases.some((phrase) => phrase.toLowerCase() === piece.toLowerCase())
+    const isKeyTerm = keyTerms.some((term) => term.toLowerCase() === piece.toLowerCase())
+    if (isHighlight) return <mark key={piece + '-' + index}>{piece}</mark>
+    if (isKeyTerm) return <strong className="j1-source-key-term" key={piece + '-' + index}>{piece}</strong>
+    return piece
+  })
 }
 
 function slideReveals(slide: LessonSlide) {
@@ -313,9 +391,9 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <div className="j1-gold-slide__visual-wrap" onClick={() => setFocusMode('visual')} role="button" tabIndex={0} aria-label="Expand slide visual"><J1GoldVisual slide={slide} motion={motion} /></div>
         <section className={'j1-gold-copy' + (isQuestion ? ' j1-gold-copy--question' : '')} onClick={() => setFocusMode('copy')} role="button" tabIndex={0} aria-label="Expand slide text">
           <span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slideIndex === 0 ? 'Chapter 1 · Section 1' : 'J1 · Slide ' + (slideIndex + 1)}</span>
-          <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h1>
-          {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}
-          {visibleReveals.length > 0 && <div className="j1-gold-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}</div>}
+          <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h1>
+          {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights, slide.id)}</p>}
+          {visibleReveals.length > 0 && <div className="j1-gold-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}</div>}
         </section>
 
         {showChinese && (
@@ -367,7 +445,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <button className="j1-gold-focus__close" type="button" onClick={() => setFocusMode(null)}>Close ×</button>
         {focusMode === 'visual'
           ? <div className="j1-gold-focus__visual"><J1GoldVisual slide={slide} motion={motion} /></div>
-          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant"><strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>{!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}</div>}</div>}
+          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights, slide.id)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant"><strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>{!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}</div>}</div>}
       </div>}
     </main>
   )
