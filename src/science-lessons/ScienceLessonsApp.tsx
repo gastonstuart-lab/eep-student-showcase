@@ -21,6 +21,7 @@ import { BiomesV2Prototype } from './presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from './presentation-v2/PresentationShell'
 import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
 import { AquaticEnhancedSlide } from './AquaticEnhancedSlide'
+import { J1OpeningLessonPlayer } from './J1OpeningLessonPlayer'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
@@ -39,9 +40,13 @@ function ScienceLessonsWorkspace() {
   const [year, setYear] = useState<YearLevel>('J1')
   const [semester, setSemester] = useState<Semester>('Fall')
   const [lessonId, setLessonId] = useState(scienceLessons[0].id)
-  const [language, setLanguage] = useState<LanguageMode>('Bilingual')
+  const [language, setLanguage] = useState<LanguageMode>('English')
 
   const lesson = findLesson(lessonId)
+
+  if (screen === 'viewer' && lesson.id === 'j1-ch1-1-habitats-ecosystems-opening') {
+    return <J1OpeningLessonPlayer lesson={lesson} onBack={() => setScreen('library')} />
+  }
 
   const openLibrary = (nextYear = year, nextSemester = semester) => {
     setYear(nextYear)
