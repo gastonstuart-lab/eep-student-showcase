@@ -22,6 +22,7 @@ import { PresentationShell } from './presentation-v2/PresentationShell'
 import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
 import { AquaticEnhancedSlide } from './AquaticEnhancedSlide'
 import { J1OpeningLessonPlayer } from './J1OpeningLessonPlayer'
+import { J2OpeningLessonPlayer } from './J2OpeningLessonPlayer'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
@@ -46,6 +47,10 @@ function ScienceLessonsWorkspace() {
 
   if (screen === 'viewer' && lesson.id === 'j1-ch1-1-habitats-ecosystems-opening') {
     return <J1OpeningLessonPlayer lesson={lesson} onBack={() => setScreen('library')} />
+  }
+
+  if (screen === 'viewer' && lesson.id === 'j2-ch1-1-elements-atoms-opening') {
+    return <J2OpeningLessonPlayer lesson={lesson} onBack={() => setScreen('library')} />
   }
 
   const openLibrary = (nextYear = year, nextSemester = semester) => {
