@@ -160,7 +160,7 @@ describe('Science Lessons curriculum', () => {
 
     expect(j1Fall[0]?.id).toBe('j1-ch1-1-habitats-ecosystems-opening')
     expect(j2Fall[0]?.id).toBe('j2-ch1-1-elements-atoms-opening')
-    expect(j1OpeningLesson.slides).toHaveLength(6)
+    expect(j1OpeningLesson.slides).toHaveLength(15)
     expect(j2OpeningLesson.slides).toHaveLength(6)
   })
 
@@ -169,6 +169,10 @@ describe('Science Lessons curriculum', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     presentLessonFromLibrary(/Habitats and Ecosystems: Opening Lesson/i)
+    expect(screen.getByRole('heading', { name: /LIVING THINGS & THE ENVIRONMENT/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
     expect(screen.getAllByText(/What needs are met by an organism's environment/i).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
