@@ -263,7 +263,7 @@ const slides: LessonSlide[] = [
   {
     id: 'j2-ch1-1-models-summary',
     title: { en: 'Atomic Theory and Models', zhHant: '原子理論與模型' },
-    body: { en: '', zhHant: '' },
+    body: { en: 'Atomic Theory and Models', zhHant: '原子理論與模型' },
     visual: 'particles',
     layout: 'image-focus',
     emphasis: 'atomic theory and models',
