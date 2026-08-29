@@ -117,7 +117,7 @@ jobs:
             '.j2-atom-model--bohr',
             '.j2-atom-model--cloud',
             '.j2-atom-model--modern',
-            '.j2-source-visual--timeline'
+            '.j2-source-visual--modern-summary'
           ];
 
           for (let index = 1; index <= 15; index += 1) {
