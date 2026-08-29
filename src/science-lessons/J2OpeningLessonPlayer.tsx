@@ -411,8 +411,9 @@ export function J2OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
     setDrawerOpen(false)
   }
 
-  const titleText = isQuestion ? slide.body.en : slide.title.en
-  const bodyText = isQuestion || slide.id === 'j2-ch1-1-models-summary' ? '' : slide.body.en
+  const isSectionTitle = slide.id === 'j2-ch1-1-title'
+  const titleText = isQuestion ? slide.body.en : isSectionTitle ? slide.body.en : slide.title.en
+  const bodyText = isQuestion || isSectionTitle || slide.id === 'j2-ch1-1-models-summary' ? '' : slide.body.en
 
   return (
     <main className={'j2-source-player' + (motion ? ' j2-source-player--motion' : '') + (isFullscreen ? ' j2-source-player--fullscreen' : '')}>
@@ -429,7 +430,7 @@ export function J2OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         </div>
 
         <section className={'j2-source-copy' + (isQuestion ? ' j2-source-copy--question' : '')} onClick={() => setFocusMode('copy')} role="button" tabIndex={0} aria-label="Expand slide text">
-          <span className="j2-source-kicker">{isQuestion ? 'QUESTION OF THE DAY!!' : slideIndex <= 1 ? 'CHAPTER 1' : 'CHAPTER 1 · SECTION 1'}</span>
+          <span className="j2-source-kicker">{isQuestion ? 'QUESTION OF THE DAY!!' : isSectionTitle ? slide.title.en : slideIndex === 0 ? 'CHAPTER 1' : 'CHAPTER 1 · SECTION 1'}</span>
           <h1>{highlightText(titleText, highlights, slide.id)}</h1>
           {bodyText && <p className="j2-source-main-copy">{highlightText(bodyText, highlights, slide.id)}</p>}
           {visibleReveals.length > 0 && <div className="j2-source-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}</div>}
