@@ -136,6 +136,7 @@ function J2SourceVisual({ slide, motion }: { slide: LessonSlide; motion: boolean
         <div className="j2-hero-nucleus"><span>p+</span><span>n</span><span>p+</span><span>n</span></div>
       </div>
       <div className="j2-hero-formulas" aria-hidden="true"><span>H₂O</span><span>CO₂</span><span>NaCl</span><span>O₂</span></div>
+      <div className="j2-source-chapter-caption">REACTIONS INVOLVE THE CHEMICAL CHANGE OF ATOMS AND MOLECULES.</div>
     </div>
   )
 
@@ -148,6 +149,9 @@ function J2SourceVisual({ slide, motion }: { slide: LessonSlide; motion: boolean
         <div><b>11</b><strong>Na</strong><span>Sodium</span></div>
       </div>
       <div className="j2-section-atom"><AtomModel kind="modern" motion={motion} /></div>
+      <div className="j2-section-concepts" aria-label="Source concepts">
+        <span>Atoms</span><span>Molecules</span><span>Matter</span><span>Elements</span><span>Compounds</span>
+      </div>
     </div>
   )
 
