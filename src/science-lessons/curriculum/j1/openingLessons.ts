@@ -89,7 +89,6 @@ const slides: LessonSlide[] = [
     revealMode: 'step-by-step',
     reveals: [
       { id: 'habitat-definition', text: { en: 'An environment that provides the things the organism needs to live, grow, and reproduce is called its habitat.', zhHant: '能提供生物生存、生長和繁殖所需事物的環境稱為棲地。' } },
-      { id: 'habitat-needs', text: { en: 'The four teaching anchors are food, water, shelter and reproduction.', zhHant: '四個教學重點是食物、水、庇護所和繁殖。' } },
     ],
     teacherNote: 'Source slide 3. Keep the original definition, but teach it visually through the four needs.',
     sourceId: 'src-j1-ch1-s1-source-ppt',
@@ -113,7 +112,6 @@ const slides: LessonSlide[] = [
     revealMode: 'step-by-step',
     reveals: [
       { id: 'abiotic-list', text: { en: 'These factors are water, sunlight, oxygen, temperature and soil.', zhHant: '這些因子包括水、陽光、氧氣、溫度和土壤。' } },
-      { id: 'abiotic-role', text: { en: 'Nonliving does not mean unimportant: these conditions shape where life can survive.', zhHant: '沒有生命不代表不重要：這些條件會塑造生命能在哪裡生存。' } },
     ],
     teacherNote: 'Source slide 5. This needs a large factor diagram, not tiny bullets.',
     sourceId: 'src-j1-ch1-s1-source-ppt',
