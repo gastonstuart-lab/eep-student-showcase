@@ -2,6 +2,25 @@ import type { ScienceUnit } from '../types/lesson'
 
 export const scienceUnits: ScienceUnit[] = [
   {
+    id: 'j1-fall-life-ecosystems',
+    number: 'Chapter 1.1',
+    title: 'Life in Ecosystems',
+    description: 'Opening unit: habitats, environmental needs, biotic and abiotic factors, and ecosystem organisation.',
+    year: 'J1',
+    semester: 'Fall',
+    accent: 'green',
+    sourceReferences: [
+      {
+        id: 'src-j1-opening-source-ppt',
+        type: 'presentation',
+        title: 'Copy of J1 PPT.pptx',
+        location: 'Google Drive / J1Science',
+        driveFileId: '1STwllX6-z931Hsqst_A1FvN7xwLCVI0g',
+        notes: 'Authoritative source for the J1 opening lesson sequence.',
+      },
+    ],
+  },
+  {
     id: 'j1-ch2-biomes',
     number: 'Chapter 2.4',
     title: 'Biomes',
@@ -50,6 +69,25 @@ export const scienceUnits: ScienceUnit[] = [
         type: 'presentation',
         title: 'Copy of J1 PPT.pptx',
         location: 'Google Drive / J1Science',
+      },
+    ],
+  },
+  {
+    id: 'j2-fall-atoms-bonding',
+    number: 'Chapter 1.1',
+    title: 'Atoms and Bonding',
+    description: 'Opening unit: matter, elements, atoms, scientific models, atomic theory and the modern atom.',
+    year: 'J2',
+    semester: 'Fall',
+    accent: 'violet',
+    sourceReferences: [
+      {
+        id: 'src-j2-opening-source-ppt',
+        type: 'presentation',
+        title: 'J2 PPT (updated).pptx',
+        location: 'Google Drive / J2Science',
+        driveFileId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
+        notes: 'Authoritative source for the J2 opening lesson sequence.',
       },
     ],
   },
