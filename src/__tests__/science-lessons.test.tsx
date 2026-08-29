@@ -197,7 +197,7 @@ describe('Science Lessons curriculum', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     presentLessonFromLibrary(/Chapter 1.*Section 1.*Living Things and the Environment/i)
-    expect(screen.getByRole('heading', { name: /LIVING THINGS & THE ENVIRONMENT/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Living Things and the Environment/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '→' }))
