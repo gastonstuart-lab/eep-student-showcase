@@ -94,24 +94,36 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
 
   if (kind.startsWith('question-')) {
     const src = kind === 'question-pond' ? IMAGES.pond : kind === 'question-wolf' ? IMAGES.bear : IMAGES.sunlight
-    return <div className={'j1-gold-visual j1-gold-visual--question' + cls}><img className="j1-gold-bg" src={src} alt="Habitat scene" /><span className="j1-gold-question-mark">?</span></div>
+    return (
+      <div className={'j1-gold-visual j1-gold-visual--question' + cls}>
+        <img className="j1-gold-bg" src={src} alt="Habitat scene" />
+        <div className="j1-gold-question-gallery" aria-hidden="true">
+          <figure><img src={IMAGES.polarBear} alt="" /><span>ice</span></figure>
+          <figure><img src={IMAGES.elephants} alt="" /><span>water</span></figure>
+          <figure><img src={IMAGES.coral} alt="" /><span>reef</span></figure>
+        </div>
+        <span className="j1-gold-question-mark">?</span>
+        <span className="j1-gold-ripple j1-gold-ripple--1" />
+        <span className="j1-gold-ripple j1-gold-ripple--2" />
+      </div>
+    )
   }
 
   if (kind === 'habitats') return (
-    <div className={'j1-gold-collage' + cls}>
-      <figure className="j1-gold-collage__hero"><img src={IMAGES.polarBear} alt="Polar bear on sea ice" /><figcaption>Polar habitat</figcaption></figure>
-      <figure><img src={IMAGES.elephants} alt="Elephants at a watering hole" /><figcaption>Watering hole</figcaption></figure>
-      <figure><img src={IMAGES.coral} alt="Fish living in a coral reef" /><figcaption>Coral reef</figcaption></figure>
+    <div className={'j1-gold-collage j1-gold-collage--premium' + cls}>
+      <figure className="j1-gold-collage__hero"><img src={IMAGES.polarBear} alt="Polar bear on sea ice" /><figcaption><b>POLAR</b><span>ice · cold · shelter</span></figcaption></figure>
+      <figure><img src={IMAGES.elephants} alt="Elephants at a watering hole" /><figcaption><b>SAVANNA</b><span>water · food · space</span></figcaption></figure>
+      <figure><img src={IMAGES.coral} alt="Fish living in a coral reef" /><figcaption><b>REEF</b><span>water · shelter · food</span></figcaption></figure>
     </div>
   )
 
   if (kind === 'abiotic') {
-    const factors = [['💧','Water'],['☀','Sunlight'],['O₂','Oxygen'],['🌡','Temperature'],['🌱','Soil']]
+    const factors = [['H₂O','Water'],['☀','Sunlight'],['O₂','Oxygen'],['°C','Temperature'],['SOIL','Soil']]
     return (
       <div className={'j1-gold-factor-scene' + cls}>
-        <img className="j1-gold-bg" src={IMAGES.sunlight} alt="Forest showing nonliving environmental conditions" />
+        <img className="j1-gold-bg" src={IMAGES.elephants} alt="Habitat showing nonliving environmental conditions" />
         <div className="j1-gold-factor-hub">
-          <strong>Nonliving parts<br />of a habitat</strong>
+          <strong><span>ABIOTIC</span><small>nonliving parts of a habitat</small></strong>
           {factors.map(([icon,label], index) => <span className={'j1-gold-factor j1-gold-factor--' + (index + 1)} key={label}><b>{icon}</b><em>{label}</em></span>)}
         </div>
       </div>
@@ -121,9 +133,11 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
   if (kind === 'biotic') return (
     <div className={'j1-gold-visual j1-gold-visual--biotic' + cls}>
       <img className="j1-gold-bg" src={IMAGES.wolf} alt="Gray wolf in a natural habitat" />
+      <div className="j1-gold-biotic-badge">BIOTIC <small>living parts</small></div>
       <div className="j1-gold-biotic-pictures" aria-hidden="true">
         <figure><img src={IMAGES.coral} alt="" /><figcaption>fish</figcaption></figure>
         <figure><img src={IMAGES.pond} alt="" /><figcaption>plants</figcaption></figure>
+        <figure><img src={IMAGES.elephants} alt="" /><figcaption>animals</figcaption></figure>
       </div>
       <div className="j1-gold-biotic-tags"><span>Animals</span><span>Plants</span><span>Birds</span><span>Fish</span><span>Seeds</span></div>
     </div>
@@ -177,7 +191,8 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [showChinese, setShowChinese] = useState(false)
   const [highlights, setHighlights] = useState(true)
-  const [motion, setMotion] = useState(false)
+  const [motion, setMotion] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [newClassName, setNewClassName] = useState('')
   const [focusMode, setFocusMode] = useState<FocusMode>(null)
   const stageRef = useRef<HTMLElement>(null)
@@ -266,13 +281,27 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   }
 
   const goToSlide = (index: number) => { goToPosition(index, 0); setDrawerOpen(false) }
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen)
+  }, [])
+
   const toggleFullscreen = async () => {
-    if (document.fullscreenElement) await document.exitFullscreen?.()
-    else await stageRef.current?.requestFullscreen?.()
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen?.()
+        return
+      }
+      await document.documentElement.requestFullscreen?.()
+      setIsFullscreen(true)
+    } catch {
+      setIsFullscreen((value) => !value)
+    }
   }
 
   return (
-    <main className={'j1-gold-player' + (motion ? ' j1-gold-player--motion' : '')} ref={stageRef}>
+    <main className={'j1-gold-player' + (motion ? ' j1-gold-player--motion' : '') + (isFullscreen ? ' j1-gold-player--fullscreen' : '')} ref={stageRef}>
       <div className="j1-gold-topline">
         <button type="button" className="j1-gold-back" onClick={onBack} aria-label="Return to lesson library">←</button>
         <div><strong>{lesson.title}</strong><span>{activeClass?.name ?? 'J1 Class'} · Slide {slideIndex + 1}/{lesson.slides.length}</span></div>
@@ -287,15 +316,24 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
           <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h1>
           {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}
           {visibleReveals.length > 0 && <div className="j1-gold-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}</div>}
-          {showChinese && <div className="j1-gold-translation" lang="zh-Hant">{zhSupport[slide.id] ?? slide.body.zhHant}</div>}
         </section>
 
-        {slideIndex === 0 && <div className="j1-gold-bottom-message">Living things depend on the environment to live, grow, and reproduce.</div>}
+        {showChinese && (
+          <aside className={'j1-gold-chinese-layer' + (isQuestion ? ' j1-gold-chinese-layer--question' : '')} lang="zh-Hant" aria-live="polite">
+            <span>繁體中文支援</span>
+            <strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>
+            {!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}
+            {visibleReveals.length > 0 && <div>{visibleReveals.map((item) => <em key={item.id}>{item.text.zhHant}</em>)}</div>}
+          </aside>
+        )}
+
+        {slideIndex === 0 && !showChinese && <div className="j1-gold-bottom-message">Living things depend on the environment to live, grow, and reproduce.</div>}
 
         <div className="j1-gold-slide-controls">
           <button type="button" className={highlights ? 'is-on' : ''} onClick={() => setHighlights((value) => !value)} aria-label="Toggle highlights"><span>💡</span><small>Highlight</small></button>
-          <button type="button" className={showChinese ? 'is-on' : ''} onClick={() => setShowChinese((value) => !value)} aria-label="Toggle Traditional Chinese support"><span>中文</span><small>Chinese</small></button>
-          <button type="button" onClick={() => void toggleFullscreen()} aria-label="Toggle full screen"><span>⛶</span><small>Full screen</small></button>
+          <button type="button" className={showChinese ? 'is-on' : ''} onClick={() => setShowChinese((value) => !value)} aria-label="Toggle Traditional Chinese support"><span>中文</span><small>{showChinese ? 'Chinese on' : 'Chinese'}</small></button>
+          <button type="button" className={motion ? 'is-on' : ''} onClick={() => setMotion((value) => !value)} aria-label="Toggle slide motion"><span>{motion ? '⏸' : '▶'}</span><small>Motion</small></button>
+          <button type="button" className={isFullscreen ? 'is-on' : ''} onClick={() => void toggleFullscreen()} aria-label="Toggle full screen"><span>⛶</span><small>{isFullscreen ? 'Exit' : 'Full screen'}</small></button>
         </div>
       </article>
 
@@ -329,7 +367,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <button className="j1-gold-focus__close" type="button" onClick={() => setFocusMode(null)}>Close ×</button>
         {focusMode === 'visual'
           ? <div className="j1-gold-focus__visual"><J1GoldVisual slide={slide} motion={motion} /></div>
-          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant">{zhSupport[slide.id] ?? slide.body.zhHant}</div>}</div>}
+          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant"><strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>{!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}</div>}</div>}
       </div>}
     </main>
   )
