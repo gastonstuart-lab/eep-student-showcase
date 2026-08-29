@@ -9,15 +9,17 @@ type FocusMode = 'copy' | 'visual' | null
 
 const STORAGE_KEY = 'science-lessons-j1-opening-classes-v1'
 
+const asset = (name: string) => `${import.meta.env.BASE_URL}science-lessons/j1-opening/${name}`
+
 const IMAGES = {
-  pond: '/science-lessons/j1-opening/pond.webp',
-  polarBear: '/science-lessons/j1-opening/polar.webp',
-  elephants: '/science-lessons/j1-opening/elephants.webp',
-  coral: '/science-lessons/j1-opening/coral.webp',
-  bear: '/science-lessons/j1-opening/bear-stream.webp',
-  wolf: '/science-lessons/j1-opening/wolf-stream.webp',
-  sunlight: '/science-lessons/j1-opening/pond.webp',
-  soil: '/science-lessons/j1-opening/pond.webp',
+  pond: asset('pond.webp'),
+  polarBear: asset('polar.webp'),
+  elephants: asset('elephants.webp'),
+  coral: asset('coral.webp'),
+  bear: asset('bear-stream.webp'),
+  wolf: asset('wolf-stream.webp'),
+  sunlight: asset('pond.webp'),
+  soil: asset('pond.webp'),
 }
 
 const STUDENT_REVEAL_EXCLUSIONS = new Set(['habitat-needs', 'abiotic-role'])
