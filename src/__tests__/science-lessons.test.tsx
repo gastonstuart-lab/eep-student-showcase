@@ -173,7 +173,7 @@ describe('Science Lessons curriculum', () => {
     expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'ArrowRight' })
-    expect(screen.getAllByText(/What needs are met by an organism's environment/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Expand slide text/i })).toHaveTextContent("What needs are met by an organism's environment?")
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
