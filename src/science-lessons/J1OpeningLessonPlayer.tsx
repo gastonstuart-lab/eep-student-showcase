@@ -452,9 +452,9 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
       <article className={'j1-gold-slide j1-gold-slide--' + kind}>
         <div className="j1-gold-slide__visual-wrap" onClick={() => setFocusMode('visual')} role="button" tabIndex={0} aria-label="Expand slide visual"><J1GoldVisual slide={slide} motion={motion} /></div>
         <section className={'j1-gold-copy' + (isQuestion ? ' j1-gold-copy--question' : '')} onClick={() => setFocusMode('copy')} role="button" tabIndex={0} aria-label="Expand slide text">
-          <span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slideIndex === 0 ? 'Chapter 1 · Section 1' : 'J1 · Slide ' + (slideIndex + 1)}</span>
-          <h1>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h1>
-          {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights, slide.id)}</p>}
+          <span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slideIndex === 0 ? slide.title.en : 'J1 · Slide ' + (slideIndex + 1)}</span>
+          <h1>{highlightText(slideIndex === 0 ? slide.body.en : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h1>
+          {!isQuestion && <p className="j1-gold-main-copy">{highlightText(slideIndex === 0 ? 'BY: XG LAWRENCE' : slide.body.en, highlights, slide.id)}</p>}
           {visibleReveals.length > 0 && <div className="j1-gold-reveals">{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}</div>}
         </section>
 
@@ -466,8 +466,6 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
             {visibleReveals.length > 0 && <div>{visibleReveals.map((item) => <em key={item.id}>{item.text.zhHant}</em>)}</div>}
           </aside>
         )}
-
-        {slideIndex === 0 && !showChinese && <div className="j1-gold-bottom-message">Living things depend on the environment to live, grow, and reproduce.</div>}
 
         <div className="j1-gold-slide-controls">
           <button type="button" className={highlights ? 'is-on' : ''} onClick={() => setHighlights((value) => !value)} aria-label="Toggle highlights"><span>💡</span><small>Highlight</small></button>
@@ -507,7 +505,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         <button className="j1-gold-focus__close" type="button" onClick={() => setFocusMode(null)}>Close ×</button>
         {focusMode === 'visual'
           ? <div className="j1-gold-focus__visual"><J1GoldVisual slide={slide} motion={motion} /></div>
-          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? 'LIVING THINGS & THE ENVIRONMENT' : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'Habitats and ecosystems' : slide.body.en, highlights, slide.id)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant"><strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>{!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}</div>}</div>}
+          : <div className="j1-gold-focus__copy"><span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span><h2>{highlightText(slideIndex === 0 ? slide.body.en : isQuestion ? slide.body.en : slide.title.en, highlights, slide.id)}</h2>{!isQuestion && <p>{highlightText(slideIndex === 0 ? 'BY: XG LAWRENCE' : slide.body.en, highlights, slide.id)}</p>}{visibleReveals.map((item) => <p key={item.id}>{highlightText(item.text.en, highlights, slide.id)}</p>)}{showChinese && <div className="j1-gold-translation" lang="zh-Hant"><strong>{isQuestion ? slide.body.zhHant : slide.title.zhHant}</strong>{!isQuestion && <p>{slide.body.zhHant || zhSupport[slide.id]}</p>}</div>}</div>}
       </div>}
     </main>
   )
