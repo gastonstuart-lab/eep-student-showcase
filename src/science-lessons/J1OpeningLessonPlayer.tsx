@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ScienceLesson } from './data'
 import type { LessonSlide } from './types/lesson'
 import './j1OpeningLessonPlayer.css'
@@ -152,8 +152,128 @@ function slideReveals(slide: LessonSlide) {
   return slide.reveals ?? []
 }
 
+
+type ApprovedPatch = {
+  id: string
+  kind: 'sentence' | 'word'
+  zh: string
+  style: CSSProperties
+  variant?: 'question' | 'copy' | 'title' | 'label' | 'center'
+}
+
+type ApprovedProofSpec = {
+  src: string
+  alt: string
+  patches: ApprovedPatch[]
+}
+
+const APPROVED_PROOF_SLIDES: Record<string, ApprovedProofSpec> = {
+  'j1-ch1-1-question-needs': {
+    src: asset('approved/02-question.webp'),
+    alt: 'Approved Question of the Day mockup with a pond habitat',
+    patches: [
+      { id:'question-full', kind:'sentence', zh:'生物的環境會滿足哪些需求？', variant:'question', style:{left:'3.7%',top:'31.5%',width:'44.2%',height:'41%'} },
+      { id:'question-key', kind:'word', zh:'生物的環境？', variant:'question', style:{left:'3.8%',top:'52.5%',width:'42%',height:'20.5%'} },
+    ],
+  },
+  'j1-ch1-1-habitats': {
+    src: asset('approved/03-habitats.webp'),
+    alt: 'Approved Habitats mockup with polar, savanna and reef habitats',
+    patches: [
+      { id:'habitats-title', kind:'word', zh:'棲地', variant:'title', style:{left:'3.2%',top:'18.5%',width:'27%',height:'11.5%'} },
+      { id:'habitats-sentence-1', kind:'sentence', zh:'生物從環境中獲得生存、生長和繁殖所需的食物、水、庇護所和其他東西。', variant:'copy', style:{left:'3.2%',top:'34.2%',width:'37.8%',height:'23.8%'} },
+      { id:'habitats-sentence-2', kind:'sentence', zh:'能提供生物生存、生長和繁殖所需事物的環境稱為棲地。', variant:'copy', style:{left:'3.2%',top:'62.2%',width:'36.8%',height:'24.5%'} },
+    ],
+  },
+  'j1-ch1-1-abiotic-overview': {
+    src: asset('approved/05-abiotic.webp'),
+    alt: 'Approved Abiotic Factors mockup with five nonliving habitat factors',
+    patches: [
+      { id:'abiotic-title', kind:'word', zh:'非生物因子', variant:'title', style:{left:'3.1%',top:'19.5%',width:'27%',height:'24.5%'} },
+      { id:'abiotic-sentence-1', kind:'sentence', zh:'非生物因子是生物棲地中沒有生命的部分。', variant:'copy', style:{left:'7.7%',top:'51%',width:'33%',height:'14.5%'} },
+      { id:'abiotic-sentence-2', kind:'sentence', zh:'這些因子包括水、陽光、氧氣、溫度和土壤。', variant:'copy', style:{left:'7.7%',top:'68%',width:'33%',height:'15.5%'} },
+      { id:'abiotic-center', kind:'sentence', zh:'生物棲地中的非生物部分', variant:'center', style:{left:'62.4%',top:'35.3%',width:'14.5%',height:'24.5%'} },
+      { id:'abiotic-water', kind:'word', zh:'水', variant:'label', style:{left:'48.6%',top:'47.7%',width:'10.2%',height:'5.4%'} },
+      { id:'abiotic-sunlight', kind:'word', zh:'陽光', variant:'label', style:{left:'64.5%',top:'25.5%',width:'11.1%',height:'5.2%'} },
+      { id:'abiotic-oxygen', kind:'word', zh:'氧氣', variant:'label', style:{left:'80.9%',top:'47.6%',width:'10.5%',height:'5.5%'} },
+      { id:'abiotic-temperature', kind:'word', zh:'溫度', variant:'label', style:{left:'54.7%',top:'78.2%',width:'11.2%',height:'5.5%'} },
+      { id:'abiotic-soil', kind:'word', zh:'土壤', variant:'label', style:{left:'73.6%',top:'78.2%',width:'10.7%',height:'5.5%'} },
+    ],
+  },
+}
+
+function ApprovedProofSlide({
+  spec,
+  chineseEnabled,
+  translatedTargets,
+  highlights,
+  isFullscreen,
+  onToggleChinese,
+  onToggleTarget,
+  onToggleHighlights,
+  onOpenDrawer,
+  onToggleFullscreen,
+}: {
+  spec: ApprovedProofSpec
+  chineseEnabled: boolean
+  translatedTargets: string[]
+  highlights: boolean
+  isFullscreen: boolean
+  onToggleChinese: () => void
+  onToggleTarget: (id: string) => void
+  onToggleHighlights: () => void
+  onOpenDrawer: () => void
+  onToggleFullscreen: () => void
+}) {
+  return (
+    <article className={'j1-approved-proof' + (chineseEnabled ? ' is-translation-ready' : '')} data-approved-proof="true">
+      <img className="j1-approved-proof__image" src={spec.src} alt={spec.alt} />
+
+      <button className="j1-approved-ui-hotspot j1-approved-ui-hotspot--drawer" type="button" onClick={onOpenDrawer} aria-label="Open teacher tools" />
+      <button className={'j1-approved-ui-hotspot j1-approved-ui-hotspot--chinese' + (chineseEnabled ? ' is-on' : '')} type="button" onClick={onToggleChinese} aria-label="Toggle Traditional Chinese click support" aria-pressed={chineseEnabled} />
+      <button className={'j1-approved-ui-hotspot j1-approved-ui-hotspot--highlight' + (highlights ? ' is-on' : ' is-off')} type="button" onClick={onToggleHighlights} aria-label="Toggle highlights" aria-pressed={highlights} />
+      <button className={'j1-approved-ui-hotspot j1-approved-ui-hotspot--fullscreen' + (isFullscreen ? ' is-on' : '')} type="button" onClick={onToggleFullscreen} aria-label="Toggle full screen" aria-pressed={isFullscreen} />
+
+      {spec.patches.map((patch) => {
+        const translated = translatedTargets.includes(patch.id)
+        return (
+          <span className="j1-approved-patch" key={patch.id}>
+            <button
+              className={'j1-approved-translation-hotspot j1-approved-translation-hotspot--' + patch.kind}
+              style={patch.style}
+              type="button"
+              disabled={!chineseEnabled}
+              onClick={() => onToggleTarget(patch.id)}
+              aria-label={(translated ? 'Show English for ' : 'Show Traditional Chinese for ') + patch.id}
+              aria-pressed={translated}
+            />
+            {translated && (
+              <span
+                className={'j1-approved-translation-overlay j1-approved-translation-overlay--' + (patch.variant ?? patch.kind)}
+                style={patch.style}
+                lang="zh-Hant"
+              >
+                {patch.zh}
+              </span>
+            )}
+          </span>
+        )
+      })}
+    </article>
+  )
+}
+
 function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }) {
   const kind = visualKindById[slide.id] ?? 'ecosystem'
+  const approvedProof = APPROVED_PROOF_SLIDES[slide.id]
+
+  useEffect(() => { setTranslatedTargets([]) }, [slide.id])
+  useEffect(() => { if (!showChinese) setTranslatedTargets([]) }, [showChinese])
+
+  const toggleTranslatedTarget = (id: string) => {
+    if (!showChinese) return
+    setTranslatedTargets((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  }
   const cls = motion ? ' is-motion' : ''
 
   if (kind === 'title') return (
@@ -330,6 +450,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   const [revealIndex, setRevealIndex] = useState(() => activeClass?.revealIndex ?? 0)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [showChinese, setShowChinese] = useState(false)
+  const [translatedTargets, setTranslatedTargets] = useState<string[]>([])
   const [highlights, setHighlights] = useState(true)
   const [motion, setMotion] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -441,15 +562,28 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   }
 
   return (
-    <main className={'j1-gold-player' + (motion ? ' j1-gold-player--motion' : '') + (isFullscreen ? ' j1-gold-player--fullscreen' : '')} ref={stageRef}>
-      <div className="j1-gold-topline">
+    <main className={'j1-gold-player' + (motion ? ' j1-gold-player--motion' : '') + (isFullscreen ? ' j1-gold-player--fullscreen' : '') + (approvedProof ? ' j1-gold-player--approved-proof' : '')} ref={stageRef}>
+      {!approvedProof && <div className="j1-gold-topline">
         <button type="button" className="j1-gold-back" onClick={onBack} aria-label="Return to lesson library">←</button>
         <div><strong>{lesson.title}</strong><span>{activeClass?.name ?? 'J1 Class'} · Slide {slideIndex + 1}/{lesson.slides.length}</span></div>
-      </div>
+      </div>}
 
-      <button className="j1-gold-drawer-tab" type="button" onClick={() => setDrawerOpen((value) => !value)} aria-label="Open teacher tools">{drawerOpen ? '‹' : '›'}</button>
+      {!approvedProof && <button className="j1-gold-drawer-tab" type="button" onClick={() => setDrawerOpen((value) => !value)} aria-label="Open teacher tools">{drawerOpen ? '‹' : '›'}</button>}
 
-      <article className={'j1-gold-slide j1-gold-slide--' + kind}>
+      {approvedProof ? (
+        <ApprovedProofSlide
+          spec={approvedProof}
+          chineseEnabled={showChinese}
+          translatedTargets={translatedTargets}
+          highlights={highlights}
+          isFullscreen={isFullscreen}
+          onToggleChinese={() => setShowChinese((value) => !value)}
+          onToggleTarget={toggleTranslatedTarget}
+          onToggleHighlights={() => setHighlights((value) => !value)}
+          onOpenDrawer={() => setDrawerOpen(true)}
+          onToggleFullscreen={() => void toggleFullscreen()}
+        />
+      ) : <article className={'j1-gold-slide j1-gold-slide--' + kind}>
         <div className="j1-gold-slide__visual-wrap" onClick={() => setFocusMode('visual')} role="button" tabIndex={0} aria-label="Expand slide visual"><J1GoldVisual slide={slide} motion={motion} /></div>
         <section className={'j1-gold-copy' + (isQuestion ? ' j1-gold-copy--question' : '')} onClick={() => setFocusMode('copy')} role="button" tabIndex={0} aria-label="Expand slide text">
           <span className="j1-gold-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slideIndex === 0 ? slide.title.en : 'J1 · Slide ' + (slideIndex + 1)}</span>
@@ -473,13 +607,13 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
           <button type="button" className={motion ? 'is-on' : ''} onClick={() => setMotion((value) => !value)} aria-label="Toggle slide motion"><span>{motion ? '⏸' : '▶'}</span><small>Motion</small></button>
           <button type="button" className={isFullscreen ? 'is-on' : ''} onClick={() => void toggleFullscreen()} aria-label="Toggle full screen"><span>⛶</span><small>{isFullscreen ? 'Exit' : 'Full screen'}</small></button>
         </div>
-      </article>
+      </article>}
 
-      <div className="j1-gold-nav">
+      {!approvedProof && <div className="j1-gold-nav">
         <button type="button" onClick={previous} disabled={slideIndex === 0 && revealIndex === 0}>←</button>
         <span>{reveals.length > 0 ? 'Reveal ' + revealIndex + '/' + reveals.length : 'Ready'}</span>
         <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1 && revealIndex === reveals.length}>→</button>
-      </div>
+      </div>}
 
       <aside className={'j1-gold-drawer' + (drawerOpen ? ' is-open' : '')} aria-label="Teacher tools">
         <div className="j1-gold-drawer__header"><div><strong>Teacher tools</strong><span>Hidden during normal teaching</span></div><button type="button" onClick={() => setDrawerOpen(false)}>×</button></div>
