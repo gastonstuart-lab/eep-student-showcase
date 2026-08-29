@@ -18,8 +18,6 @@ const IMAGES = {
   coral: asset('coral.webp'),
   bear: asset('bear-stream.webp'),
   wolf: asset('wolf-stream.webp'),
-  sunlight: asset('pond.webp'),
-  soil: asset('pond.webp'),
 }
 
 const STUDENT_REVEAL_EXCLUSIONS = new Set(['habitat-needs', 'abiotic-role'])
@@ -170,8 +168,25 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
     </div>
   )
 
+  if (kind === 'question-levels') return (
+    <div className={'j1-gold-level-question' + cls}>
+      <div className="j1-gold-level-question__scene">
+        <div className="j1-gold-level-question__card j1-gold-level-question__card--one">
+          <span>1</span><strong>one species</strong><b>?</b>
+        </div>
+        <div className="j1-gold-level-question__card j1-gold-level-question__card--many">
+          <span>2</span><strong>different populations</strong><b>?</b>
+        </div>
+        <div className="j1-gold-level-question__card j1-gold-level-question__card--whole">
+          <span>3</span><strong>living + nonliving</strong><b>?</b>
+        </div>
+        <div className="j1-gold-level-question__connector" aria-hidden="true">→</div>
+      </div>
+    </div>
+  )
+
   if (kind.startsWith('question-')) {
-    const src = kind === 'question-pond' ? IMAGES.pond : kind === 'question-wolf' ? IMAGES.bear : IMAGES.sunlight
+    const src = kind === 'question-pond' ? IMAGES.pond : IMAGES.bear
     return (
       <div className={'j1-gold-visual j1-gold-visual--question' + cls}>
         <img className="j1-gold-bg" src={src} alt="Habitat scene" />
@@ -221,17 +236,37 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
     </div>
   )
 
-  if (kind === 'water' || kind === 'sunlight') {
-    const src = kind === 'water' ? IMAGES.pond : IMAGES.sunlight
-    const symbol = kind === 'water' ? 'H₂O' : '☀'
-    const caption = kind === 'water' ? 'photosynthesis · bodies · survival' : 'Sunlight → photosynthesis'
-    return <div className={'j1-gold-visual j1-gold-visual--' + kind + cls}><img className="j1-gold-bg" src={src} alt={kind + ' in a habitat'} /><div className="j1-gold-big-symbol">{symbol}</div><div className="j1-gold-visual-caption">{caption}</div></div>
-  }
+  if (kind === 'water') return (
+    <div className={'j1-gold-water-scene' + cls}>
+      <img className="j1-gold-bg" src={IMAGES.bear} alt="Fresh water flowing through a living habitat" />
+      <div className="j1-gold-water-symbol">H₂O</div>
+      <div className="j1-gold-water-proof">
+        <div><strong>PHOTOSYNTHESIS</strong><span>water + sunlight + CO₂</span></div>
+        <div><strong>BODIES</strong><span>water makes up a large part</span></div>
+        <div><strong>LIFE</strong><span>living things need water</span></div>
+      </div>
+    </div>
+  )
+
+  if (kind === 'sunlight') return (
+    <div className={'j1-gold-sunlight-scene' + cls}>
+      <img className="j1-gold-bg" src={IMAGES.pond} alt="Sunlit plants and water in a habitat" />
+      <div className="j1-gold-sun-disc">☀</div>
+      <div className="j1-gold-sun-rays" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="j1-gold-photosynthesis-link"><strong>SUNLIGHT</strong><b>→</b><strong>PHOTOSYNTHESIS</strong></div>
+      <div className="j1-gold-no-light"><span>NO SUNLIGHT</span><strong>plants & algae cannot grow</strong></div>
+    </div>
+  )
 
   if (kind === 'oxygen') return (
     <div className={'j1-gold-oxygen' + cls}>
-      <div className="j1-gold-oxygen__air"><strong>O₂</strong><span>Land organisms get oxygen from the air.</span></div>
-      <div className="j1-gold-oxygen__water"><img src={IMAGES.coral} alt="Fish in oxygenated water" /><span>Water organisms use oxygen dissolved in water.</span></div>
+      <div className="j1-gold-oxygen__air"><em>AIR</em><strong>O₂</strong><span>Land organisms get oxygen from the air.</span></div>
+      <div className="j1-gold-oxygen__water">
+        <img src={IMAGES.coral} alt="Fish living in oxygenated water" />
+        <em>WATER</em>
+        <div className="j1-gold-oxygen-bubbles" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+        <span>Water organisms get oxygen from the water around them.</span>
+      </div>
     </div>
   )
 
@@ -245,19 +280,47 @@ function J1GoldVisual({ slide, motion }: { slide: LessonSlide; motion: boolean }
 
   if (kind === 'soil') return (
     <div className={'j1-gold-soil' + cls}>
-      <img src={IMAGES.soil} alt="Seedling growing from soil" />
-      <div className="j1-gold-soil-layers"><span>rock pieces</span><span>nutrients</span><span>air</span><span>water</span><span>decaying remains</span></div>
+      <div className="j1-gold-soil-profile" aria-label="Soil cross-section">
+        <div className="j1-gold-soil-sky"><div className="j1-gold-soil-plant"><i /><b /><b /></div></div>
+        <div className="j1-gold-soil-band j1-gold-soil-band--top"><span>NUTRIENTS</span><i className="j1-gold-root j1-gold-root--a" /><i className="j1-gold-root j1-gold-root--b" /></div>
+        <div className="j1-gold-soil-band j1-gold-soil-band--middle"><span>AIR</span><span>H₂O</span><i className="j1-gold-soil-rock" /></div>
+        <div className="j1-gold-soil-band j1-gold-soil-band--deep"><span>ROCK PIECES</span><span>DECAYING REMAINS</span></div>
+      </div>
+      <div className="j1-gold-soil-layers">
+        <strong>SOIL IS A MIXTURE</strong>
+        <span>rock pieces</span><span>nutrients</span><span>air</span><span>water</span><span>decaying remains</span>
+      </div>
     </div>
   )
 
-  if (kind === 'population' || kind === 'community') {
-    const src = kind === 'population' ? IMAGES.elephants : IMAGES.coral
-    const label = kind === 'population' ? 'POPULATION' : 'COMMUNITY'
-    const caption = kind === 'population' ? 'one species · one area' : 'different populations together'
-    return <div className={'j1-gold-organisation' + cls}><img className="j1-gold-bg" src={src} alt={label} /><div className="j1-gold-organisation-card"><strong>{label}</strong><span>{caption}</span></div></div>
-  }
+  if (kind === 'population') return (
+    <div className={'j1-gold-organisation j1-gold-population' + cls}>
+      <img className="j1-gold-bg" src={IMAGES.elephants} alt="A group of elephants of the same species living in one area" />
+      <div className="j1-gold-population-ring"><span>SAME SPECIES</span><span>SAME AREA</span></div>
+      <div className="j1-gold-organisation-card"><strong>POPULATION</strong><span>all members of one species in an area</span></div>
+    </div>
+  )
 
-  return <div className={'j1-gold-organisation' + cls}><img className="j1-gold-bg" src={IMAGES.sunlight} alt="Forest ecosystem" /><div className="j1-gold-ecosystem-flow"><span>community</span><b>+</b><span>nonliving surroundings</span><b>=</b><strong>ECOSYSTEM</strong></div></div>
+  if (kind === 'community') return (
+    <div className={'j1-gold-community' + cls}>
+      <img className="j1-gold-bg" src={IMAGES.coral} alt="Many living populations sharing a coral reef community" />
+      <div className="j1-gold-community-labels"><span>population</span><span>population</span><span>population</span></div>
+      <div className="j1-gold-community-card"><strong>COMMUNITY</strong><span>different populations living together</span></div>
+    </div>
+  )
+
+  return (
+    <div className={'j1-gold-ecosystem' + cls}>
+      <img className="j1-gold-bg" src={IMAGES.pond} alt="A pond ecosystem containing living organisms and nonliving surroundings" />
+      <div className="j1-gold-ecosystem-community">
+        <strong>COMMUNITY</strong><span>living organisms</span>
+      </div>
+      <div className="j1-gold-ecosystem-abiotic">
+        <span>H₂O</span><span>☀</span><span>O₂</span><span>SOIL</span>
+      </div>
+      <div className="j1-gold-ecosystem-flow"><span>community</span><b>+</b><span>nonliving surroundings</span><b>=</b><strong>ECOSYSTEM</strong></div>
+    </div>
+  )
 }
 
 export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesson; onBack: () => void }) {
