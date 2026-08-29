@@ -42,7 +42,7 @@ const visualKindById: Record<string, string> = {
   'j2-ch1-1-bohr': 'bohr',
   'j2-ch1-1-electron-cloud': 'cloud',
   'j2-ch1-1-modern-model': 'modern',
-  'j2-ch1-1-models-summary': 'timeline',
+  'j2-ch1-1-models-summary': 'modern-summary',
 }
 
 function loadClasses(): SavedClass[] {
@@ -267,6 +267,18 @@ function J2SourceVisual({ slide, motion }: { slide: LessonSlide; motion: boolean
       <HistoryRail active="Chadwick" />
       <div className="j2-scientist-atom"><AtomModel kind="modern" motion={motion} /></div>
       <div className="j2-modern-key"><span><b>p+</b> proton</span><span><b>n</b> neutron</span><span><b>−</b> electron</span></div>
+    </div>
+  )
+
+  if (kind === 'modern-summary') return (
+    <div className={'j2-source-visual j2-source-visual--modern-summary' + motionClass}>
+      <div className="j2-modern-summary__atom"><AtomModel kind="modern" motion={motion} /></div>
+      <div className="j2-modern-summary__legend">
+        <strong>MODERN MODEL OF THE ATOM</strong>
+        <span><b className="is-proton">p+</b> protons · positive charge · nucleus</span>
+        <span><b className="is-neutron">n</b> neutrons · neutral · nucleus</span>
+        <span><b className="is-electron">−</b> electrons · negative charge · electron cloud</span>
+      </div>
     </div>
   )
 
