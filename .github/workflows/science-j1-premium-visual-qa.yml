@@ -43,7 +43,7 @@ jobs:
       - name: Capture J1 premium lesson
         run: |
           mkdir -p j1-premium-qa
-          cat > /tmp/capture-j1.mjs <<'EOF'
+          cat > capture-j1.mjs <<'EOF'
           import { chromium } from 'playwright';
           const browser = await chromium.launch({headless:true});
           const page = await browser.newPage({viewport:{width:1440,height:900}, deviceScaleFactor:1});
@@ -80,7 +80,7 @@ jobs:
           await snap('08-chinese-support');
           await browser.close();
           EOF
-          node /tmp/capture-j1.mjs
+          node capture-j1.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: j1-premium-visual-qa
