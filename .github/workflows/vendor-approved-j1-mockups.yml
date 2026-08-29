@@ -2,6 +2,11 @@ name: Vendor Approved J1 Mockups
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - science-live-preview
+    paths:
+      - '.github/workflows/vendor-approved-j1-mockups.yml'
 
 permissions:
   contents: write
