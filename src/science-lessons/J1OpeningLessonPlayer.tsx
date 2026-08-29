@@ -456,10 +456,10 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   const kind = visualKindById[slide.id] ?? 'ecosystem'
   const approvedProof = APPROVED_PROOF_SLIDES[slide.id]
 
-  useEffect(() => { setTranslatedTargets([]) }, [slide.id])
-  useEffect(() => {
-    if (!showChinese) setTranslatedTargets([])
-  }, [showChinese])
+  const toggleChineseSupport = () => {
+    if (showChinese) setTranslatedTargets([])
+    setShowChinese(!showChinese)
+  }
 
   const toggleTranslatedTarget = (id: string) => {
     if (!showChinese) return
@@ -477,6 +477,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
   }
 
   const goToPosition = (nextSlideIndex: number, nextRevealIndex: number) => {
+    if (nextSlideIndex !== slideIndex) setTranslatedTargets([])
     setSlideIndex(nextSlideIndex)
     setRevealIndex(nextRevealIndex)
     persistPosition(nextSlideIndex, nextRevealIndex)
@@ -579,7 +580,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
           translatedTargets={translatedTargets}
           highlights={highlights}
           isFullscreen={isFullscreen}
-          onToggleChinese={() => setShowChinese((value) => !value)}
+          onToggleChinese={toggleChineseSupport}
           onToggleTarget={toggleTranslatedTarget}
           onToggleHighlights={() => setHighlights((value) => !value)}
           onOpenDrawer={() => setDrawerOpen(true)}
@@ -605,7 +606,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
 
         <div className="j1-gold-slide-controls">
           <button type="button" className={highlights ? 'is-on' : ''} onClick={() => setHighlights((value) => !value)} aria-label="Toggle highlights"><span>💡</span><small>Highlight</small></button>
-          <button type="button" className={showChinese ? 'is-on' : ''} onClick={() => setShowChinese((value) => !value)} aria-label="Toggle Traditional Chinese support"><span>中文</span><small>{showChinese ? 'Chinese on' : 'Chinese'}</small></button>
+          <button type="button" className={showChinese ? 'is-on' : ''} onClick={toggleChineseSupport} aria-label="Toggle Traditional Chinese support"><span>中文</span><small>{showChinese ? 'Chinese on' : 'Chinese'}</small></button>
           <button type="button" className={motion ? 'is-on' : ''} onClick={() => setMotion((value) => !value)} aria-label="Toggle slide motion"><span>{motion ? '⏸' : '▶'}</span><small>Motion</small></button>
           <button type="button" className={isFullscreen ? 'is-on' : ''} onClick={() => void toggleFullscreen()} aria-label="Toggle full screen"><span>⛶</span><small>{isFullscreen ? 'Exit' : 'Full screen'}</small></button>
         </div>
@@ -627,7 +628,7 @@ export function J1OpeningLessonPlayer({ lesson, onBack }: { lesson: ScienceLesso
         </section>
         <section className="j1-gold-drawer-toggles">
           <button className={highlights ? 'is-on' : ''} type="button" onClick={() => setHighlights((value) => !value)}>Highlights</button>
-          <button className={showChinese ? 'is-on' : ''} type="button" onClick={() => setShowChinese((value) => !value)}>中文 support</button>
+          <button className={showChinese ? 'is-on' : ''} type="button" onClick={toggleChineseSupport}>中文 support</button>
           <button className={motion ? 'is-on' : ''} type="button" onClick={() => setMotion((value) => !value)}>Motion {motion ? 'on' : 'off'}</button>
           <button type="button" onClick={() => setRevealIndex(reveals.length)}>Show all</button>
         </section>
