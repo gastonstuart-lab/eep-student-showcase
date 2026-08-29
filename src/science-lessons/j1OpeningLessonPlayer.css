@@ -337,21 +337,23 @@
 .j1-gold-player--motion .j1-gold-oxygen.is-motion .j1-gold-oxygen-bubbles i:nth-child(2){animation-delay:.8s}.j1-gold-player--motion .j1-gold-oxygen.is-motion .j1-gold-oxygen-bubbles i:nth-child(3){animation-delay:1.5s}.j1-gold-player--motion .j1-gold-oxygen.is-motion .j1-gold-oxygen-bubbles i:nth-child(4){animation-delay:2.1s}
 @keyframes j1BubbleRise{0%{transform:translateY(40px);opacity:.2}45%{opacity:1}100%{transform:translateY(-80px);opacity:0}}
 
-.j1-gold-soil{grid-template-columns:1.17fr .83fr;background:#5e3923}
-.j1-gold-soil-profile{position:relative;display:grid;grid-template-rows:25% 25% 25% 25%;min-width:0;overflow:hidden}
-.j1-gold-soil-sky{position:relative;background:linear-gradient(#96d8ef,#d8f2df 64%,#6caa4c 65% 100%)}
-.j1-gold-soil-plant{position:absolute;right:27%;bottom:-7px;width:80px;height:112px}
-.j1-gold-soil-plant i{position:absolute;left:38px;bottom:0;width:7px;height:76px;background:#2e783b;border-radius:999px}
-.j1-gold-soil-plant b{position:absolute;left:3px;top:18px;width:46px;height:25px;border-radius:70% 20% 70% 20%;background:#59a747;transform:rotate(24deg)}
-.j1-gold-soil-plant b:last-child{left:42px;top:7px;transform:scaleX(-1) rotate(18deg)}
-.j1-gold-soil-band{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 5%;overflow:hidden}
-.j1-gold-soil-band--top{background:linear-gradient(90deg,#8d5e34,#a87949)}.j1-gold-soil-band--middle{background:linear-gradient(90deg,#694321,#7b522d)}.j1-gold-soil-band--deep{background:linear-gradient(90deg,#44301f,#382418)}
-.j1-gold-soil-band span{position:relative;z-index:3;padding:7px 10px;border-radius:999px;background:rgba(255,250,235,.9);color:#4e331f;font-size:11px;font-weight:1000;letter-spacing:.04em}
-.j1-gold-root{position:absolute;z-index:2;left:54%;top:-8px;width:4px;height:120%;background:#d6b28a;border-radius:999px;transform:rotate(12deg)}.j1-gold-root--b{left:61%;height:90%;transform:rotate(-19deg)}
-.j1-gold-soil-rock{position:absolute;left:16%;bottom:18%;width:50px;height:30px;border-radius:48% 52% 38% 62%;background:#baa287;box-shadow:72px -9px 0 -9px #d0baa1,135px 12px 0 -14px #927c68}
-.j1-gold-soil-layers{background:linear-gradient(180deg,#fbf6e9,#efe3c8);padding:34px 32px;gap:9px}
-.j1-gold-soil-layers strong{margin-bottom:3px;color:#6a4b2f;font-size:clamp(17px,1.4vw,24px);letter-spacing:.04em}
-.j1-gold-soil-layers span{padding:10px 14px;font-size:clamp(13px,1.05vw,18px);box-shadow:0 8px 18px rgba(84,53,30,.12)}
+.j1-gold-soil{display:block;background:radial-gradient(circle at 78% 24%,#305b54 0,#183d3d 28%,#092830 62%,#061d24 100%)}
+.j1-gold-soil-profile{position:absolute;right:4.5%;top:7%;width:43%;height:57%;display:grid;grid-template-rows:25% 25% 25% 25%;overflow:hidden;border-radius:30px;border:4px solid rgba(255,255,255,.86);box-shadow:0 24px 50px rgba(0,0,0,.34);background:#6a4528}
+.j1-gold-soil-profile::after{content:"SOIL PROFILE";position:absolute;z-index:5;right:13px;top:12px;padding:7px 11px;border-radius:999px;background:rgba(4,38,42,.84);color:#fff;font-size:11px;font-weight:1000;letter-spacing:.08em}
+.j1-gold-soil-sky{position:relative;background:linear-gradient(#78cdec,#c9ecd8 63%,#5f9f48 64% 100%)}
+.j1-gold-soil-plant{position:absolute;left:20%;bottom:-8px;width:92px;height:122px}
+.j1-gold-soil-plant i{position:absolute;left:43px;bottom:0;width:8px;height:83px;background:#2b743a;border-radius:999px}
+.j1-gold-soil-plant b{position:absolute;left:4px;top:18px;width:52px;height:28px;border-radius:70% 20% 70% 20%;background:#5bb34d;transform:rotate(24deg);box-shadow:inset 0 0 0 2px rgba(255,255,255,.16)}
+.j1-gold-soil-plant b:last-child{left:46px;top:5px;transform:scaleX(-1) rotate(18deg)}
+.j1-gold-soil-band{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:12px 4%;overflow:hidden}
+.j1-gold-soil-band--top{background:linear-gradient(90deg,#98683b,#b0804e)}.j1-gold-soil-band--middle{background:linear-gradient(90deg,#704822,#82592f)}.j1-gold-soil-band--deep{background:linear-gradient(90deg,#47311f,#352316)}
+.j1-gold-soil-band span{position:relative;z-index:3;padding:7px 10px;border-radius:999px;background:rgba(255,250,235,.94);color:#4e331f;font-size:11px;font-weight:1000;letter-spacing:.04em;box-shadow:0 5px 12px rgba(0,0,0,.13)}
+.j1-gold-root{position:absolute;z-index:2;left:30%;top:-8px;width:4px;height:125%;background:#dcc09d;border-radius:999px;transform:rotate(11deg)}.j1-gold-root--b{left:39%;height:95%;transform:rotate(-18deg)}
+.j1-gold-soil-rock{position:absolute;left:9%;bottom:17%;width:48px;height:28px;border-radius:48% 52% 38% 62%;background:#baa287;box-shadow:68px -8px 0 -9px #d0baa1,126px 10px 0 -14px #927c68}
+.j1-gold-soil-layers{position:absolute;right:4.5%;bottom:7%;width:43%;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:15px 17px 17px;border-radius:24px;background:linear-gradient(135deg,rgba(255,250,235,.97),rgba(235,225,195,.96));box-shadow:0 18px 38px rgba(0,0,0,.28)}
+.j1-gold-soil-layers strong{grid-column:1/-1;margin:0 0 2px;color:#6a4b2f;font-size:clamp(15px,1.2vw,20px);letter-spacing:.05em}
+.j1-gold-soil-layers span{padding:8px 11px;border-radius:12px;font-size:clamp(11px,.88vw,15px);text-align:center;box-shadow:0 6px 14px rgba(84,53,30,.11)}
+.j1-gold-soil-layers span:last-child{grid-column:1/-1}
 
 .j1-gold-level-question{background:radial-gradient(circle at 77% 52%,#1f6672 0,#0b3640 42%,#061e26 100%)}
 .j1-gold-level-question__scene{position:absolute;right:4.5%;top:13%;bottom:12%;width:45%;display:grid;align-content:center;gap:14px}
