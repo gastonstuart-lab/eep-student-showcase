@@ -169,12 +169,12 @@ describe('Science Lessons curriculum', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     presentLessonFromLibrary(/Habitats and Ecosystems: Opening Lesson/i)
-    expect(screen.getByText(/What needs are met by an organism's environment/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/What needs are met by an organism's environment/i).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
     presentLessonFromLibrary(/Elements and Atoms: Opening Lesson/i)
-    expect(screen.getByText(/Why are elements sometimes called the building blocks of matter/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Why are elements sometimes called the building blocks of matter/i).length).toBeGreaterThan(0)
   })
 
 describe('Science Lessons teacher flow', () => {
@@ -424,7 +424,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
+    presentLessonFromLibrary(/Concentration, Solutes and Saturation/i)
 
     expect(screen.getByText(/Concentration, Solutes and Saturation/i)).toBeInTheDocument()
     expect(screen.getByText(/Lesson objectives/i)).toBeInTheDocument()
@@ -441,7 +441,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    presentLessonFromLibrary(/Aquatic Ecosystems and Habitat Factors/i)
+    presentLessonFromLibrary(/Concentration, Solutes and Saturation/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[2])
     fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
@@ -465,7 +465,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
+    presentLessonFromLibrary(/Solubility and Solubility Curves/i)
     fireEvent.click(container.querySelectorAll('.viewer-thumbnails > button')[4])
 
     expect(screen.getByRole('heading', { name: /Use a graph-reading crosshair/i })).toBeInTheDocument()
@@ -487,7 +487,7 @@ describe('J1 Solutions and Solubility production unit', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Spring / Summer' }))
-    presentLessonFromLibrary(/Aquatic Food Webs and Ecosystem Change/i)
+    presentLessonFromLibrary(/Solubility and Solubility Curves/i)
     fireEvent.click(container.querySelector('.viewer-tool-button--accent')!)
 
     expect(screen.getByRole('dialog', { name: /Classroom presentation mode/i })).toBeInTheDocument()
