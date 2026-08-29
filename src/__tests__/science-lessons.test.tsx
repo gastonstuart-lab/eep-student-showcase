@@ -165,6 +165,33 @@ describe('Science Lessons curriculum', () => {
     expect(j2OpeningLesson.slides[2]?.body.en).toBe('Why are elements sometimes called the building blocks of matter?')
   })
 
+  it('locks the J1 opening to the exact fifteen-slide source order', () => {
+    expect(j1OpeningLesson.slides.map((slide) => slide.id)).toEqual([
+      'j1-ch1-1-title',
+      'j1-ch1-1-question-needs',
+      'j1-ch1-1-habitats',
+      'j1-ch1-1-question-parts',
+      'j1-ch1-1-abiotic-overview',
+      'j1-ch1-1-biotic-factors',
+      'j1-ch1-1-water',
+      'j1-ch1-1-sunlight',
+      'j1-ch1-1-oxygen',
+      'j1-ch1-1-temperature',
+      'j1-ch1-1-soil',
+      'j1-ch1-1-question-levels',
+      'j1-ch1-1-populations',
+      'j1-ch1-1-communities',
+      'j1-ch1-1-ecosystems',
+    ])
+    expect(j1OpeningLesson.slides[0]?.body.en).toBe('Living Things and the Environment')
+    expect(j1OpeningLesson.slides[1]?.body.en).toBe("What needs are met by an organism's environment?")
+    expect(j1OpeningLesson.slides[3]?.body.en).toBe("What are the two parts of an organism's habitat with which it interacts?")
+    expect(j1OpeningLesson.slides[11]?.body.en).toBe('What are the levels of organization within an ecosystem?')
+    const revealIds = j1OpeningLesson.slides.flatMap((slide) => (slide.reveals ?? []).map((reveal) => reveal.id))
+    expect(revealIds).not.toContain('habitat-needs')
+    expect(revealIds).not.toContain('abiotic-role')
+  })
+
   it('locks the J2 opening to the exact fifteen-slide source order', () => {
     expect(j2OpeningLesson.slides.map((slide) => slide.id)).toEqual([
       'j2-ch1-title',
