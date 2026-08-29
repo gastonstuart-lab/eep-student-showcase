@@ -161,14 +161,15 @@ describe('Science Lessons curriculum', () => {
     expect(j1Fall[0]?.id).toBe('j1-ch1-1-habitats-ecosystems-opening')
     expect(j2Fall[0]?.id).toBe('j2-ch1-1-elements-atoms-opening')
     expect(j1OpeningLesson.slides).toHaveLength(15)
-    expect(j2OpeningLesson.slides).toHaveLength(6)
+    expect(j2OpeningLesson.slides).toHaveLength(15)
+    expect(j2OpeningLesson.slides[2]?.body.en).toBe('Why are elements sometimes called the building blocks of matter?')
   })
 
   it('opens both new opening lessons from the library', () => {
     render(<ScienceLessonsApp />)
 
     fireEvent.click(screen.getByRole('button', { name: /Browse lesson library/i }))
-    presentLessonFromLibrary(/Habitats and Ecosystems: Opening Lesson/i)
+    presentLessonFromLibrary(/Chapter 1.*Section 1.*Living Things and the Environment/i)
     expect(screen.getByRole('heading', { name: /LIVING THINGS & THE ENVIRONMENT/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Open teacher tools/i })).toBeInTheDocument()
 
@@ -177,8 +178,8 @@ describe('Science Lessons curriculum', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Return to lesson library/i }))
     fireEvent.click(screen.getByRole('button', { name: 'J2' }))
-    presentLessonFromLibrary(/Elements and Atoms: Opening Lesson/i)
-    expect(screen.getAllByText(/Why are elements sometimes called the building blocks of matter/i).length).toBeGreaterThan(0)
+    presentLessonFromLibrary(/Chapter 1.*Section 1.*Elements and Atoms/i)
+    expect(screen.getAllByText(/Chapter 1: ATOMS AND BONDING/i).length).toBeGreaterThan(0)
   })
 
 describe('Science Lessons teacher flow', () => {
