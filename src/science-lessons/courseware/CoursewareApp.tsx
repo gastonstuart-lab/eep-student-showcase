@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 import type { LessonSlide } from '../types/lesson'
 import { coursewareSections, getCoursewareLesson, type CoursewareSection } from './coursewareManifest'
 import { coursewareSourcePages, type CoursewareSourcePage } from './coursewareSourcePages'
-import { HIGHLIGHT_PHRASES, J2Visual, renderHighlightedText } from './CoursewareVisuals'
+import { HIGHLIGHT_PHRASES, J1Visual, J2Visual, renderHighlightedText } from './CoursewareVisuals'
 import './courseware.css'
 
 type TranslationPatch = {
@@ -106,7 +106,10 @@ function SourcePage({
   return (
     <article data-slide-id={slide.id} className={`courseware-source-page courseware-source-page--${year.toLowerCase()} ${isQuestion ? 'courseware-source-page--question' : ''}`}>
       {year === 'J1'
-        ? <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
+        ? <>
+            <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
+            <J1Visual slideId={slide.id} />
+          </>
         : <J2Visual slideId={slide.id} />}
       <div className="courseware-source-page__wash" />
       <span className="courseware-page-badge" aria-hidden="true">{sourcePage?.sourceSlide ?? ''}</span>
