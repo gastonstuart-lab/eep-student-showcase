@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { LessonSlide } from '../types/lesson'
 import { coursewareSections, getCoursewareLesson, type CoursewareSection } from './coursewareManifest'
+import { coursewareSourcePages, type CoursewareSourcePage } from './coursewareSourcePages'
 import './courseware.css'
 
 type TranslationPatch = {
@@ -63,6 +64,7 @@ const fallbackImageFor = (slide: LessonSlide) => {
 
 function SourcePage({
   slide,
+  sourcePage,
   revealIndex,
   chineseEnabled,
   translated,
@@ -71,6 +73,7 @@ function SourcePage({
   year,
 }: {
   slide: LessonSlide
+  sourcePage?: CoursewareSourcePage
   revealIndex: number
   chineseEnabled: boolean
   translated: Set<string>
@@ -78,12 +81,17 @@ function SourcePage({
   isOpeningTitle: boolean
   year: 'J1' | 'J2'
 }) {
-  const visibleReveals = (slide.reveals ?? []).slice(0, revealIndex)
-  const isQuestion = slide.layout === 'question' || slide.id.includes('question-')
+  const exactParagraphs = sourcePage?.paragraphs ?? [slide.body.en, ...(slide.reveals ?? []).map((item) => item.text.en)]
+  const visibleParagraphs = exactParagraphs.slice(0, Math.min(exactParagraphs.length, Math.max(1, revealIndex + 1)))
+  const isQuestion = Boolean(sourcePage?.prompt) || slide.layout === 'question' || slide.id.includes('question-')
+  const sourceHeading = sourcePage?.heading ?? slide.title.en
+  const sourceSubheading = sourcePage?.subheading
+  const prompt = sourcePage?.prompt ?? slide.body.en
+  const translatedParagraphs = [slide.body.zhHant, ...(slide.reveals ?? []).map((item) => item.text.zhHant)]
 
   const translatable = (id: string, english: string, chinese?: string, className?: string) => (
     <button
-      className={`courseware-source-text ${className ?? ''} ${chineseEnabled ? 'is-translation-ready' : ''}`}
+      className={`courseware-source-text ${className ?? ''} ${chineseEnabled && chinese ? 'is-translation-ready' : ''}`}
       type="button"
       onClick={() => chineseEnabled && chinese && onToggleTranslated(id)}
       aria-label={chineseEnabled && chinese ? `Translate ${english}` : undefined}
@@ -99,24 +107,36 @@ function SourcePage({
         : <div className="courseware-atom-scene" aria-hidden="true"><i/><i/><i/><b/><span/><span/><span/></div>}
       <div className="courseware-source-page__wash" />
       <div className="courseware-source-page__copy">
-        <span className="courseware-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span>
-        {isQuestion
-          ? translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-question')
-          : isOpeningTitle
-            ? <>
-                {translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-title')}
-                <span className="courseware-byline">BY: XG LAWRENCE</span>
-              </>
-            : <>
-                {translatable(`${slide.id}-title`, slide.title.en, slide.title.zhHant, 'courseware-title')}
-                {translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-body')}
-              </>}
-        {visibleReveals.length > 0 && (
-          <div className="courseware-reveals">
-            {visibleReveals.map((item) => (
-              <div key={item.id}>{translatable(item.id, item.text.en, item.text.zhHant, 'courseware-reveal')}</div>
-            ))}
-          </div>
+        {isQuestion ? (
+          <>
+            <span className="courseware-kicker">{sourceHeading}</span>
+            {translatable(`${slide.id}-prompt`, prompt, slide.body.zhHant, 'courseware-question')}
+          </>
+        ) : isOpeningTitle ? (
+          <>
+            <span className="courseware-kicker">{sourceHeading}</span>
+            {translatable(`${slide.id}-title`, sourceSubheading ?? slide.body.en, slide.body.zhHant, 'courseware-title')}
+            <span className="courseware-byline">{sourcePage?.byline ?? 'BY: XG LAWRENCE'}</span>
+          </>
+        ) : (
+          <>
+            <span className="courseware-kicker">{sourceSubheading ? sourceHeading : `${year} · SOURCE PAGE ${sourcePage?.sourceSlide ?? ''}`}</span>
+            {translatable(`${slide.id}-title`, sourceSubheading ?? sourceHeading, slide.title.zhHant, 'courseware-title')}
+            {visibleParagraphs.length > 0 && (
+              <div className="courseware-reveals courseware-reveals--source">
+                {visibleParagraphs.map((paragraph, index) => (
+                  <div key={`${slide.id}-source-${index}`}>
+                    {translatable(
+                      `${slide.id}-source-${index}`,
+                      paragraph,
+                      translatedParagraphs[index],
+                      index === 0 ? 'courseware-body' : 'courseware-reveal',
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </article>
@@ -174,7 +194,9 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
 
   const slide = lesson.slides[slideIndex] ?? lesson.slides[0]
   const artboard = APPROVED_ARTBOARDS[slide.id]
-  const revealCount = artboard ? 0 : (slide.reveals?.length ?? 0)
+  const sourcePage = coursewareSourcePages[slide.id]
+  const sourceParagraphCount = sourcePage?.paragraphs.length
+  const revealCount = artboard ? 0 : Math.max(0, (sourceParagraphCount ?? ((slide.reveals?.length ?? 0) + 1)) - 1)
   const translated = useMemo(() => new Set(translatedIds), [translatedIds])
 
   const resetTransientState = useCallback(() => {
@@ -266,7 +288,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} year={section.year} />}
+          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} year={section.year} />}
 
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
@@ -292,7 +314,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
         <button className="courseware-drawer__exit" type="button" onClick={onExit}>← Back to sections</button>
         <section>
           <strong>Current source page</strong>
-          <p>PowerPoint page {slideIndex + 1}: {slide.title.en}</p>
+          <p>PowerPoint page {sourcePage?.sourceSlide ?? slideIndex + 1}: {sourcePage?.subheading ?? sourcePage?.heading ?? slide.title.en}</p>
           <small>{section.sourceTitle}</small>
         </section>
         <section>
