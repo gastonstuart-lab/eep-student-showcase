@@ -66,7 +66,6 @@ const fallbackImageFor = (slide: LessonSlide) => {
 function SourcePage({
   slide,
   sourcePage,
-  revealIndex,
   chineseEnabled,
   translated,
   onToggleTranslated,
@@ -76,7 +75,6 @@ function SourcePage({
 }: {
   slide: LessonSlide
   sourcePage?: CoursewareSourcePage
-  revealIndex: number
   chineseEnabled: boolean
   translated: Set<string>
   onToggleTranslated: (id: string) => void
@@ -126,7 +124,7 @@ function SourcePage({
           </>
         ) : (
           <>
-            <span className="courseware-kicker">{sourceSubheading ? sourceHeading : `${year} · SOURCE PAGE ${sourcePage?.sourceSlide ?? ''}`}</span>
+            <span className="courseware-kicker">{sourceSubheading ? sourceHeading : ''}</span>
             {translatable(`${slide.id}-title`, sourceSubheading ?? sourceHeading, slide.title.zhHant, 'courseware-title')}
             {visibleParagraphs.length > 0 && (
               <div className="courseware-reveals courseware-reveals--source">
@@ -299,7 +297,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isTitlePage={Boolean(sourcePage?.byline)} year={section.year} highlights={highlights} />}
+          : <SourcePage slide={slide} sourcePage={sourcePage} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isTitlePage={Boolean(sourcePage?.byline)} year={section.year} highlights={highlights} />}
 
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
