@@ -54,6 +54,72 @@ export function renderHighlightedText(text: string, phrases: string[], enabled: 
   return nodes
 }
 
+
+export function J1Visual({ slideId }: { slideId: string }) {
+  if (slideId.includes('water')) {
+    return <div className="courseware-j1-visual courseware-j1-water" aria-hidden="true">
+      <div className="courseware-water-drop">H₂O</div>
+      <div className="courseware-photo-equation"><span>sunlight</span><b>+</b><span>CO₂</span><b>+</b><span>water</span><strong>→ photosynthesis →</strong><em>food</em></div>
+    </div>
+  }
+
+  if (slideId.includes('sunlight')) {
+    return <div className="courseware-j1-visual courseware-j1-sunlight" aria-hidden="true">
+      <div className="courseware-sun-disc"/><div className="courseware-plant"><i/><i/><b/></div><strong>LIGHT → PHOTOSYNTHESIS</strong><small>No light → very little plant growth</small>
+    </div>
+  }
+
+  if (slideId.includes('oxygen')) {
+    return <div className="courseware-j1-visual courseware-j1-oxygen" aria-hidden="true">
+      <div><span>AIR</span><strong>O₂</strong><small>land organisms</small></div>
+      <div className="is-water"><span>WATER</span><strong>O₂</strong><i/><i/><i/><small>fish + aquatic organisms</small></div>
+    </div>
+  }
+
+  if (slideId.includes('temperature')) {
+    return <div className="courseware-j1-visual courseware-j1-temperature" aria-hidden="true">
+      <div className="is-hot"><strong>HOT</strong><span>☀</span></div>
+      <div className="courseware-thermometer"><i/></div>
+      <div className="is-cold"><strong>COLD</strong><span>❄</span></div>
+    </div>
+  }
+
+  if (slideId.includes('soil')) {
+    return <div className="courseware-j1-visual courseware-j1-soil" aria-hidden="true">
+      <div className="courseware-soil-plant"><i/><i/><b/></div>
+      <div className="courseware-soil-layer is-top">decaying remains</div>
+      <div className="courseware-soil-layer is-middle">nutrients · air · water</div>
+      <div className="courseware-soil-layer is-bottom">rock pieces</div>
+    </div>
+  }
+
+  if (slideId.includes('question-levels')) {
+    return <div className="courseware-j1-visual courseware-j1-levels" aria-hidden="true">
+      <span>SPECIES</span><b>→</b><span>POPULATION</span><b>→</b><span>COMMUNITY</span><b>→</b><span>ECOSYSTEM</span>
+    </div>
+  }
+
+  if (slideId.includes('populations')) {
+    return <div className="courseware-j1-visual courseware-j1-population" aria-hidden="true">
+      <strong>ONE SPECIES</strong><div><i/><i/><i/><i/><i/><i/></div><span>= POPULATION</span>
+    </div>
+  }
+
+  if (slideId.includes('communities')) {
+    return <div className="courseware-j1-visual courseware-j1-community" aria-hidden="true">
+      <strong>MANY POPULATIONS</strong><div><span>Wolves</span><span>Birds</span><span>Plants</span><span>Fish</span></div><em>= COMMUNITY</em>
+    </div>
+  }
+
+  if (slideId.includes('ecosystems')) {
+    return <div className="courseware-j1-visual courseware-j1-ecosystem" aria-hidden="true">
+      <strong>ECOSYSTEM</strong><div><span>community</span><span>water</span><span>soil</span><span>air</span><span>sunlight</span></div><small>living things + nonliving surroundings</small>
+    </div>
+  }
+
+  return null
+}
+
 export function J2Visual({ slideId }: { slideId: string }) {
   if (slideId.includes('elements-compounds-mixtures')) {
     return <div className="courseware-j2-visual courseware-j2-mixtures" aria-hidden="true">
