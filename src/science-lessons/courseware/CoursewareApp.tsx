@@ -54,6 +54,7 @@ const APPROVED_ARTBOARDS: Record<string, ApprovedArtboard> = {
 }
 
 const fallbackImageFor = (slide: LessonSlide) => {
+  if (slide.layout === 'question') return j1Asset('pond.webp')
   if (slide.id.includes('water') || slide.id.includes('ecosystem') || slide.id.includes('community')) return j1Asset('pond.webp')
   if (slide.id.includes('biotic') || slide.id.includes('population')) return j1Asset('wolf-stream.webp')
   if (slide.id.includes('oxygen')) return j1Asset('coral.webp')
@@ -67,6 +68,7 @@ function SourcePage({
   translated,
   onToggleTranslated,
   isOpeningTitle,
+  year,
 }: {
   slide: LessonSlide
   revealIndex: number
@@ -74,6 +76,7 @@ function SourcePage({
   translated: Set<string>
   onToggleTranslated: (id: string) => void
   isOpeningTitle: boolean
+  year: 'J1' | 'J2'
 }) {
   const visibleReveals = (slide.reveals ?? []).slice(0, revealIndex)
   const isQuestion = slide.layout === 'question' || slide.id.includes('question-')
@@ -90,8 +93,10 @@ function SourcePage({
   )
 
   return (
-    <article className={`courseware-source-page ${isQuestion ? 'courseware-source-page--question' : ''}`}>
-      <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
+    <article className={`courseware-source-page courseware-source-page--${year.toLowerCase()} ${isQuestion ? 'courseware-source-page--question' : ''}`}>
+      {year === 'J1'
+        ? <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
+        : <div className="courseware-atom-scene" aria-hidden="true"><i/><i/><i/><b/><span/><span/><span/></div>}
       <div className="courseware-source-page__wash" />
       <div className="courseware-source-page__copy">
         <span className="courseware-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span>
@@ -261,7 +266,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} />}
+          : <SourcePage slide={slide} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} year={section.year} />}
 
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
