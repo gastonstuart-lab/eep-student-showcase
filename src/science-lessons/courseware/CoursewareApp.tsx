@@ -53,6 +53,17 @@ const APPROVED_ARTBOARDS: Record<string, ApprovedArtboard> = {
       { id: 'abiotic-soil', zh: '土壤', variant: 'label', style: { left: '73.6%', top: '78.2%', width: '10.7%', height: '5.5%' } },
     ],
   },
+  'j1-ch1-1-biotic-factors': {
+    src: j1Asset('approved/06-biotic.webp'),
+    alt: 'Approved Biotic Factors page with wolves, birds, plants and fish in a mountain river habitat',
+    patches: [
+      { id: 'biotic-title', zh: '生物因子', variant: 'title', style: { left: '4.5%', top: '14.5%', width: '40%', height: '13%' } },
+      { id: 'biotic-sentence-1', zh: '生物會與棲地中有生命和沒有生命的部分互動。', variant: 'copy', style: { left: '8.7%', top: '31%', width: '39%', height: '15%' } },
+      { id: 'biotic-sentence-2', zh: '棲地中有生命的部分稱為生物因子。', variant: 'copy', style: { left: '8.7%', top: '47%', width: '39%', height: '13%' } },
+      { id: 'biotic-sentence-3', zh: '棲地中的動物和植物都是生物因子。', variant: 'copy', style: { left: '8.7%', top: '60%', width: '39%', height: '12%' } },
+      { id: 'biotic-sentence-4', zh: '例如：狼、鳥、植物、種子和魚。', variant: 'copy', style: { left: '8.7%', top: '72%', width: '39%', height: '12%' } },
+    ],
+  },
 }
 
 const fallbackImageFor = (slide: LessonSlide) => {
