@@ -146,6 +146,15 @@ export function J1Visual({ slideId, assets }: { slideId: string; assets: J1Visua
 }
 
 export function J2Visual({ slideId }: { slideId: string }) {
+  if (slideId === 'j2-ch1-1-title') {
+    return <div className="courseware-j2-visual courseware-j2-section-intro" aria-hidden="true">
+      <div className="courseware-element-tile"><span>ELEMENTS</span><i/><i/><i/></div>
+      <b>→</b>
+      <div className="courseware-mini-atom courseware-mini-atom--large"><i/><i/><i/><span/></div>
+      <strong>ATOMS</strong>
+    </div>
+  }
+
   if (slideId.includes('elements-compounds-mixtures')) {
     return <div className="courseware-j2-visual courseware-j2-mixtures" aria-hidden="true">
       <div className="courseware-particle-vessel"><strong>COMPOUND</strong><i/><i/><i/><i/><i/><i/></div>
