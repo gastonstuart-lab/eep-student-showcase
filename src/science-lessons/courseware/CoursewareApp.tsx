@@ -266,7 +266,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
         <button className={`courseware-chinese-control ${artboard ? 'is-artboard-control' : ''} ${chineseEnabled ? 'is-on' : ''}`} type="button" onClick={toggleChinese} aria-pressed={chineseEnabled} aria-label="Toggle Traditional Chinese click support">中文</button>
-        <button className={`courseware-highlight-control ${artboard ? 'is-artboard-control' : ''}`} type="button" aria-label="Highlight key teaching points">💡<small>Highlight</small></button>
+        <button className={`courseware-highlight-control ${artboard ? 'is-artboard-control' : ''}`} type="button" aria-label="Highlight key teaching points (not enabled yet)" disabled>💡<small>Highlight</small></button>
         <button className={`courseware-fullscreen-control ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => void toggleFullscreen()} aria-label="Toggle full screen">⛶<small>Full Screen</small></button>
 
         <nav className="courseware-nav" aria-label="Lesson navigation">
