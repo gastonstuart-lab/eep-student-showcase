@@ -1,0 +1,96 @@
+name: Science Courseware Visual QA
+
+on:
+  push:
+    branches:
+      - science-courseware-rebuild
+    paths:
+      - 'src/science-lessons/courseware/**'
+      - 'src/science-lessons/ScienceLessonsApp.tsx'
+      - '.github/workflows/science-courseware-visual-qa.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: science-courseware-visual-qa
+  cancel-in-progress: true
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview server
+        run: |
+          nohup npx vite preview --host 127.0.0.1 --port 4173 > /tmp/courseware-preview.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/science-lessons.html?courseware=1 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/courseware-preview.log
+          exit 1
+      - name: Capture unified courseware proof
+        run: |
+          mkdir -p courseware-qa
+          cat > capture-courseware.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1440,height:900}, deviceScaleFactor:1});
+          await page.goto('http://127.0.0.1:4173/science-lessons.html?courseware=1', {waitUntil:'networkidle'});
+          await page.getByRole('heading',{name:'Science Courseware'}).waitFor();
+          await page.screenshot({path:'courseware-qa/00-sections.png', fullPage:true});
+
+          const j1 = page.getByRole('button',{name:/J1.*Chapter 1.*Section 1.*Living Things and the Environment/i});
+          await j1.click();
+          const stage = page.locator('.courseware-stage');
+          await stage.waitFor();
+          const nav = page.getByRole('navigation',{name:'Lesson navigation'});
+          await nav.waitFor();
+
+          async function snap(name){
+            await page.waitForTimeout(500);
+            await page.screenshot({path:'courseware-qa/'+name+'.png', fullPage:true});
+          }
+
+          await snap('01-page1-player');
+          await page.getByRole('button',{name:'Next'}).click();
+          await page.locator('.courseware-artboard img').waitFor();
+          await snap('02-page2-approved');
+
+          await page.getByRole('button',{name:'中文'}).click();
+          await page.getByRole('button',{name:/Show Traditional Chinese for question-full/i}).click();
+          await page.getByText('生物的環境會滿足哪些需求？').waitFor();
+          await snap('03-page2-chinese');
+          await page.getByRole('button',{name:'中文'}).click();
+
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('04-page3-approved');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('05-page4-player');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('06-page5-approved');
+
+          const navText = (await nav.innerText()).trim();
+          if (!navText.includes('5 / 15')) throw new Error('Permanent navigation did not persist through approved pages: '+navText);
+
+          await page.getByRole('button',{name:/Open teacher tools/i}).click();
+          await page.getByText('PowerPoint page 5').waitFor();
+          await snap('07-teacher-drawer');
+
+          await browser.close();
+          EOF
+          node capture-courseware.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: science-courseware-visual-qa
+          path: courseware-qa
+          retention-days: 7
