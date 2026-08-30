@@ -108,3 +108,20 @@
   .courseware-nav{bottom:1%;padding:5px}
   .courseware-nav button{width:40px;height:34px}
 }
+
+
+/* Quality-reset interaction layer: these behaviours belong to the player, not to individual page designs. */
+.courseware-source-text{cursor:zoom-in}
+.courseware-source-text mark{background:transparent;color:#c7e45a;font-weight:1000}
+.courseware-source-page--j2 .courseware-source-text mark{color:#c8b4ff}
+.courseware-highlight-control.is-on:not(.is-artboard-control){background:#f6ffd9;box-shadow:0 0 0 4px rgba(185,217,93,.28),0 9px 24px rgba(0,0,0,.18)}
+.courseware-highlight-control:disabled{cursor:not-allowed;opacity:.7}
+
+.courseware-focus-overlay{position:fixed;z-index:200;inset:0;display:grid;place-items:center;padding:5vw;background:rgba(0,12,18,.78);backdrop-filter:blur(10px)}
+.courseware-focus-card{position:relative;width:min(1050px,88vw);min-height:34vh;display:grid;align-content:center;gap:20px;padding:clamp(34px,5vw,70px);border-radius:34px;background:linear-gradient(145deg,rgba(5,42,42,.99),rgba(5,24,31,.99));box-shadow:0 40px 100px rgba(0,0,0,.55);border:1px solid rgba(199,228,90,.35)}
+.courseware-focus-card>button{position:absolute;right:20px;top:16px;width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:30px;cursor:pointer}
+.courseware-focus-card p{margin:0;color:#fff;font-size:clamp(34px,4.1vw,70px);line-height:1.08;font-weight:950;letter-spacing:-.035em;text-wrap:balance}
+.courseware-focus-card p[lang="zh-Hant"]{padding-top:18px;border-top:1px solid rgba(255,255,255,.14);color:#dff2a5;font-size:clamp(28px,3.2vw,54px);font-weight:850}
+
+.courseware-shell.is-fullscreen{position:fixed;z-index:150;inset:0;padding:0!important;background:#000}
+.courseware-shell.is-fullscreen .courseware-stage{width:min(100vw,177.778vh);height:min(100vh,56.25vw);max-width:none;box-shadow:none}
