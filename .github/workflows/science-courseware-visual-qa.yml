@@ -82,12 +82,12 @@ jobs:
           await snap('06-page5-approved');
           await page.getByRole('button',{name:'Next'}).click();
           await snap('07-page6-biotic');
-          await page.getByRole('button',{name:/Toggle highlights/i}).click();
-          await snap('08-page6-highlights-off');
-          await page.getByRole('button',{name:/Toggle highlights/i}).click();
 
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('09-page7-water');
+          await snap('08-page7-water-highlights-on');
+          await page.getByRole('button',{name:/Toggle highlights/i}).click();
+          await snap('09-page7-water-highlights-off');
+          await page.getByRole('button',{name:/Toggle highlights/i}).click();
           await page.getByRole('button',{name:'Next'}).click();
           await snap('10-page8-sunlight');
           await page.getByRole('button',{name:'Next'}).click();
