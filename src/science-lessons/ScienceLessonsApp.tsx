@@ -23,12 +23,17 @@ import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
 import { AquaticEnhancedSlide } from './AquaticEnhancedSlide'
 import { J1OpeningLessonPlayer } from './J1OpeningLessonPlayer'
 import { J2OpeningLessonPlayer } from './J2OpeningLessonPlayer'
+import { CoursewareApp } from './courseware/CoursewareApp'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
 const languageOptions: LanguageMode[] = ['English', 'Bilingual', '繁體中文']
 
 export function ScienceLessonsApp() {
+  if (window.location.search.includes('courseware=1')) {
+    return <CoursewareApp />
+  }
+
   if (window.location.search.includes('v2=biomes')) {
     return <BiomesV2Prototype />
   }
