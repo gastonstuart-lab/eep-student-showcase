@@ -166,19 +166,19 @@ export function J2Visual({ slideId }: { slideId: string }) {
   }
 
   if (slideId.includes('dalton')) {
-    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--dalton" aria-hidden="true"><span>1803</span><b/><strong>DALTON</strong><small>solid sphere</small></div>
+    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--dalton" aria-hidden="true"><b/><strong>DALTON</strong><small>atomic theory + model</small></div>
   }
 
   if (slideId.includes('thomson')) {
-    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--thomson" aria-hidden="true"><span>1897</span><b><i/><i/><i/><i/></b><strong>THOMSON</strong><small>electrons inside the atom</small></div>
+    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--thomson" aria-hidden="true"><b><i/><i/><i/><i/></b><strong>THOMSON</strong><small>electrons inside the atom</small></div>
   }
 
   if (slideId.includes('rutherford')) {
-    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--rutherford" aria-hidden="true"><span>1911</span><b><i/><i/><i/></b><strong>RUTHERFORD</strong><small>tiny positive nucleus</small></div>
+    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--rutherford" aria-hidden="true"><b><i/><i/><i/></b><strong>RUTHERFORD</strong><small>tiny positive nucleus</small></div>
   }
 
   if (slideId.includes('bohr')) {
-    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--bohr" aria-hidden="true"><span>1913</span><b><i/><i/><i/><em/><em/><em/></b><strong>BOHR</strong><small>specific energy levels</small></div>
+    return <div className="courseware-j2-visual courseware-j2-model courseware-j2-model--bohr" aria-hidden="true"><b><i/><i/><i/><em/><em/><em/></b><strong>BOHR</strong><small>specific energy levels</small></div>
   }
 
   if (slideId.includes('electron-cloud')) {
