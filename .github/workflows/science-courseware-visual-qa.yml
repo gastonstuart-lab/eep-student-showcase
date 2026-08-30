@@ -86,50 +86,69 @@ jobs:
           await snap('08-page6-highlights-off');
           await page.getByRole('button',{name:/Toggle highlights/i}).click();
 
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('09-page7-water');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('10-page8-sunlight');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('11-page9-oxygen');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('12-page10-temperature');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('13-page11-soil');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('14-page12-levels-question');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('15-page13-populations');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('16-page14-communities');
+          await page.getByRole('button',{name:'Next'}).click();
+          await snap('17-page15-ecosystems');
+
           const navText = (await nav.innerText()).trim();
-          if (!navText.includes('6 / 15')) throw new Error('Permanent navigation did not persist through approved pages: '+navText);
+          if (!navText.includes('15 / 15')) throw new Error('Permanent navigation did not persist through all J1 pages: '+navText);
 
           await page.getByRole('button',{name:/Toggle full screen/i}).click();
           await page.waitForTimeout(250);
           const fullClass = await page.locator('.courseware-shell').evaluate((el) => el.classList.contains('is-fullscreen'));
           if (!fullClass) throw new Error('Courseware fullscreen mode did not activate');
-          await snap('09-page6-fullscreen');
+          await snap('18-page15-fullscreen');
           await page.getByRole('button',{name:/Toggle full screen/i}).click();
 
           await page.getByRole('button',{name:/Open teacher tools/i}).click();
-          await page.getByText('PowerPoint page 6').waitFor();
-          await snap('10-teacher-drawer');
+          await page.getByText('PowerPoint page 15').waitFor();
+          await snap('19-teacher-drawer');
 
           await page.getByRole('button',{name:/Back to sections/i}).click();
           const j2 = page.getByRole('button',{name:/J2.*Chapter 1.*Atoms and Bonding.*Section 1.*Elements and Atoms/i});
           await j2.click();
           await page.locator('.courseware-source-page--j2').waitFor();
           if (await page.locator('.courseware-source-page--j2 > img').count()) throw new Error('J2 courseware must not reuse J1 habitat photography');
-          await snap('11-j2-chapter-title');
+          await snap('20-j2-chapter-title');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('12-j2-section-title');
+          await snap('21-j2-section-title');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('13-j2-question');
+          await snap('22-j2-question');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('14-j2-matter-blocks');
+          await snap('23-j2-matter-blocks');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('15-j2-compounds-mixtures');
+          await snap('24-j2-compounds-mixtures');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('16-j2-particles-elements');
+          await snap('25-j2-particles-elements');
           await page.getByRole('button',{name:'Next'}).click();
           await page.getByRole('button',{name:'Next'}).click();
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('17-j2-dalton');
+          await snap('26-j2-dalton');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('18-j2-thomson');
+          await snap('27-j2-thomson');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('19-j2-rutherford');
+          await snap('28-j2-rutherford');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('20-j2-bohr');
+          await snap('29-j2-bohr');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('21-j2-electron-cloud');
+          await snap('30-j2-electron-cloud');
           await page.getByRole('button',{name:'Next'}).click();
-          await snap('22-j2-modern-model');
+          await snap('31-j2-modern-model');
 
           await browser.close();
           EOF
