@@ -37,10 +37,17 @@
 .courseware-reveals{display:grid;gap:11px;margin-top:4px}
 .courseware-reveal{padding:11px 15px;border-left:5px solid #b9d95d;background:rgba(255,255,255,.08);border-radius:0 15px 15px 0;font-size:clamp(17px,1.4vw,24px);line-height:1.25;font-weight:750}
 
-.courseware-drawer-tab{position:absolute;z-index:40;left:0;top:44%;width:36px;height:78px;border:0;border-radius:0 18px 18px 0;background:rgba(6,35,38,.9);color:#fff;font-size:31px;cursor:pointer}
-.courseware-stage-tools{position:absolute;z-index:45;right:2.1%;top:2.3%;display:flex;gap:9px}
-.courseware-stage-tools button{min-width:58px;height:48px;border:1px solid rgba(8,34,35,.16);border-radius:999px;background:rgba(255,255,255,.95);color:#123b35;font-size:17px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.18);cursor:pointer}
-.courseware-stage-tools button.is-on{background:#b9d95d;color:#173023;box-shadow:0 0 0 4px rgba(185,217,93,.3)}
+.courseware-drawer-tab{position:absolute;z-index:40;left:0;top:42%;width:2.2%;height:12.5%;border:0;border-radius:0 18px 18px 0;background:rgba(6,35,38,.9);color:#fff;font-size:31px;cursor:pointer}
+.courseware-chinese-control,.courseware-highlight-control,.courseware-fullscreen-control{position:absolute;z-index:45;border:1px solid rgba(8,34,35,.16);background:rgba(255,255,255,.96);color:#123b35;box-shadow:0 9px 24px rgba(0,0,0,.18);cursor:pointer;font-weight:1000}
+.courseware-chinese-control{right:1.7%;top:2.3%;width:8.6%;height:7.1%;border-radius:999px;font-size:clamp(12px,1.1vw,18px)}
+.courseware-highlight-control{right:10.5%;bottom:2%;width:7.3%;height:12.4%;border-radius:50%;display:grid;place-items:center;align-content:center;font-size:clamp(16px,1.4vw,24px);line-height:1}
+.courseware-fullscreen-control{right:2%;bottom:2%;width:7.3%;height:12.4%;border-radius:50%;display:grid;place-items:center;align-content:center;font-size:clamp(16px,1.4vw,24px);line-height:1}
+.courseware-highlight-control small,.courseware-fullscreen-control small{display:block;margin-top:3px;font-size:clamp(7px,.58vw,10px);font-weight:800}
+.courseware-chinese-control.is-on{background:#b9d95d;color:#173023;box-shadow:0 0 0 4px rgba(185,217,93,.3)}
+.courseware-highlight-control:disabled{cursor:not-allowed;opacity:.72}
+.courseware-drawer-tab.is-artboard-control,.courseware-chinese-control.is-artboard-control,.courseware-highlight-control.is-artboard-control,.courseware-fullscreen-control.is-artboard-control{background:transparent;color:transparent;border-color:transparent;box-shadow:none;opacity:1}
+.courseware-drawer-tab.is-artboard-control:focus-visible,.courseware-chinese-control.is-artboard-control:focus-visible,.courseware-highlight-control.is-artboard-control:focus-visible,.courseware-fullscreen-control.is-artboard-control:focus-visible{outline:4px solid rgba(185,217,93,.9);outline-offset:2px}
+.courseware-byline{font-size:clamp(16px,1.35vw,23px);font-weight:900;letter-spacing:.04em;color:#dff2a5}
 .courseware-nav{position:absolute;z-index:50;left:50%;bottom:2.1%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px;border-radius:999px;background:rgba(3,25,28,.88);backdrop-filter:blur(12px);box-shadow:0 10px 34px rgba(0,0,0,.25)}
 .courseware-nav button{width:50px;height:42px;border:0;border-radius:999px;background:#fff;color:#103b35;font-size:20px;font-weight:1000;cursor:pointer}
 .courseware-nav button:disabled{opacity:.35;cursor:not-allowed}
@@ -83,7 +90,8 @@
   .courseware-shell{padding:0;background:#000}
   .courseware-stage{width:100vw;max-width:none}
   .courseware-source-page__copy{left:3%;top:7%;width:52%;gap:9px}
-  .courseware-stage-tools button{min-width:43px;height:38px;font-size:13px}
+  .courseware-chinese-control{font-size:11px}
+  .courseware-highlight-control small,.courseware-fullscreen-control small{display:none}
   .courseware-nav{bottom:1%;padding:5px}
   .courseware-nav button{width:40px;height:34px}
 }
