@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { CoursewareApp } from '../science-lessons/courseware/CoursewareApp'
+import { CoursewareApp, CoursewareLessonPlayer } from '../science-lessons/courseware/CoursewareApp'
+import { coursewareSections, getCoursewareLesson } from '../science-lessons/courseware/coursewareManifest'
 
 const createClass = (name: string) => {
   fireEvent.change(screen.getByLabelText('New class'), { target: { value: name } })
@@ -62,5 +63,29 @@ describe('Science courseware class sessions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '中文' }))
     expect(screen.getByLabelText('Traditional Chinese support')).toBeInTheDocument()
+  })
+
+  it('clamps stale restored reveal progress to the current page artwork', () => {
+    const section = coursewareSections[0]
+    render(
+      <CoursewareLessonPlayer
+        lesson={getCoursewareLesson(section)}
+        section={section}
+        className="Current session"
+        initialProgress={{
+          slideIndex: 0,
+          revealIndex: 99,
+          chineseEnabled: false,
+          highlightsEnabled: true,
+          mode: 'interactive',
+        }}
+        onProgress={() => undefined}
+        onExit={() => undefined}
+      />,
+    )
+
+    expect(screen.getByLabelText('Page 1 of 15')).toHaveTextContent('reveal 1/1')
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByLabelText('Page 2 of 15')).toBeInTheDocument()
   })
 })

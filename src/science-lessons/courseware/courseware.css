@@ -80,12 +80,12 @@
 
 .courseware-drawer{position:fixed;z-index:100;left:16px;top:16px;bottom:16px;width:min(390px,88vw);padding:18px;border-radius:24px;background:rgba(3,21,28,.985);box-shadow:0 30px 80px rgba(0,0,0,.55);transform:translateX(calc(-100% - 34px));transition:transform .2s ease;overflow:auto}
 .courseware-drawer.is-open{transform:translateX(0)}
-.courseware-drawer header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.courseware-drawer header{position:sticky;z-index:3;top:-18px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:-18px -18px 0;padding:18px 18px 10px;background:rgba(3,21,28,.985)}
 .courseware-drawer header div{display:grid;gap:2px}
 .courseware-drawer header strong{font-size:22px}
 .courseware-drawer header span{font-size:12px;color:#8bcbd2}
 .courseware-drawer header button{border:0;background:transparent;color:#fff;font-size:27px;cursor:pointer}
-.courseware-drawer__exit{width:100%;margin:14px 0 2px;border:0;border-radius:12px;padding:11px 12px;background:rgba(185,217,93,.16);color:#eaf7d2;font-weight:900;text-align:left;cursor:pointer}
+.courseware-drawer__exit{position:sticky;z-index:2;top:55px;width:100%;margin:4px 0 2px;border:0;border-radius:12px;padding:11px 12px;background:rgba(29,65,52,.98);color:#eaf7d2;font-weight:900;text-align:left;cursor:pointer}
 .courseware-drawer section{margin:11px 0;padding:14px;border-radius:17px;background:rgba(255,255,255,.07)}
 .courseware-drawer section>strong{display:block;margin-bottom:8px;color:#b9e5e9;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
 .courseware-drawer p{margin:5px 0;color:#e2efef;line-height:1.4}

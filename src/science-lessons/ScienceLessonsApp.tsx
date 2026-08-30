@@ -21,19 +21,16 @@ import { BiomesV2Prototype } from './presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from './presentation-v2/PresentationShell'
 import { biomesV2SceneBySlideId } from './presentation-v2/biomesV2Scenes'
 import { AquaticEnhancedSlide } from './AquaticEnhancedSlide'
-import { J1OpeningLessonPlayer } from './J1OpeningLessonPlayer'
-import { J2OpeningLessonPlayer } from './J2OpeningLessonPlayer'
-import { CoursewareApp } from './courseware/CoursewareApp'
+import { CoursewareLessonPlayer } from './courseware/CoursewareApp'
+import { findCoursewareSection } from './courseware/coursewareManifest'
+import { defaultCoursewareProgress, type CoursewareProgress } from './courseware/coursewareSession'
 
 type Screen = 'home' | 'library' | 'viewer' | 'editor'
 
 const languageOptions: LanguageMode[] = ['English', 'Bilingual', '繁體中文']
+const coursewareProgressStorageKey = 'science-lessons-courseware-progress-v1'
 
 export function ScienceLessonsApp() {
-  if (window.location.search.includes('courseware=1')) {
-    return <CoursewareApp />
-  }
-
   if (window.location.search.includes('v2=biomes')) {
     return <BiomesV2Prototype />
   }
@@ -49,13 +46,23 @@ function ScienceLessonsWorkspace() {
   const [language, setLanguage] = useState<LanguageMode>('English')
 
   const lesson = findLesson(lessonId)
+  const coursewareSection = lesson.presentation?.kind === 'courseware'
+    ? findCoursewareSection(lesson.presentation.sectionId)
+    : undefined
 
-  if (screen === 'viewer' && lesson.id === 'j1-ch1-1-habitats-ecosystems-opening') {
-    return <J1OpeningLessonPlayer lesson={lesson} onBack={() => setScreen('library')} />
-  }
-
-  if (screen === 'viewer' && lesson.id === 'j2-ch1-1-elements-atoms-opening') {
-    return <J2OpeningLessonPlayer lesson={lesson} onBack={() => setScreen('library')} />
+  if (screen === 'viewer' && coursewareSection) {
+    return (
+      <CoursewareLessonPlayer
+        key={coursewareSection.id}
+        lesson={lesson}
+        section={coursewareSection}
+        className="Current session"
+        initialProgress={loadCoursewareProgress(coursewareSection.id)}
+        onProgress={(progress) => saveCoursewareProgress(coursewareSection.id, progress)}
+        onExit={() => setScreen('library')}
+        exitLabel="Back to lesson library"
+      />
+    )
   }
 
   const openLibrary = (nextYear = year, nextSemester = semester) => {
@@ -107,6 +114,24 @@ function ScienceLessonsWorkspace() {
       )}
     </div>
   )
+}
+
+function loadCoursewareProgress(sectionId: string): CoursewareProgress {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(coursewareProgressStorageKey) ?? '{}') as Record<string, CoursewareProgress>
+    return stored[sectionId] ?? defaultCoursewareProgress()
+  } catch {
+    return defaultCoursewareProgress()
+  }
+}
+
+function saveCoursewareProgress(sectionId: string, progress: CoursewareProgress) {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(coursewareProgressStorageKey) ?? '{}') as Record<string, CoursewareProgress>
+    window.localStorage.setItem(coursewareProgressStorageKey, JSON.stringify({ ...stored, [sectionId]: progress }))
+  } catch {
+    // Local progress must never block a teaching session.
+  }
 }
 
 function AppHeader({ screen, onNavigate }: { screen: Screen; onNavigate: (screen: Screen) => void }) {

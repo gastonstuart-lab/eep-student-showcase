@@ -1,21 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { LessonSlide } from '../types/lesson'
+import type { LessonSlide, ScienceLesson } from '../types/lesson'
 import { coursewareArtwork, type CoursewareArtwork } from './coursewareArtwork'
 import { FocusOverlay, type FocusContent } from './CoursewareInteractions'
 import { coursewareSections, getCoursewareLesson, type CoursewareSection } from './coursewareManifest'
+import { defaultCoursewareProgress, type CoursewareProgress } from './coursewareSession'
 import { coursewareSourcePages, type CoursewareSourcePage } from './coursewareSourcePages'
 import './courseware.css'
 
 type TeachingMode = 'simple' | 'interactive'
-
-type CoursewareProgress = {
-  slideIndex: number
-  revealIndex: number
-  chineseEnabled: boolean
-  highlightsEnabled: boolean
-  mode: TeachingMode
-}
 
 type TeacherClass = {
   id: string
@@ -25,14 +18,6 @@ type TeacherClass = {
 }
 
 const STORAGE_KEY = 'science-courseware-classes-v1'
-
-const defaultProgress = (): CoursewareProgress => ({
-  slideIndex: 0,
-  revealIndex: 0,
-  chineseEnabled: false,
-  highlightsEnabled: true,
-  mode: 'simple',
-})
 
 const loadClasses = (): TeacherClass[] => {
   try {
@@ -131,23 +116,31 @@ function UnfinishedPage({ slide, sourcePage }: { slide: LessonSlide; sourcePage?
   )
 }
 
-function CoursewarePlayer({
+export function CoursewareLessonPlayer({
+  lesson,
   section,
   className,
   initialProgress,
   onProgress,
   onExit,
+  exitLabel = 'Back to classes',
 }: {
+  lesson: ScienceLesson
   section: CoursewareSection
   className: string
   initialProgress: CoursewareProgress
   onProgress: (progress: CoursewareProgress) => void
   onExit: () => void
+  exitLabel?: string
 }) {
-  const lesson = useMemo(() => getCoursewareLesson(section), [section])
   const safeInitialIndex = Math.min(Math.max(0, initialProgress.slideIndex), lesson.slides.length - 1)
+  const initialSlide = lesson.slides[safeInitialIndex] ?? lesson.slides[0]
+  const initialArtwork = initialSlide ? coursewareArtwork[initialSlide.id] : undefined
+  const initialRevealCount = initialProgress.mode === 'interactive' && initialArtwork
+    ? Math.max(0, ...initialArtwork.revealBlocks.map((block) => block.stage))
+    : 0
   const [slideIndex, setSlideIndex] = useState(safeInitialIndex)
-  const [revealIndex, setRevealIndex] = useState(initialProgress.revealIndex)
+  const [revealIndex, setRevealIndex] = useState(Math.min(Math.max(0, initialProgress.revealIndex), initialRevealCount))
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chineseEnabled, setChineseEnabled] = useState(initialProgress.chineseEnabled)
   const [highlightsEnabled, setHighlightsEnabled] = useState(initialProgress.highlightsEnabled)
@@ -230,8 +223,13 @@ function CoursewarePlayer({
       setIsFullscreen(false)
       return
     }
-    setIsFullscreen(true)
-    await shellRef.current?.requestFullscreen?.().catch(() => undefined)
+    if (!shellRef.current?.requestFullscreen) return
+    try {
+      await shellRef.current.requestFullscreen()
+      setIsFullscreen(true)
+    } catch {
+      setIsFullscreen(false)
+    }
   }
 
   const jumpTo = (index: number) => {
@@ -278,7 +276,7 @@ function CoursewarePlayer({
           <div><strong>Teacher tools</strong><span>{className} · {section.year}</span></div>
           <button type="button" onClick={() => setDrawerOpen(false)} aria-label="Close teacher tools">×</button>
         </header>
-        <button className="courseware-drawer__exit" type="button" onClick={onExit}>← Back to classes</button>
+        <button className="courseware-drawer__exit" type="button" onClick={onExit}>← {exitLabel}</button>
         <section className="courseware-drawer__mode">
           <strong>Teaching mode</strong>
           <button className={mode === 'simple' ? 'is-current' : ''} type="button" onClick={() => setTeachingMode('simple')}>Simple</button>
@@ -346,12 +344,15 @@ export function CoursewareApp() {
   }
 
   if (activeSection && selectedClass) {
+    const lesson = getCoursewareLesson(activeSection)
+
     return (
-      <CoursewarePlayer
+      <CoursewareLessonPlayer
         key={`${selectedClass.id}-${activeSection.id}`}
+        lesson={lesson}
         section={activeSection}
         className={selectedClass.name}
-        initialProgress={selectedClass.progress[activeSection.id] ?? defaultProgress()}
+        initialProgress={selectedClass.progress[activeSection.id] ?? defaultCoursewareProgress()}
         onProgress={saveActiveProgress}
         onExit={() => setActiveSectionId(null)}
       />

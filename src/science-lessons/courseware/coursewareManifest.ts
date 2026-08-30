@@ -38,3 +38,6 @@ export const coursewareSections: CoursewareSection[] = [
 ]
 
 export const getCoursewareLesson = (section: CoursewareSection): ScienceLesson => findLesson(section.lessonId)
+
+export const findCoursewareSection = (sectionId: string): CoursewareSection | undefined =>
+  coursewareSections.find((section) => section.id === sectionId)

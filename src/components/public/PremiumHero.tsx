@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { CSSProperties } from 'react'
+import { isStaticDocumentTarget } from './staticDocumentTarget'
 
 export interface PremiumHeroAction {
   label: string
@@ -66,7 +67,7 @@ export function PremiumHero({
                   <span>{ctaLabel(action.label)}</span>
                 </a>
               ) : (
-                <Link className={className} key={`${action.label}-${action.to}`} to={action.to}>
+                <Link className={className} key={`${action.label}-${action.to}`} reloadDocument={isStaticDocumentTarget(action.to)} to={action.to}>
                   <span>{ctaLabel(action.label)}</span>
                 </Link>
               )

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { isStaticDocumentTarget } from './staticDocumentTarget'
 
 const ctaLabel = (label: string) => (label.includes('→') ? label : `${label} →`)
 
@@ -35,14 +36,14 @@ export function PremiumImageCard({
       </div>
       <div className="premium-image-card-actions">
         {actionTo ? (
-          <Link className="premium-card-cta" to={actionTo}>
+          <Link className="premium-card-cta" reloadDocument={isStaticDocumentTarget(actionTo)} to={actionTo}>
             {ctaLabel(actionLabel)}
           </Link>
         ) : (
           <span className="premium-card-cta is-static">{ctaLabel(actionLabel)}</span>
         )}
         {secondaryLabel && secondaryTo && (
-          <Link className="premium-card-cta premium-card-cta-secondary" to={secondaryTo}>
+          <Link className="premium-card-cta premium-card-cta-secondary" reloadDocument={isStaticDocumentTarget(secondaryTo)} to={secondaryTo}>
             {ctaLabel(secondaryLabel)}
           </Link>
         )}

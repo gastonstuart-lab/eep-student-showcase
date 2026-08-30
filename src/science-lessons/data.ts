@@ -2,6 +2,7 @@ export type {
   LanguageMode,
   LessonBiomeKey,
   LessonMedia,
+  LessonPresentation,
   LessonResource,
   LessonResourceFormat,
   LessonResourceType,

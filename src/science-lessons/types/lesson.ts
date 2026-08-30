@@ -19,6 +19,11 @@ export type LessonVisualOrigin =
   | 'temporary'
 export type RevealMode = 'all-at-once' | 'step-by-step'
 
+export type LessonPresentation = {
+  kind: 'courseware'
+  sectionId: string
+}
+
 export interface LocalizedText {
   en: string
   zhHant?: string
@@ -116,6 +121,7 @@ export interface ScienceLesson {
   sourceReferences: LessonSourceReference[]
   slides: LessonSlide[]
   resources: LessonResource[]
+  presentation?: LessonPresentation
 }
 
 export interface ScienceUnit {

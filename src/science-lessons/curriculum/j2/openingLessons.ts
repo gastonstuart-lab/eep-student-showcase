@@ -295,5 +295,6 @@ export const j2OpeningLessons: ScienceLesson[] = [
     sourceReferences,
     slides,
     resources,
+    presentation: { kind: 'courseware', sectionId: 'j2-ch1-s1' },
   },
 ]

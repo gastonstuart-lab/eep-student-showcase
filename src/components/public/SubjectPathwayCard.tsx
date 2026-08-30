@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { isStaticDocumentTarget } from './staticDocumentTarget'
 
 const ctaLabel = (label: string) => (label.includes('→') ? label : `${label} →`)
 
@@ -20,7 +21,7 @@ export function SubjectPathwayCard({
   theme: 'science' | 'language' | 'performance' | 'social'
 }) {
   return (
-    <Link className={`premium-subject-card premium-subject-${theme}`} to={to}>
+    <Link className={`premium-subject-card premium-subject-${theme}`} reloadDocument={isStaticDocumentTarget(to)} to={to}>
       <img className="premium-subject-image" src={image} alt={imageAlt} loading="lazy" />
       <div className="premium-subject-body">
         <span className="programme-kicker">Subject Hub</span>
