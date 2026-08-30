@@ -66,11 +66,11 @@ jobs:
           await page.locator('.courseware-artboard img').waitFor();
           await snap('02-page2-approved');
 
-          await page.getByRole('button',{name:'中文'}).click();
+          await page.getByRole('button',{name:/Toggle Traditional Chinese click support/i}).click();
           await page.getByRole('button',{name:/Show Traditional Chinese for question-full/i}).click();
           await page.getByText('生物的環境會滿足哪些需求？').waitFor();
           await snap('03-page2-chinese');
-          await page.getByRole('button',{name:'中文'}).click();
+          await page.getByRole('button',{name:/Toggle Traditional Chinese click support/i}).click();
 
           await page.getByRole('button',{name:'Next'}).click();
           await snap('04-page3-approved');
