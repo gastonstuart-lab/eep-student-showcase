@@ -308,3 +308,11 @@
 .courseware-j1-community span img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .courseware-j1-community span::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(180deg,transparent,rgba(3,31,38,.88))}
 .courseware-j1-community span b{position:absolute;z-index:2;left:0;right:0;bottom:9px;color:#fff;font-size:clamp(11px,1vw,16px);letter-spacing:.03em}
+
+
+.courseware-j1-title-collage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1.12fr .88fr;gap:12px;right:3%;top:8%;height:82%;width:47%}
+.courseware-j1-title-collage figure{position:relative;margin:0;overflow:hidden;border-radius:22px;border:4px solid rgba(255,255,255,.86);box-shadow:0 18px 38px rgba(0,0,0,.28)}
+.courseware-j1-title-collage figure:first-child{grid-column:1/-1}
+.courseware-j1-title-collage img{width:100%;height:100%;object-fit:cover}
+.courseware-j1-title-collage span{position:absolute;left:10px;bottom:9px;padding:6px 9px;border-radius:999px;background:rgba(3,30,38,.82);color:#fff;font-size:11px;font-weight:1000;letter-spacing:.09em}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-title"]>img{filter:saturate(.72) brightness(.55);object-position:left center}
