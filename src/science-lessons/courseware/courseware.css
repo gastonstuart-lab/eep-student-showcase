@@ -26,6 +26,19 @@
 .courseware-source-page{overflow:hidden;background:#153536}
 .courseware-source-page>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.92)}
 .courseware-source-page__wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,34,33,.97) 0 47%,rgba(3,29,28,.42) 62%,rgba(3,25,26,.08) 100%)}
+.courseware-source-page--j2{background:radial-gradient(circle at 78% 48%,#49387e 0,#18284e 28%,#0b1731 64%,#06101f 100%)}
+.courseware-source-page--j2 .courseware-source-page__wash{background:linear-gradient(90deg,rgba(6,15,34,.97) 0 48%,rgba(8,18,39,.52) 64%,rgba(8,18,39,.08) 100%)}
+.courseware-source-page--j2 .courseware-kicker,.courseware-source-page--j2 .courseware-byline{color:#d8c7ff}
+.courseware-source-page--j2 .courseware-reveal{border-left-color:#a887ff}
+.courseware-atom-scene{position:absolute;right:3%;top:8%;width:48%;height:82%;display:grid;place-items:center;filter:drop-shadow(0 25px 50px rgba(0,0,0,.32))}
+.courseware-atom-scene b{position:absolute;width:26%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 32%,#fff 0 6%,#d9b7ff 7% 15%,#7f5bd9 38%,#402b83 72%,#241b5c 100%);box-shadow:0 0 55px rgba(168,135,255,.48)}
+.courseware-atom-scene i{position:absolute;width:78%;height:34%;border:3px solid rgba(220,207,255,.74);border-radius:50%;transform:rotate(0deg)}
+.courseware-atom-scene i:nth-child(2){transform:rotate(60deg)}
+.courseware-atom-scene i:nth-child(3){transform:rotate(120deg)}
+.courseware-atom-scene span{position:absolute;width:4.6%;aspect-ratio:1;border-radius:50%;background:#e7dcff;box-shadow:0 0 22px rgba(231,220,255,.9)}
+.courseware-atom-scene span:nth-of-type(1){right:9%;top:44%}
+.courseware-atom-scene span:nth-of-type(2){left:19%;top:19%}
+.courseware-atom-scene span:nth-of-type(3){left:30%;bottom:12%}
 .courseware-source-page__copy{position:absolute;z-index:4;left:4%;top:10%;width:43%;display:grid;gap:18px;align-content:start}
 .courseware-kicker{color:#c6e46e;font-size:clamp(14px,1.25vw,20px);font-weight:1000;letter-spacing:.07em;text-transform:uppercase}
 .courseware-source-text{display:block;width:100%;border:0;padding:0;background:transparent;color:#fff;text-align:left;font:inherit;cursor:default}
