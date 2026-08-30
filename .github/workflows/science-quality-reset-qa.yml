@@ -53,7 +53,7 @@ jobs:
           await bioticText.waitFor();
           await bioticText.click();
           await page.getByRole('dialog',{name:'Enlarged teaching text'}).waitFor();
-          await page.getByText('An organism interacts with both the living and nonliving parts of its habitat.').waitFor();
+          await page.getByRole('dialog',{name:'Enlarged teaching text'}).getByText('An organism interacts with both the living and nonliving parts of its habitat.').waitFor();
           await page.getByRole('button',{name:'Close enlarged text'}).click();
 
           const visibleBefore = await page.locator('.courseware-reveals--source > div').count();
