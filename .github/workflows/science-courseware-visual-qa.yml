@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - science-courseware-rebuild
+      - science-courseware-production
+      - science-live-preview
     paths:
       - 'src/science-lessons/courseware/**'
       - 'src/science-lessons/ScienceLessonsApp.tsx'
