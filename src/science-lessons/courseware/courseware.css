@@ -291,3 +291,20 @@
   .courseware-photo-equation{gap:4px;padding:8px}
   .courseware-j1-temperature{grid-template-columns:1fr 42px 1fr}
 }
+
+
+/* Real imagery inside the J1 conceptual diagrams. */
+.courseware-j1-temperature .is-hot,.courseware-j1-temperature .is-cold{position:relative;overflow:hidden;padding:0}
+.courseware-j1-temperature .is-hot img,.courseware-j1-temperature .is-cold img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.courseware-j1-temperature .is-hot::after,.courseware-j1-temperature .is-cold::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.48))}
+.courseware-j1-temperature .is-hot strong,.courseware-j1-temperature .is-cold strong{position:relative;z-index:2;padding:8px 15px;border-radius:999px;background:rgba(3,31,37,.8);color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+
+.courseware-j1-population>div{width:72%}
+.courseware-j1-population img{width:100%;aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:center;border:4px solid rgba(250,253,250,.9);box-shadow:0 12px 25px rgba(0,0,0,.28)}
+.courseware-j1-population i{display:none}
+
+.courseware-j1-community>div{width:76%}
+.courseware-j1-community span{position:relative;padding:0;overflow:hidden;min-height:118px;background:#eef6ef}
+.courseware-j1-community span img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.courseware-j1-community span::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(180deg,transparent,rgba(3,31,38,.88))}
+.courseware-j1-community span b{position:absolute;z-index:2;left:0;right:0;bottom:9px;color:#fff;font-size:clamp(11px,1vw,16px);letter-spacing:.03em}
