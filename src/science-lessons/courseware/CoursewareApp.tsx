@@ -21,6 +21,14 @@ type ApprovedArtboard = {
 
 const j1Asset = (name: string) => `${import.meta.env.BASE_URL}science-lessons/j1-opening/${name}`
 
+const J1_SCENE_ASSETS = {
+  pond: j1Asset('pond.webp'),
+  polar: j1Asset('polar.webp'),
+  elephants: j1Asset('elephants.webp'),
+  coral: j1Asset('coral.webp'),
+  wolf: j1Asset('wolf-stream.webp'),
+}
+
 const APPROVED_ARTBOARDS: Record<string, ApprovedArtboard> = {
   'j1-ch1-1-question-needs': {
     src: j1Asset('approved/02-question.webp'),
@@ -68,6 +76,7 @@ const APPROVED_ARTBOARDS: Record<string, ApprovedArtboard> = {
 
 const fallbackImageFor = (slide: LessonSlide) => {
   if (slide.layout === 'question') return j1Asset('pond.webp')
+  if (slide.id.includes('sunlight')) return j1Asset('pond.webp')
   if (slide.id.includes('water') || slide.id.includes('ecosystem') || slide.id.includes('community')) return j1Asset('pond.webp')
   if (slide.id.includes('biotic') || slide.id.includes('population')) return j1Asset('wolf-stream.webp')
   if (slide.id.includes('oxygen')) return j1Asset('coral.webp')
@@ -119,7 +128,7 @@ function SourcePage({
       {year === 'J1'
         ? <>
             <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
-            <J1Visual slideId={slide.id} />
+            <J1Visual slideId={slide.id} assets={J1_SCENE_ASSETS} />
           </>
         : <J2Visual slideId={slide.id} />}
       <div className="courseware-source-page__wash" />
