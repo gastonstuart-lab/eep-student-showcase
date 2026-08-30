@@ -108,3 +108,111 @@
   .courseware-nav{bottom:1%;padding:5px}
   .courseware-nav button{width:40px;height:34px}
 }
+
+
+/* Production courseware refinements: page-first navigation, true text highlights, and page-specific teaching scenes. */
+.courseware-source-text mark{background:transparent;color:#b9d95d;font-weight:1000}
+.courseware-page-badge{position:absolute;z-index:5;left:3.2%;top:4.5%;display:grid;place-items:center;width:clamp(48px,5vw,76px);aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#b4d231,#76960b);color:#fff;font-size:clamp(24px,2.6vw,42px);font-weight:1000;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.courseware-source-page--j1::before{content:"";position:absolute;z-index:2;left:-12%;top:-12%;width:65%;height:124%;border-radius:0 53% 53% 0;background:radial-gradient(circle at 70% 45%,rgba(8,59,51,.95),rgba(2,33,34,.99) 63%,rgba(1,23,27,.995));box-shadow:22px 0 55px rgba(0,0,0,.16)}
+.courseware-source-page--j1 .courseware-source-page__wash{z-index:1;background:linear-gradient(90deg,rgba(2,30,32,.2),rgba(2,30,32,.06) 55%,rgba(2,30,32,.04))}
+.courseware-source-page--j1 .courseware-source-page__copy{z-index:6;left:5%;top:16%;width:43%;gap:15px}
+.courseware-source-page--j1 .courseware-kicker{color:#c7e45a}
+.courseware-source-page--j1 .courseware-title{font-size:clamp(43px,4.65vw,80px)}
+.courseware-source-page--j1 .courseware-question{font-size:clamp(40px,4.45vw,76px);line-height:.99}
+.courseware-source-page--j1 .courseware-byline{color:#c7e45a}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-title"] .courseware-source-page__copy{top:19%;width:45%}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-title"] .courseware-page-badge{display:none}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-question-parts"] .courseware-source-page__copy{top:15%;width:46%}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-question-parts"]::before{width:61%}
+
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"]::before{width:58%;border-radius:0 48% 48% 0;background:radial-gradient(circle at 70% 45%,rgba(6,57,46,.98),rgba(1,32,31,.995) 66%)}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-source-page__copy{top:13%;width:44%;gap:12px}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-kicker:empty{display:none}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-title{font-size:clamp(46px,4.7vw,80px);margin-bottom:8px}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-reveals--source{gap:9px}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-reveals--source>div{position:relative;padding-left:46px}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-reveals--source>div::before{content:"";position:absolute;left:0;top:8px;width:31px;height:31px;border-radius:50%;background:rgba(162,192,55,.23);box-shadow:inset 0 0 0 1px rgba(190,220,84,.22)}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-reveals--source>div::after{content:"⌁";position:absolute;left:8px;top:5px;color:#a9ca3f;font-size:20px;transform:rotate(-26deg)}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-body,
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"] .courseware-reveal{padding:0;border:0;background:transparent;border-radius:0;font-size:clamp(16px,1.55vw,27px);line-height:1.22}
+.courseware-source-page--j1[data-slide-id="j1-ch1-1-biotic-factors"]>img{object-position:62% center}
+
+/* J2 uses a family of page-specific teaching visuals rather than one repeated atom. */
+.courseware-j2-visual{position:absolute;z-index:1;right:2.5%;top:8%;width:49%;height:82%;display:grid;place-items:center;color:#f5f1ff}
+.courseware-j2-blocks{perspective:800px;display:block}
+.courseware-j2-blocks span{position:absolute;display:grid;place-items:center;width:31%;height:22%;border-radius:18px;background:linear-gradient(145deg,rgba(203,184,255,.96),rgba(113,76,206,.96));color:#111b3b;font-size:clamp(16px,1.8vw,29px);font-weight:1000;box-shadow:0 24px 45px rgba(0,0,0,.3),inset 0 0 0 2px rgba(255,255,255,.28)}
+.courseware-j2-blocks span:nth-child(1){left:9%;bottom:13%;transform:rotate(-5deg)}
+.courseware-j2-blocks span:nth-child(2){left:36%;bottom:34%;transform:rotate(5deg)}
+.courseware-j2-blocks span:nth-child(3){right:8%;bottom:13%;transform:rotate(-3deg)}
+.courseware-j2-blocks i{position:absolute;width:7%;aspect-ratio:1;border-radius:50%;background:#efe8ff;box-shadow:0 0 26px rgba(213,190,255,.8)}
+.courseware-j2-blocks i:nth-of-type(1){left:13%;top:17%}.courseware-j2-blocks i:nth-of-type(2){left:35%;top:8%}.courseware-j2-blocks i:nth-of-type(3){right:22%;top:17%}.courseware-j2-blocks i:nth-of-type(4){right:5%;top:35%}.courseware-j2-blocks i:nth-of-type(5){left:48%;top:29%}
+
+.courseware-j2-mixtures{grid-template-columns:1fr 1fr;gap:7%;padding:8% 3%;box-sizing:border-box}
+.courseware-particle-vessel{position:relative;width:100%;height:72%;border:5px solid rgba(229,219,255,.8);border-top:0;border-radius:0 0 32px 32px;background:linear-gradient(180deg,rgba(102,73,184,.12),rgba(98,67,174,.38));overflow:hidden;box-shadow:0 22px 45px rgba(0,0,0,.3)}
+.courseware-particle-vessel::before{content:"";position:absolute;left:-5%;right:-5%;top:-2%;height:14%;border:5px solid rgba(229,219,255,.8);border-radius:50%}
+.courseware-particle-vessel strong{position:absolute;left:50%;bottom:-45px;transform:translateX(-50%);font-size:clamp(12px,1.1vw,18px);letter-spacing:.08em}
+.courseware-particle-vessel i{position:absolute;width:17%;aspect-ratio:1;border-radius:50%;background:#e7d8ff;box-shadow:16px 0 0 #8dd3ff}
+.courseware-particle-vessel i:nth-of-type(1){left:14%;top:26%}.courseware-particle-vessel i:nth-of-type(2){right:16%;top:22%}.courseware-particle-vessel i:nth-of-type(3){left:37%;top:45%}.courseware-particle-vessel i:nth-of-type(4){left:13%;bottom:16%}.courseware-particle-vessel i:nth-of-type(5){right:13%;bottom:13%}.courseware-particle-vessel i:nth-of-type(6){left:41%;bottom:5%}
+.courseware-particle-vessel.is-mixture i:nth-of-type(odd){background:#ffd27e;box-shadow:none}.courseware-particle-vessel.is-mixture i:nth-of-type(even){background:#9ad8ff;box-shadow:none}
+
+.courseware-j2-particle-zoom{display:flex;align-items:center;justify-content:center;gap:3%;padding:0 4%;box-sizing:border-box}
+.courseware-j2-particle-zoom>b{font-size:clamp(30px,3vw,52px);color:#ab8cff}
+.courseware-matter-block,.courseware-element-block{display:grid;place-items:center;width:27%;height:24%;border-radius:22px;background:linear-gradient(145deg,#54428d,#9b7bea);font-size:clamp(14px,1.4vw,23px);font-weight:1000;box-shadow:0 20px 38px rgba(0,0,0,.3)}
+.courseware-mini-atom{position:relative;width:25%;aspect-ratio:1;display:grid;place-items:center}
+.courseware-mini-atom span{width:24%;aspect-ratio:1;border-radius:50%;background:#f4eaff;box-shadow:0 0 30px #a887ff}
+.courseware-mini-atom i{position:absolute;width:92%;height:35%;border:3px solid rgba(229,218,255,.78);border-radius:50%}
+.courseware-mini-atom i:nth-child(2){transform:rotate(60deg)}.courseware-mini-atom i:nth-child(3){transform:rotate(120deg)}
+
+.courseware-j2-model{align-content:center;gap:14px;text-align:center}
+.courseware-j2-model>span{padding:8px 16px;border-radius:999px;background:rgba(167,135,255,.2);color:#d8c7ff;font-weight:900;letter-spacing:.08em}
+.courseware-j2-model>strong{font-size:clamp(26px,3vw,48px);letter-spacing:.05em}
+.courseware-j2-model>small{font-size:clamp(13px,1.25vw,20px);color:#c9c2e5;font-weight:700}
+.courseware-j2-model> b{position:relative;width:45%;aspect-ratio:1;border-radius:50%;display:block}
+.courseware-j2-model--dalton>b{background:radial-gradient(circle at 34% 29%,#f8f0ff,#ad91eb 24%,#6347a9 62%,#2c215b);box-shadow:0 0 60px rgba(168,135,255,.48)}
+.courseware-j2-model--thomson>b{background:radial-gradient(circle,#cdaeff,#6f4eb3);box-shadow:inset 0 0 0 3px rgba(255,255,255,.18),0 0 60px rgba(168,135,255,.4)}
+.courseware-j2-model--thomson>b i{position:absolute;width:11%;aspect-ratio:1;border-radius:50%;background:#111d45;box-shadow:0 0 0 3px #f0e8ff}
+.courseware-j2-model--thomson>b i:nth-child(1){left:19%;top:20%}.courseware-j2-model--thomson>b i:nth-child(2){right:20%;top:28%}.courseware-j2-model--thomson>b i:nth-child(3){left:32%;bottom:18%}.courseware-j2-model--thomson>b i:nth-child(4){right:27%;bottom:24%}
+.courseware-j2-model--rutherford>b{border:3px solid rgba(225,214,255,.55);box-shadow:inset 0 0 55px rgba(120,83,214,.18)}
+.courseware-j2-model--rutherford>b::after{content:"+";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:18%;aspect-ratio:1;border-radius:50%;background:#ffb36f;color:#532c10;font-weight:1000;font-size:clamp(20px,2.4vw,38px);box-shadow:0 0 30px rgba(255,179,111,.7)}
+.courseware-j2-model--rutherford>b i{position:absolute;left:-12%;width:124%;height:2px;background:linear-gradient(90deg,transparent,#d5c5ff 18%,#d5c5ff 78%,transparent)}
+.courseware-j2-model--rutherford>b i:nth-child(1){top:28%;transform:rotate(8deg)}.courseware-j2-model--rutherford>b i:nth-child(2){top:49%;transform:rotate(-4deg)}.courseware-j2-model--rutherford>b i:nth-child(3){top:70%;transform:rotate(12deg)}
+.courseware-j2-model--bohr>b{display:grid;place-items:center}
+.courseware-j2-model--bohr>b i{position:absolute;border:3px solid rgba(226,217,255,.65);border-radius:50%}
+.courseware-j2-model--bohr>b i:nth-child(1){width:38%;height:38%}.courseware-j2-model--bohr>b i:nth-child(2){width:68%;height:68%}.courseware-j2-model--bohr>b i:nth-child(3){width:96%;height:96%}
+.courseware-j2-model--bohr>b::after{content:"";width:16%;aspect-ratio:1;border-radius:50%;background:#ffb36f;box-shadow:0 0 28px rgba(255,179,111,.7)}
+.courseware-j2-model--bohr>b em{position:absolute;width:7%;aspect-ratio:1;border-radius:50%;background:#e9ddff;box-shadow:0 0 18px rgba(233,221,255,.8)}
+.courseware-j2-model--bohr>b em:nth-of-type(1){top:31%;left:12%}.courseware-j2-model--bohr>b em:nth-of-type(2){right:4%;top:47%}.courseware-j2-model--bohr>b em:nth-of-type(3){left:47%;bottom:0}
+
+.courseware-j2-cloud{display:grid;place-items:center}
+.courseware-j2-cloud b,.courseware-modern-cloud{position:absolute;width:68%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(224,210,255,.75) 0 5%,rgba(174,138,255,.38) 16%,rgba(110,80,193,.21) 38%,rgba(80,53,152,.06) 65%,transparent 72%);filter:blur(3px);box-shadow:0 0 80px rgba(147,112,230,.25)}
+.courseware-j2-cloud i{position:absolute;width:4%;aspect-ratio:1;border-radius:50%;background:#f4efff;box-shadow:0 0 18px rgba(244,239,255,.9)}
+.courseware-j2-cloud i:nth-of-type(1){left:21%;top:29%}.courseware-j2-cloud i:nth-of-type(2){right:17%;top:47%}.courseware-j2-cloud i:nth-of-type(3){left:47%;bottom:19%}
+.courseware-j2-cloud strong{position:absolute;bottom:8%;font-size:clamp(18px,2vw,34px);letter-spacing:.08em}
+.courseware-j2-modern{display:grid;place-items:center}
+.courseware-modern-nucleus{position:absolute;display:grid;grid-template-columns:1fr 1fr;gap:2px;width:21%;aspect-ratio:1;place-items:center;z-index:2}
+.courseware-modern-nucleus b{display:grid;place-items:center;width:82%;aspect-ratio:1;border-radius:50%;background:#ffb36f;color:#4b2a15;font-size:clamp(10px,1vw,16px)}
+.courseware-modern-nucleus b:nth-child(even){background:#d7c9ff;color:#27204b}
+.courseware-j2-modern>strong{position:absolute;bottom:7%;font-size:clamp(18px,2vw,34px);letter-spacing:.08em}
+
+.courseware-j2-timeline{display:flex;align-items:center;justify-content:center;gap:2%;padding:0 3%;box-sizing:border-box;flex-wrap:wrap}
+.courseware-j2-timeline span{display:grid;place-items:center;min-width:15%;height:18%;padding:0 8px;border-radius:18px;background:rgba(151,116,232,.24);border:2px solid rgba(218,202,255,.38);font-size:clamp(11px,1vw,17px);font-weight:900}
+.courseware-j2-timeline b{color:#b89cff;font-size:clamp(18px,2vw,34px)}
+
+.courseware-source-page--j2 .courseware-page-badge{background:linear-gradient(145deg,#b69bff,#6c4cb3)}
+.courseware-source-page--j2 .courseware-source-text mark{color:#c8b4ff}
+.courseware-source-page--j2 .courseware-source-page__copy{z-index:6}
+.courseware-source-page--j2[data-slide-id="j2-ch1-title"] .courseware-page-badge,
+.courseware-source-page--j2[data-slide-id="j2-ch1-1-title"] .courseware-page-badge{display:none}
+.courseware-source-page--j2[data-slide-id="j2-ch1-1-question-building-blocks"] .courseware-source-page__copy,
+.courseware-source-page--j2[data-slide-id="j2-ch1-1-question-theory"] .courseware-source-page__copy{top:16%}
+
+/* Highlight button now reflects the real source-text state on dynamic pages. */
+.courseware-highlight-control.is-on:not(.is-artboard-control){box-shadow:0 0 0 4px rgba(185,217,93,.28),0 9px 24px rgba(0,0,0,.18);background:#f6ffd9}
+.courseware-highlight-control.is-artboard-control{cursor:default}
+
+@media(max-width:820px){
+  .courseware-page-badge{width:38px;font-size:18px}
+  .courseware-source-page--j1 .courseware-source-page__copy{left:5%;top:12%;width:48%}
+  .courseware-source-page--j1::before{width:68%}
+  .courseware-j2-visual{right:1%;width:48%}
+}
