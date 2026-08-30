@@ -1,0 +1,76 @@
+name: Science Quality Reset QA
+
+on:
+  push:
+    branches:
+      - science-courseware-quality-reset
+    paths:
+      - 'src/science-lessons/courseware/**'
+      - '.github/workflows/science-quality-reset-qa.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: science-quality-reset-qa
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        run: |
+          nohup npx vite preview --host 127.0.0.1 --port 4173 > /tmp/quality-reset.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS 'http://127.0.0.1:4173/science-lessons.html?courseware=1' >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/quality-reset.log
+          exit 1
+      - name: Verify permanent interactions
+        run: |
+          cat > quality-reset.mjs <<'EOF'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1440,height:900}});
+          await page.goto('http://127.0.0.1:4173/science-lessons.html?courseware=1', {waitUntil:'networkidle'});
+
+          await page.getByRole('button',{name:/J1.*Living Things and the Environment/i}).click();
+          for (let i=0;i<5;i++) await page.getByRole('button',{name:'Next'}).click();
+
+          const bioticText = page.getByRole('button',{name:/Enlarge An organism interacts with both the living and nonliving parts/i});
+          await bioticText.waitFor();
+          await bioticText.click();
+          await page.getByRole('dialog',{name:'Enlarged teaching text'}).waitFor();
+          await page.getByText('An organism interacts with both the living and nonliving parts of its habitat.').waitFor();
+          await page.getByRole('button',{name:'Close enlarged text'}).click();
+
+          const visibleBefore = await page.locator('.courseware-reveals--source > div').count();
+          await page.getByRole('button',{name:'Next'}).click();
+          const visibleAfter = await page.locator('.courseware-reveals--source > div').count();
+          if (visibleAfter <= visibleBefore) throw new Error('Next did not reveal another teaching point before page navigation.');
+
+          const highlight = page.getByRole('button',{name:'Toggle highlights'});
+          await highlight.click();
+          if ((await highlight.getAttribute('aria-pressed')) !== 'false') throw new Error('Highlight toggle did not switch off.');
+
+          await page.getByRole('button',{name:'Toggle full screen'}).click();
+          if (!(await page.locator('.courseware-shell').evaluate(el => el.classList.contains('is-fullscreen')))) {
+            throw new Error('Fullscreen presentation state did not activate.');
+          }
+
+          await page.keyboard.press('Escape');
+          await browser.close();
+          EOF
+          node quality-reset.mjs
