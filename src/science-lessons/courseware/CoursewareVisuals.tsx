@@ -55,7 +55,15 @@ export function renderHighlightedText(text: string, phrases: string[], enabled: 
 }
 
 
-export function J1Visual({ slideId }: { slideId: string }) {
+type J1VisualAssets = {
+  pond: string
+  polar: string
+  elephants: string
+  coral: string
+  wolf: string
+}
+
+export function J1Visual({ slideId, assets }: { slideId: string; assets: J1VisualAssets }) {
   if (slideId.includes('water')) {
     return <div className="courseware-j1-visual courseware-j1-water" aria-hidden="true">
       <div className="courseware-water-drop">H₂O</div>
@@ -78,9 +86,9 @@ export function J1Visual({ slideId }: { slideId: string }) {
 
   if (slideId.includes('temperature')) {
     return <div className="courseware-j1-visual courseware-j1-temperature" aria-hidden="true">
-      <div className="is-hot"><strong>HOT</strong><span>☀</span></div>
+      <div className="is-hot"><img src={assets.elephants} alt=""/><strong>HOT</strong></div>
       <div className="courseware-thermometer"><i/></div>
-      <div className="is-cold"><strong>COLD</strong><span>❄</span></div>
+      <div className="is-cold"><img src={assets.polar} alt=""/><strong>COLD</strong></div>
     </div>
   }
 
@@ -101,13 +109,22 @@ export function J1Visual({ slideId }: { slideId: string }) {
 
   if (slideId.includes('populations')) {
     return <div className="courseware-j1-visual courseware-j1-population" aria-hidden="true">
-      <strong>ONE SPECIES</strong><div><i/><i/><i/><i/><i/><i/></div><span>= POPULATION</span>
+      <strong>ONE SPECIES</strong>
+      <div>{Array.from({ length: 6 }).map((_, index) => <img key={index} src={assets.wolf} alt=""/>)}</div>
+      <span>= POPULATION</span>
     </div>
   }
 
   if (slideId.includes('communities')) {
     return <div className="courseware-j1-visual courseware-j1-community" aria-hidden="true">
-      <strong>MANY POPULATIONS</strong><div><span>Wolves</span><span>Birds</span><span>Plants</span><span>Fish</span></div><em>= COMMUNITY</em>
+      <strong>MANY POPULATIONS</strong>
+      <div>
+        <span><img src={assets.wolf} alt=""/><b>Wolves</b></span>
+        <span><img src={assets.elephants} alt=""/><b>Mammals</b></span>
+        <span><img src={assets.pond} alt=""/><b>Plants</b></span>
+        <span><img src={assets.coral} alt=""/><b>Fish</b></span>
+      </div>
+      <em>= COMMUNITY</em>
     </div>
   }
 
