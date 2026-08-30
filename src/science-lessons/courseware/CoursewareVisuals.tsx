@@ -81,7 +81,7 @@ export function J1Visual({ slideId, assets }: { slideId: string; assets: J1Visua
 
   if (slideId.includes('sunlight')) {
     return <div className="courseware-j1-visual courseware-j1-sunlight" aria-hidden="true">
-      <div className="courseware-sun-disc"/><div className="courseware-plant"><i/><i/><b/></div><strong>LIGHT → PHOTOSYNTHESIS</strong><small>No light → very little plant growth</small>
+      <div className="courseware-sun-disc"/><div className="courseware-plant"><i/><i/><b/></div><strong>LIGHT → PHOTOSYNTHESIS</strong><small>No light → plants and algae cannot grow</small>
     </div>
   }
 
@@ -117,7 +117,7 @@ export function J1Visual({ slideId, assets }: { slideId: string; assets: J1Visua
 
   if (slideId.includes('populations')) {
     return <div className="courseware-j1-visual courseware-j1-population" aria-hidden="true">
-      <strong>ONE SPECIES</strong>
+      <strong>ONE SPECIES IN ONE AREA</strong>
       <div>{Array.from({ length: 6 }).map((_, index) => <img key={index} src={assets.wolf} alt=""/>)}</div>
       <span>= POPULATION</span>
     </div>
@@ -125,7 +125,7 @@ export function J1Visual({ slideId, assets }: { slideId: string; assets: J1Visua
 
   if (slideId.includes('communities')) {
     return <div className="courseware-j1-visual courseware-j1-community" aria-hidden="true">
-      <strong>MANY POPULATIONS</strong>
+      <strong>DIFFERENT POPULATIONS TOGETHER</strong>
       <div>
         <span><img src={assets.wolf} alt=""/><b>Wolves</b></span>
         <span><img src={assets.elephants} alt=""/><b>Mammals</b></span>
