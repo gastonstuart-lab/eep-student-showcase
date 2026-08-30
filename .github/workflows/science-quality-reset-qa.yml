@@ -44,6 +44,8 @@ jobs:
 
           const browser = await chromium.launch({headless:true});
           const page = await browser.newPage({viewport:{width:1440,height:900}});
+          const fs = await import('node:fs');
+          fs.mkdirSync('quality-reset-evidence',{recursive:true});
           await page.goto('http://127.0.0.1:4173/science-lessons.html?courseware=1', {waitUntil:'networkidle'});
 
           await page.getByRole('button',{name:/J1.*Living Things and the Environment/i}).click();
@@ -54,23 +56,34 @@ jobs:
           await bioticText.click();
           await page.getByRole('dialog',{name:'Enlarged teaching text'}).waitFor();
           await page.getByRole('dialog',{name:'Enlarged teaching text'}).getByText('An organism interacts with both the living and nonliving parts of its habitat.').waitFor();
+          await page.screenshot({path:'quality-reset-evidence/01-enlarged-text.png',fullPage:true});
           await page.getByRole('button',{name:'Close enlarged text'}).click();
 
           const visibleBefore = await page.locator('.courseware-reveals--source > div').count();
           await page.getByRole('button',{name:'Next'}).click();
           const visibleAfter = await page.locator('.courseware-reveals--source > div').count();
           if (visibleAfter <= visibleBefore) throw new Error('Next did not reveal another teaching point before page navigation.');
+          await page.screenshot({path:'quality-reset-evidence/02-progressive-reveal.png',fullPage:true});
 
           const highlight = page.getByRole('button',{name:'Toggle highlights'});
           await highlight.click();
           if ((await highlight.getAttribute('aria-pressed')) !== 'false') throw new Error('Highlight toggle did not switch off.');
+          await page.screenshot({path:'quality-reset-evidence/03-highlights-off.png',fullPage:true});
 
           await page.getByRole('button',{name:'Toggle full screen'}).click();
           if (!(await page.locator('.courseware-shell').evaluate(el => el.classList.contains('is-fullscreen')))) {
             throw new Error('Fullscreen presentation state did not activate.');
           }
+          await page.screenshot({path:'quality-reset-evidence/04-fullscreen.png',fullPage:true});
 
           await page.keyboard.press('Escape');
           await browser.close();
           EOF
           node quality-reset.mjs
+
+      - name: Upload proof screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: science-quality-reset-evidence
+          path: quality-reset-evidence
+          retention-days: 7
