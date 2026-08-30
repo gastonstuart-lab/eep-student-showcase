@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from 'react'
 
 export const HIGHLIGHT_PHRASES: Record<string, string[]> = {
