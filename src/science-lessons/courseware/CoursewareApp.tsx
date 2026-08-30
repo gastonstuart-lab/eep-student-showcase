@@ -230,7 +230,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       setRevealIndex(0)
       resetTransientState()
     }
-  }, [lesson.slides, resetTransientState, revealIndex, slideIndex])
+  }, [resetTransientState, revealIndex, slideIndex])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
