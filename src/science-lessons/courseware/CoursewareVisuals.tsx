@@ -64,6 +64,14 @@ type J1VisualAssets = {
 }
 
 export function J1Visual({ slideId, assets }: { slideId: string; assets: J1VisualAssets }) {
+  if (slideId === 'j1-ch1-1-title') {
+    return <div className="courseware-j1-visual courseware-j1-title-collage" aria-hidden="true">
+      <figure className="is-polar"><img src={assets.polar} alt=""/><span>ICE</span></figure>
+      <figure className="is-savanna"><img src={assets.elephants} alt=""/><span>LAND</span></figure>
+      <figure className="is-reef"><img src={assets.coral} alt=""/><span>WATER</span></figure>
+    </div>
+  }
+
   if (slideId.includes('water')) {
     return <div className="courseware-j1-visual courseware-j1-water" aria-hidden="true">
       <div className="courseware-water-drop">H₂O</div>
