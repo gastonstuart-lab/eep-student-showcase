@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import type { LessonSlide } from '../types/lesson'
 import { coursewareSections, getCoursewareLesson, type CoursewareSection } from './coursewareManifest'
 import { coursewareSourcePages, type CoursewareSourcePage } from './coursewareSourcePages'
+import { HIGHLIGHT_PHRASES, J2Visual, renderHighlightedText } from './CoursewareVisuals'
 import './courseware.css'
 
 type TranslationPatch = {
@@ -71,6 +72,7 @@ function SourcePage({
   onToggleTranslated,
   isTitlePage,
   year,
+  highlights,
 }: {
   slide: LessonSlide
   sourcePage?: CoursewareSourcePage
@@ -80,9 +82,10 @@ function SourcePage({
   onToggleTranslated: (id: string) => void
   isTitlePage: boolean
   year: 'J1' | 'J2'
+  highlights: boolean
 }) {
   const exactParagraphs = sourcePage?.paragraphs ?? [slide.body.en, ...(slide.reveals ?? []).map((item) => item.text.en)]
-  const visibleParagraphs = exactParagraphs.slice(0, Math.min(exactParagraphs.length, Math.max(1, revealIndex + 1)))
+  const visibleParagraphs = exactParagraphs
   const isQuestion = Boolean(sourcePage?.prompt) || slide.layout === 'question' || slide.id.includes('question-')
   const sourceHeading = sourcePage?.heading ?? slide.title.en
   const sourceSubheading = sourcePage?.subheading
@@ -96,16 +99,19 @@ function SourcePage({
       onClick={() => chineseEnabled && chinese && onToggleTranslated(id)}
       aria-label={chineseEnabled && chinese ? `Translate ${english}` : undefined}
     >
-      {translated.has(id) && chinese ? <span lang="zh-Hant">{chinese}</span> : english}
+      {translated.has(id) && chinese
+        ? <span lang="zh-Hant">{chinese}</span>
+        : renderHighlightedText(english, HIGHLIGHT_PHRASES[slide.id] ?? [], highlights)}
     </button>
   )
 
   return (
-    <article className={`courseware-source-page courseware-source-page--${year.toLowerCase()} ${isQuestion ? 'courseware-source-page--question' : ''}`}>
+    <article data-slide-id={slide.id} className={`courseware-source-page courseware-source-page--${year.toLowerCase()} ${isQuestion ? 'courseware-source-page--question' : ''}`}>
       {year === 'J1'
         ? <img src={fallbackImageFor(slide)} alt="" aria-hidden="true" />
-        : <div className="courseware-atom-scene" aria-hidden="true"><i/><i/><i/><b/><span/><span/><span/></div>}
+        : <J2Visual slideId={slide.id} />}
       <div className="courseware-source-page__wash" />
+      <span className="courseware-page-badge" aria-hidden="true">{sourcePage?.sourceSlide ?? ''}</span>
       <div className="courseware-source-page__copy">
         {isQuestion ? (
           <>
@@ -189,14 +195,14 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chineseEnabled, setChineseEnabled] = useState(false)
   const [translatedIds, setTranslatedIds] = useState<string[]>([])
+  const [highlights, setHighlights] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const shellRef = useRef<HTMLElement>(null)
 
   const slide = lesson.slides[slideIndex] ?? lesson.slides[0]
   const artboard = APPROVED_ARTBOARDS[slide.id]
   const sourcePage = coursewareSourcePages[slide.id]
-  const sourceParagraphCount = sourcePage?.paragraphs.length
-  const revealCount = artboard ? 0 : Math.max(0, (sourceParagraphCount ?? ((slide.reveals?.length ?? 0) + 1)) - 1)
+  const revealCount = 0
   const translated = useMemo(() => new Set(translatedIds), [translatedIds])
 
   const resetTransientState = useCallback(() => {
@@ -222,10 +228,8 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       return
     }
     if (slideIndex > 0) {
-      const previousSlide = lesson.slides[slideIndex - 1]
-      const previousIsArtboard = Boolean(APPROVED_ARTBOARDS[previousSlide.id])
       setSlideIndex((value) => value - 1)
-      setRevealIndex(previousIsArtboard ? 0 : (previousSlide.reveals?.length ?? 0))
+      setRevealIndex(0)
       resetTransientState()
     }
   }, [lesson.slides, resetTransientState, revealIndex, slideIndex])
@@ -255,10 +259,17 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
 
   const toggleFullscreen = async () => {
     if (document.fullscreenElement) {
-      await document.exitFullscreen?.()
+      await document.exitFullscreen?.().catch(() => undefined)
+      setIsFullscreen(false)
       return
     }
-    await shellRef.current?.requestFullscreen?.()
+    if (isFullscreen) {
+      setIsFullscreen(false)
+      return
+    }
+    setIsFullscreen(true)
+    const target = shellRef.current ?? document.documentElement
+    await target.requestFullscreen?.().catch(() => undefined)
   }
 
   const toggleChinese = () => {
@@ -288,19 +299,19 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isTitlePage={Boolean(sourcePage?.byline)} year={section.year} />}
+          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isTitlePage={Boolean(sourcePage?.byline)} year={section.year} highlights={highlights} />}
 
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
         <button className={`courseware-chinese-control ${artboard ? 'is-artboard-control' : ''} ${chineseEnabled ? 'is-on' : ''}`} type="button" onClick={toggleChinese} aria-pressed={chineseEnabled} aria-label="Toggle Traditional Chinese click support">中文</button>
-        <button className={`courseware-highlight-control ${artboard ? 'is-artboard-control' : ''}`} type="button" aria-label="Highlight key teaching points (not enabled yet)" disabled>💡<small>Highlight</small></button>
+        <button className={`courseware-highlight-control ${artboard ? 'is-artboard-control' : ''} ${highlights ? 'is-on' : ''}`} type="button" onClick={() => setHighlights((value) => !value)} aria-label="Toggle highlights" aria-pressed={highlights}>💡<small>Highlight</small></button>
         <button className={`courseware-fullscreen-control ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => void toggleFullscreen()} aria-label="Toggle full screen">⛶<small>Full Screen</small></button>
 
         <nav className="courseware-nav" aria-label="Lesson navigation">
           <button type="button" onClick={previous} disabled={slideIndex === 0 && revealIndex === 0} aria-label="Previous">←</button>
           <span>
             <b>{slideIndex + 1}</b> / {lesson.slides.length}
-            {revealCount > 0 && <small> · reveal {revealIndex}/{revealCount}</small>}
+
           </span>
           <button type="button" onClick={next} disabled={slideIndex === lesson.slides.length - 1 && revealIndex === revealCount} aria-label="Next">→</button>
         </nav>
