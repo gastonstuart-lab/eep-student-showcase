@@ -66,12 +66,14 @@ function SourcePage({
   chineseEnabled,
   translated,
   onToggleTranslated,
+  isOpeningTitle,
 }: {
   slide: LessonSlide
   revealIndex: number
   chineseEnabled: boolean
   translated: Set<string>
   onToggleTranslated: (id: string) => void
+  isOpeningTitle: boolean
 }) {
   const visibleReveals = (slide.reveals ?? []).slice(0, revealIndex)
   const isQuestion = slide.layout === 'question' || slide.id.includes('question-')
@@ -95,10 +97,15 @@ function SourcePage({
         <span className="courseware-kicker">{isQuestion ? 'QUESTION OF THE DAY' : slide.title.en}</span>
         {isQuestion
           ? translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-question')
-          : <>
-              {translatable(`${slide.id}-title`, slide.title.en, slide.title.zhHant, 'courseware-title')}
-              {translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-body')}
-            </>}
+          : isOpeningTitle
+            ? <>
+                {translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-title')}
+                <span className="courseware-byline">BY: XG LAWRENCE</span>
+              </>
+            : <>
+                {translatable(`${slide.id}-title`, slide.title.en, slide.title.zhHant, 'courseware-title')}
+                {translatable(`${slide.id}-body`, slide.body.en, slide.body.zhHant, 'courseware-body')}
+              </>}
         {visibleReveals.length > 0 && (
           <div className="courseware-reveals">
             {visibleReveals.map((item) => (
@@ -254,14 +261,13 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />}
+          : <SourcePage slide={slide} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} />}
 
-        <button className="courseware-drawer-tab" type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
+        <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
-        <div className="courseware-stage-tools">
-          <button className={chineseEnabled ? 'is-on' : ''} type="button" onClick={toggleChinese} aria-pressed={chineseEnabled}>中文</button>
-          <button type="button" onClick={() => void toggleFullscreen()} aria-label="Toggle full screen">⛶</button>
-        </div>
+        <button className={`courseware-chinese-control ${artboard ? 'is-artboard-control' : ''} ${chineseEnabled ? 'is-on' : ''}`} type="button" onClick={toggleChinese} aria-pressed={chineseEnabled} aria-label="Toggle Traditional Chinese click support">中文</button>
+        <button className={`courseware-highlight-control ${artboard ? 'is-artboard-control' : ''}`} type="button" aria-label="Highlight key teaching points">💡<small>Highlight</small></button>
+        <button className={`courseware-fullscreen-control ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => void toggleFullscreen()} aria-label="Toggle full screen">⛶<small>Full Screen</small></button>
 
         <nav className="courseware-nav" aria-label="Lesson navigation">
           <button type="button" onClick={previous} disabled={slideIndex === 0 && revealIndex === 0} aria-label="Previous">←</button>
