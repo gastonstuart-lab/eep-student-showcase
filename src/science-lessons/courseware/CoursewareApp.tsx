@@ -69,7 +69,7 @@ function SourcePage({
   chineseEnabled,
   translated,
   onToggleTranslated,
-  isOpeningTitle,
+  isTitlePage,
   year,
 }: {
   slide: LessonSlide
@@ -78,7 +78,7 @@ function SourcePage({
   chineseEnabled: boolean
   translated: Set<string>
   onToggleTranslated: (id: string) => void
-  isOpeningTitle: boolean
+  isTitlePage: boolean
   year: 'J1' | 'J2'
 }) {
   const exactParagraphs = sourcePage?.paragraphs ?? [slide.body.en, ...(slide.reveals ?? []).map((item) => item.text.en)]
@@ -112,7 +112,7 @@ function SourcePage({
             <span className="courseware-kicker">{sourceHeading}</span>
             {translatable(`${slide.id}-prompt`, prompt, slide.body.zhHant, 'courseware-question')}
           </>
-        ) : isOpeningTitle ? (
+        ) : isTitlePage ? (
           <>
             <span className="courseware-kicker">{sourceHeading}</span>
             {translatable(`${slide.id}-title`, sourceSubheading ?? slide.body.en, slide.body.zhHant, 'courseware-title')}
@@ -288,7 +288,7 @@ function CoursewarePlayer({ section, onExit }: { section: CoursewareSection; onE
       <section className="courseware-stage" aria-label={`Page ${slideIndex + 1} of ${lesson.slides.length}`}>
         {artboard
           ? <ArtboardPage artboard={artboard} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} />
-          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isOpeningTitle={slideIndex === 0} year={section.year} />}
+          : <SourcePage slide={slide} sourcePage={sourcePage} revealIndex={revealIndex} chineseEnabled={chineseEnabled} translated={translated} onToggleTranslated={toggleTranslated} isTitlePage={Boolean(sourcePage?.byline)} year={section.year} />}
 
         <button className={`courseware-drawer-tab ${artboard ? 'is-artboard-control' : ''}`} type="button" onClick={() => setDrawerOpen(true)} aria-label="Open teacher tools">›</button>
 
