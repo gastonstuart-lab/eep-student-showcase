@@ -2,8 +2,9 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ScienceLessonsApp } from '../science-lessons/ScienceLessonsApp'
 import { rainfallComparisonData } from '../science-lessons/curriculum/biomeCharts'
+import { formatSourceSectionLabel, sourceSectionMappings } from '../science-lessons/curriculum/curriculumSourceMap'
 import { biomesHomeworkCoverage, biomesQuizCoverage } from '../science-lessons/curriculum/j1/ch2-4-biomes-assessment'
-import { findLesson, scienceLessons, scienceVisualAssets } from '../science-lessons/data'
+import { findLesson, scienceLessons, scienceUnits, scienceVisualAssets } from '../science-lessons/data'
 import { BiomesV2Prototype } from '../science-lessons/presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from '../science-lessons/presentation-v2/PresentationShell'
 import { validateScienceCurriculum } from '../science-lessons/validation'
@@ -44,6 +45,34 @@ describe('Science Lessons curriculum', () => {
     expect(scienceLessons.some((lesson) => lesson.year === 'J2')).toBe(true)
     expect(scienceLessons.some((lesson) => lesson.semester === 'Fall')).toBe(true)
     expect(scienceLessons.some((lesson) => lesson.semester === 'Spring / Summer')).toBe(true)
+  })
+
+  it('keeps source-backed unit and lesson hierarchy aligned to the PPT structure', () => {
+    const verified = sourceSectionMappings.filter((mapping) => mapping.status === 'verified')
+
+    expect(verified.map((mapping) => ({
+      id: mapping.id,
+      label: formatSourceSectionLabel(mapping),
+      range: mapping.sourceSlideRange,
+    }))).toEqual([
+      { id: 'j1-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15' },
+      { id: 'j1-ch1-s2', label: 'Chapter 1 · Section 2', range: '16-34' },
+      { id: 'j1-ch1-s3', label: 'Chapter 1 · Section 3', range: '35-44' },
+      { id: 'j1-ch1-s4', label: 'Chapter 1 · Section 4', range: '45-53' },
+      { id: 'j1-ch2-s4', label: 'Chapter 2 · Section 4', range: '99-116' },
+      { id: 'j2-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15' },
+    ])
+
+    for (const mapping of sourceSectionMappings) {
+      const unit = scienceUnits.find((item) => item.id === mapping.unitId)
+      const expectedLabel = formatSourceSectionLabel(mapping)
+
+      expect(unit?.number).toBe(expectedLabel)
+      expect(scienceLessons.filter((lesson) => lesson.unitId === mapping.unitId).every((lesson) => lesson.chapter === expectedLabel)).toBe(true)
+    }
+
+    expect(scienceUnits.map((unit) => unit.number)).not.toContain('Chapter 1.1')
+    expect(scienceUnits.map((unit) => unit.number)).not.toContain('Chapter 2.4')
   })
 
   it('loads exactly two canonical Biomes lessons in teaching order', () => {
@@ -578,7 +607,7 @@ describe('J2 Aquatic Ecosystems production unit', () => {
     expect(j2EcosystemLessons.every((lesson) => lesson.year === 'J2')).toBe(true)
     expect(j2EcosystemLessons.every((lesson) => lesson.semester === 'Fall')).toBe(true)
     expect(j2EcosystemLessons.every((lesson) => lesson.status === 'Published')).toBe(true)
-    expect(j2HabitatLesson.chapter).toBe('Ch.2.5')
+    expect(j2HabitatLesson.chapter).toBe('Chapter 2 · Section 5')
     expect(j2FoodWebLesson.lessonOrder).toBe(j2HabitatLesson.lessonOrder + 1)
   })
 

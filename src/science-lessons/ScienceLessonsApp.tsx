@@ -656,7 +656,7 @@ function studentLabel(label: string, language: LanguageMode) {
   if (language !== '繁體中文') return label
 
   const labels: Record<string, string> = {
-    'Chapter 2.4': '第 2.4 章',
+    'Chapter 2 · Section 4': '第 2 章 · 第 4 節',
     'Core idea': '核心概念',
     'Vocabulary map': '詞彙地圖',
     'Explain the pattern': '解釋規律',
@@ -859,7 +859,7 @@ function HeroVisualSlide({ slide, language, visibleReveals }: SlideLayoutProps) 
     <>
       {j2EcosystemSlide ? <AquaticHeroScene slide={slide} language={language} /> : solutionSlide ? <SolutionHeroScene slide={slide} language={language} /> : isReactionSlide ? <ReactionHeroScene slide={slide} language={language} /> : <SciencePhoto slide={slide} className="slide-photo slide-photo--full" />}
       <section className="slide-hero-copy">
-        <SlideTitle slide={slide} language={language} kicker={j2EcosystemSlide || solutionSlide || isReactionSlide ? 'Core idea' : 'Chapter 2.4'} />
+        <SlideTitle slide={slide} language={language} kicker={j2EcosystemSlide || solutionSlide || isReactionSlide ? 'Core idea' : 'Chapter 2 · Section 4'} />
         <SlideBody slide={slide} language={language} />
         <RevealStack items={visibleReveals} language={language} mode="prompts" />
       </section>

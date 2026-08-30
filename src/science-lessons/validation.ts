@@ -1,4 +1,5 @@
 import { scienceLessons, scienceVisualAssets } from './data'
+import { formatSourceSectionLabel, sourceSectionMappings } from './curriculum/curriculumSourceMap'
 import type { ScienceLesson } from './types/lesson'
 
 export interface CurriculumValidationIssue {
@@ -75,6 +76,15 @@ export function validateScienceCurriculum() {
   }
 
   for (const lesson of scienceLessons) {
+    const mapping = sourceSectionMappings.find((item) => item.unitId === lesson.unitId)
+
+    if (mapping) {
+      const expectedLabel = formatSourceSectionLabel(mapping)
+      if (lesson.chapter !== expectedLabel) {
+        issues.push({ severity: 'error', lessonId: lesson.id, message: `Lesson chapter label must match source hierarchy: ${expectedLabel}.` })
+      }
+    }
+
     for (const slide of lesson.slides) {
       if (slide.media?.assetId) {
         const asset = scienceVisualAssets.find((item) => item.id === slide.media?.assetId)

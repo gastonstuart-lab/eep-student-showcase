@@ -1,4 +1,8 @@
 import type { LessonSlide, ScienceLesson } from '../../types/lesson'
+import { formatSourceSectionLabel, sourceSectionMappingByUnitId } from '../curriculumSourceMap'
+
+const reactionsSectionLabel = formatSourceSectionLabel(sourceSectionMappingByUnitId['j1-fall-reactions'])
+const solutionsSectionLabel = formatSourceSectionLabel(sourceSectionMappingByUnitId['j1-spring-solutions'])
 
 const j1ReactionSources = [
   {
@@ -718,7 +722,7 @@ export const j1PilotLessons: ScienceLesson[] = [
     subtitle: 'Why reactions need a starting push and how catalysts lower the energy barrier',
     year: 'J1',
     semester: 'Fall',
-    chapter: 'Ch.2 Reactions',
+    chapter: reactionsSectionLabel,
     lessonOrder: 10,
     duration: 50,
     status: 'Published',
@@ -740,7 +744,7 @@ export const j1PilotLessons: ScienceLesson[] = [
     subtitle: 'Using energy-transfer direction and reaction profiles to classify reactions',
     year: 'J1',
     semester: 'Fall',
-    chapter: 'Ch.2 Reactions',
+    chapter: reactionsSectionLabel,
     lessonOrder: 11,
     duration: 50,
     status: 'Published',
@@ -762,7 +766,7 @@ export const j1PilotLessons: ScienceLesson[] = [
     subtitle: 'Using particle models to compare dissolved solute, volume and saturation evidence',
     year: 'J1',
     semester: 'Spring / Summer',
-    chapter: 'Ch.3.1',
+    chapter: solutionsSectionLabel,
     lessonOrder: 1,
     duration: 50,
     status: 'Published',
@@ -784,7 +788,7 @@ export const j1PilotLessons: ScienceLesson[] = [
     subtitle: 'Reading axes, temperature, maximum dissolved mass and curve evidence',
     year: 'J1',
     semester: 'Spring / Summer',
-    chapter: 'Ch.3.1',
+    chapter: solutionsSectionLabel,
     lessonOrder: 2,
     duration: 50,
     status: 'Published',

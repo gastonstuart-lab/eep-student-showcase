@@ -1,6 +1,8 @@
 import type { LessonSlide, ScienceLesson } from '../../types/lesson'
+import { formatSourceSectionLabel, sourceSectionMappingByUnitId } from '../curriculumSourceMap'
 
 const driveUrl = (id: string) => `https://drive.google.com/file/d/${id}/view`
+const biomesSectionLabel = formatSourceSectionLabel(sourceSectionMappingByUnitId['j1-ch2-biomes'])
 
 const sourceReferences = [
   {
@@ -598,10 +600,10 @@ export const j1Ch24BiomesLessons: ScienceLesson[] = [
     id: 'j1-ch2-4-biomes-lesson-1',
     unitId: 'j1-ch2-biomes',
     title: 'What Is a Biome? Climate and Major Examples',
-    subtitle: 'Chapter 2.4 introduction, climate factors, rain forest, desert, and grassland',
+    subtitle: 'Chapter 2 · Section 4 introduction, climate factors, rain forest, desert, and grassland',
     year: 'J1',
     semester: 'Fall',
-    chapter: 'Ch.2.4',
+    chapter: biomesSectionLabel,
     lessonOrder: 0,
     duration: 50,
     status: 'Published',
@@ -623,7 +625,7 @@ export const j1Ch24BiomesLessons: ScienceLesson[] = [
     subtitle: 'Deciduous forest, boreal forest, tundra, mountains and assessment review',
     year: 'J1',
     semester: 'Fall',
-    chapter: 'Ch.2.4',
+    chapter: biomesSectionLabel,
     lessonOrder: 1,
     duration: 50,
     status: 'Published',

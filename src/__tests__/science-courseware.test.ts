@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { coursewareSections, getCoursewareLesson } from '../science-lessons/courseware/coursewareManifest'
 import { coursewareSourcePages } from '../science-lessons/courseware/coursewareSourcePages'
 import { coursewareArtwork, FINAL_ARTWORK_IDS } from '../science-lessons/courseware/coursewareArtwork'
+import { sourceSectionMappingByUnitId } from '../science-lessons/curriculum/curriculumSourceMap'
 
 describe('Science courseware source hierarchy', () => {
   it('keeps J1 Chapter 1 Section 1 separate from its section title', () => {
@@ -34,6 +35,23 @@ describe('Science courseware source hierarchy', () => {
     for (const section of coursewareSections) {
       expect(getCoursewareLesson(section).slides).toHaveLength(15)
     }
+  })
+
+  it('derives courseware section labels from the shared source hierarchy map', () => {
+    const j1 = coursewareSections.find((item) => item.id === 'j1-ch1-s1')
+    const j2 = coursewareSections.find((item) => item.id === 'j2-ch1-s1')
+
+    expect(j1).toMatchObject({
+      chapterNumber: sourceSectionMappingByUnitId['j1-fall-life-ecosystems'].chapterNumber,
+      sectionNumber: sourceSectionMappingByUnitId['j1-fall-life-ecosystems'].sectionNumber,
+      sectionTitle: sourceSectionMappingByUnitId['j1-fall-life-ecosystems'].sectionTitle,
+    })
+    expect(j2).toMatchObject({
+      chapterNumber: sourceSectionMappingByUnitId['j2-fall-atoms-bonding'].chapterNumber,
+      chapterTitle: sourceSectionMappingByUnitId['j2-fall-atoms-bonding'].chapterTitle,
+      sectionNumber: sourceSectionMappingByUnitId['j2-fall-atoms-bonding'].sectionNumber,
+      sectionTitle: sourceSectionMappingByUnitId['j2-fall-atoms-bonding'].sectionTitle,
+    })
   })
 
   it('preserves awkward source wording instead of silently rewriting the J1 PowerPoint', () => {

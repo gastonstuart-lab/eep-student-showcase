@@ -1,4 +1,5 @@
 import type { ScienceUnit } from '../types/lesson'
+import { formatSourceSectionLabel, sourceSectionMappingByUnitId } from './curriculumSourceMap'
 
 export const scienceUnits: ScienceUnit[] = [
   {
@@ -79,7 +80,7 @@ export const scienceUnits: ScienceUnit[] = [
   },
   {
     id: 'j1-ch2-biomes',
-    number: 'Chapter 2.4',
+    number: formatSourceSectionLabel(sourceSectionMappingByUnitId['j1-ch2-biomes']),
     title: 'Biomes',
     description: 'Production unit: climate factors, major land biomes, adaptations and ecosystem conditions.',
     year: 'J1',
@@ -114,7 +115,7 @@ export const scienceUnits: ScienceUnit[] = [
   },
   {
     id: 'j1-spring-solutions',
-    number: 'Unit 3',
+    number: formatSourceSectionLabel(sourceSectionMappingByUnitId['j1-spring-solutions']),
     title: 'Solutions and Solubility',
     description: 'Volume, concentration, dissolving, saturation and solubility curves.',
     year: 'J1',
@@ -131,7 +132,7 @@ export const scienceUnits: ScienceUnit[] = [
   },
   {
     id: 'j2-fall-atoms-bonding',
-    number: 'Chapter 1.1',
+    number: formatSourceSectionLabel(sourceSectionMappingByUnitId['j2-fall-atoms-bonding']),
     title: 'Atoms and Bonding',
     description: 'Opening unit: matter, elements, atoms, scientific models, atomic theory and the modern atom.',
     year: 'J2',
@@ -150,7 +151,7 @@ export const scienceUnits: ScienceUnit[] = [
   },
   {
     id: 'j2-fall-ecosystems',
-    number: 'Unit 2',
+    number: formatSourceSectionLabel(sourceSectionMappingByUnitId['j2-fall-ecosystems']),
     title: 'Ecosystems',
     description: 'Habitats, food webs, adaptation and interactions within ecosystems.',
     year: 'J2',

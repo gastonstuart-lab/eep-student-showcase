@@ -1,4 +1,7 @@
 import type { LessonSlide, ScienceLesson } from '../../types/lesson'
+import { formatSourceSectionLabel, sourceSectionMappingByUnitId } from '../curriculumSourceMap'
+
+const ecosystemsSectionLabel = formatSourceSectionLabel(sourceSectionMappingByUnitId['j2-fall-ecosystems'])
 
 const j2EcosystemSources = [
   {
@@ -365,7 +368,7 @@ export const j2PilotLessons: ScienceLesson[] = [
     subtitle: 'Classifying biotic and abiotic factors in freshwater and marine habitats',
     year: 'J2',
     semester: 'Fall',
-    chapter: 'Ch.2.5',
+    chapter: ecosystemsSectionLabel,
     lessonOrder: 1,
     duration: 50,
     status: 'Published',
@@ -387,7 +390,7 @@ export const j2PilotLessons: ScienceLesson[] = [
     subtitle: 'Tracing feeding links to predict how population changes spread',
     year: 'J2',
     semester: 'Fall',
-    chapter: 'Ch.2.5',
+    chapter: ecosystemsSectionLabel,
     lessonOrder: 2,
     duration: 50,
     status: 'Published',
