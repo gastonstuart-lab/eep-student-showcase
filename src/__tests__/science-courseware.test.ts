@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { coursewareSections, getCoursewareLesson } from '../science-lessons/courseware/coursewareManifest'
 import { coursewareSourcePages } from '../science-lessons/courseware/coursewareSourcePages'
+import { coursewareArtwork, FINAL_ARTWORK_IDS } from '../science-lessons/courseware/coursewareArtwork'
 
 describe('Science courseware source hierarchy', () => {
   it('keeps J1 Chapter 1 Section 1 separate from its section title', () => {
@@ -11,6 +12,7 @@ describe('Science courseware source hierarchy', () => {
       sectionNumber: 'Section 1',
       sectionTitle: 'Living Things and the Environment',
       sourceTitle: 'Copy of J1 PPT.pptx',
+      sourceDriveId: '1STwllX6-z931Hsqst_A1FvN7xwLCVI0g',
     })
     expect(section?.chapterNumber).not.toBe('Chapter 1.1')
   })
@@ -24,6 +26,7 @@ describe('Science courseware source hierarchy', () => {
       sectionNumber: 'Section 1',
       sectionTitle: 'Elements and Atoms',
       sourceTitle: 'J2 PPT (updated).pptx',
+      sourceDriveId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
     })
   })
 
@@ -59,5 +62,34 @@ describe('Science courseware source hierarchy', () => {
       heading: 'Chapter 1: Section 1',
       subheading: 'Elements and Atoms',
     })
+  })
+
+  it('keeps the source maps at exactly fifteen opening pages per year', () => {
+    expect(Object.keys(coursewareSourcePages).filter((id) => id.startsWith('j1-'))).toHaveLength(15)
+    expect(Object.keys(coursewareSourcePages).filter((id) => id.startsWith('j2-'))).toHaveLength(15)
+  })
+
+  it('registers only canonical gold artwork and never the old fallback folder', () => {
+    for (const artwork of Object.values(coursewareArtwork)) {
+      expect(artwork.src).toContain('science-lessons/gold/')
+      expect(artwork.src).not.toContain('j1-opening')
+      expect(artwork.src).not.toMatch(/pond|bear-stream|wolf-stream|coral/)
+      expect(artwork.textRegion).toBeTruthy()
+      expect(artwork.visualRegion).toBeTruthy()
+    }
+  })
+
+  it('locks Gate A and the approved J2 continuation into the final artwork set', () => {
+    const gateA = [
+      'j1-ch1-1-title',
+      'j1-ch1-1-question-needs',
+      'j1-ch1-1-habitats',
+      'j1-ch1-1-question-parts',
+      'j1-ch1-1-abiotic-overview',
+      'j1-ch1-1-biotic-factors',
+    ]
+    const j2Approved = getCoursewareLesson(coursewareSections[1]).slides.slice(0, 10).map((slide) => slide.id)
+    expect(FINAL_ARTWORK_IDS).toEqual(expect.arrayContaining([...gateA, ...j2Approved]))
+    expect(FINAL_ARTWORK_IDS).toHaveLength(30)
   })
 })

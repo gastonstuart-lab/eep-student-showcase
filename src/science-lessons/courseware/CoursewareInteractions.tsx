@@ -2,8 +2,13 @@
 import type { ReactNode } from 'react'
 
 export type FocusContent = {
+  kind?: 'text'
   english: string
   chinese?: string
+} | {
+  kind: 'image'
+  imageSrc: string
+  alt: string
 }
 
 export const HIGHLIGHT_PHRASES: Record<string, string[]> = {
@@ -73,11 +78,17 @@ export function FocusOverlay({
   onClose: () => void
 }) {
   return (
-    <div className="courseware-focus-overlay" role="dialog" aria-modal="true" aria-label="Enlarged teaching text" onClick={onClose}>
-      <div className="courseware-focus-card" onClick={(event) => event.stopPropagation()}>
+    <div className="courseware-focus-overlay" role="dialog" aria-modal="true" aria-label={content.kind === 'image' ? 'Enlarged teaching visual' : 'Enlarged teaching text'} onClick={onClose}>
+      <div className={`courseware-focus-card ${content.kind === 'image' ? 'courseware-focus-card--image' : ''}`} onClick={(event) => event.stopPropagation()}>
         <button type="button" onClick={onClose} aria-label="Close enlarged text">×</button>
-        <p>{content.english}</p>
-        {chineseEnabled && content.chinese && <p lang="zh-Hant">{content.chinese}</p>}
+        {content.kind === 'image' ? (
+          <img src={content.imageSrc} alt={content.alt} />
+        ) : (
+          <>
+            <p>{content.english}</p>
+            {chineseEnabled && content.chinese && <p lang="zh-Hant">{content.chinese}</p>}
+          </>
+        )}
       </div>
     </div>
   )

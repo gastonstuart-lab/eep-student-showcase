@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "baseline": {
+    "branch": "science-gold-master",
+    "commit": "af3b8e35295c811a4750e24dffdaafc7ac76fed1"
+  },
+  "sourceDecks": {
+    "J1": {
+      "title": "Copy of J1 PPT.pptx",
+      "driveFileId": "1STwllX6-z931Hsqst_A1FvN7xwLCVI0g",
+      "slideRange": "1-15"
+    },
+    "J2": {
+      "title": "J2 PPT (updated).pptx",
+      "driveFileId": "14AUxNBq96_rRR9exiieSsHBdvuth4ofh",
+      "slideRange": "1-15"
+    }
+  },
+  "interactions": ["simple-navigation", "staged-reveals", "reversible-highlights", "traditional-chinese-support", "text-enlargement", "visual-enlargement", "fullscreen", "teacher-drawer", "per-class-progress"],
+  "pages": [
+    {"year":"J1","sourceSlide":1,"id":"j1-ch1-1-title","path":"j1/01-title.png","status":"final"},
+    {"year":"J1","sourceSlide":2,"id":"j1-ch1-1-question-needs","path":"j1/02-question.png","status":"final"},
+    {"year":"J1","sourceSlide":3,"id":"j1-ch1-1-habitats","path":"j1/03-habitats.png","status":"final"},
+    {"year":"J1","sourceSlide":4,"id":"j1-ch1-1-question-parts","path":"j1/04-question-parts.png","status":"final"},
+    {"year":"J1","sourceSlide":5,"id":"j1-ch1-1-abiotic-overview","path":"j1/05-abiotic.png","status":"final"},
+    {"year":"J1","sourceSlide":6,"id":"j1-ch1-1-biotic-factors","path":"j1/06-biotic.png","status":"final"},
+    {"year":"J1","sourceSlide":7,"id":"j1-ch1-1-water","path":"j1/07-water.png","status":"final"},
+    {"year":"J1","sourceSlide":8,"id":"j1-ch1-1-sunlight","path":"j1/08-sunlight.png","status":"final"},
+    {"year":"J1","sourceSlide":9,"id":"j1-ch1-1-oxygen","path":"j1/09-oxygen.png","status":"final"},
+    {"year":"J1","sourceSlide":10,"id":"j1-ch1-1-temperature","path":"j1/10-temperature.png","status":"final"},
+    {"year":"J1","sourceSlide":11,"id":"j1-ch1-1-soil","path":"j1/11-soil.png","status":"final"},
+    {"year":"J1","sourceSlide":12,"id":"j1-ch1-1-question-levels","path":"j1/12-question-levels.png","status":"final"},
+    {"year":"J1","sourceSlide":13,"id":"j1-ch1-1-populations","path":"j1/13-populations.png","status":"final"},
+    {"year":"J1","sourceSlide":14,"id":"j1-ch1-1-communities","path":"j1/14-communities.png","status":"final"},
+    {"year":"J1","sourceSlide":15,"id":"j1-ch1-1-ecosystems","path":"j1/15-ecosystems.png","status":"final"},
+    {"year":"J2","sourceSlide":1,"id":"j2-ch1-title","path":"j2/01-chapter-title.png","status":"final"},
+    {"year":"J2","sourceSlide":2,"id":"j2-ch1-1-title","path":"j2/02-section-title.png","status":"final"},
+    {"year":"J2","sourceSlide":3,"id":"j2-ch1-1-question-building-blocks","path":"j2/03-question-building-blocks.png","status":"final"},
+    {"year":"J2","sourceSlide":4,"id":"j2-ch1-1-building-blocks-matter","path":"j2/04-building-blocks.png","status":"final"},
+    {"year":"J2","sourceSlide":5,"id":"j2-ch1-1-elements-compounds-mixtures","path":"j2/05-elements-compounds-mixtures.png","status":"final"},
+    {"year":"J2","sourceSlide":6,"id":"j2-ch1-1-particles-elements","path":"j2/06-particles-elements.png","status":"final"},
+    {"year":"J2","sourceSlide":7,"id":"j2-ch1-1-question-theory","path":"j2/07-question-theory.png","status":"final"},
+    {"year":"J2","sourceSlide":8,"id":"j2-ch1-1-theory-models","path":"j2/08-theory-models.png","status":"final"},
+    {"year":"J2","sourceSlide":9,"id":"j2-ch1-1-dalton","path":"j2/09-dalton.png","status":"final"},
+    {"year":"J2","sourceSlide":10,"id":"j2-ch1-1-thomson","path":"j2/10-thomson.png","status":"final"},
+    {"year":"J2","sourceSlide":11,"id":"j2-ch1-1-rutherford","path":"j2/11-rutherford.png","status":"final"},
+    {"year":"J2","sourceSlide":12,"id":"j2-ch1-1-bohr","path":"j2/12-bohr.png","status":"final"},
+    {"year":"J2","sourceSlide":13,"id":"j2-ch1-1-electron-cloud","path":"j2/13-electron-cloud.png","status":"final"},
+    {"year":"J2","sourceSlide":14,"id":"j2-ch1-1-modern-model","path":"j2/14-modern-model.png","status":"final"},
+    {"year":"J2","sourceSlide":15,"id":"j2-ch1-1-models-summary","path":"j2/15-models-summary.png","status":"final"}
+  ],
+  "powerPoint": {
+    "J1": "powerpoint/J1-opening-courseware.pptx",
+    "J2": "powerpoint/J2-opening-courseware.pptx"
+  }
+}

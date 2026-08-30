@@ -1,0 +1,119 @@
+name: Science Courseware Final QA
+
+on:
+  push:
+    branches:
+      - codex/science-courseware-final-production
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: science-courseware-final-qa
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix functions
+      - run: npm run build
+      - run: npm run lint
+      - run: npm test -- --run
+      - run: npx playwright install --with-deps chromium
+      - name: Start review server
+        run: |
+          nohup npx vite preview --host 127.0.0.1 --port 4173 > /tmp/courseware-final-preview.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS 'http://127.0.0.1:4173/science-lessons.html?courseware=1' >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/courseware-final-preview.log
+          exit 1
+      - name: Exercise player and capture all pages
+        run: |
+          mkdir -p courseware-final-qa/1440x900 courseware-final-qa/1366x768
+          cat > /tmp/courseware-final-qa.mjs <<'EOF'
+          import { chromium } from 'playwright'
+          import AxeBuilder from '@axe-core/playwright'
+
+          const browser = await chromium.launch({ headless: true })
+          const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })
+          await page.goto('http://127.0.0.1:4173/science-lessons.html?courseware=1', { waitUntil: 'networkidle' })
+          await page.getByLabel('New class').fill('Final QA A')
+          await page.getByRole('button', { name: 'Create class' }).click()
+
+          const lesson = (name) => page.getByRole('button', { name })
+          const next = () => page.getByRole('button', { name: 'Next' }).click()
+          const stageLabel = () => page.locator('.courseware-stage').getAttribute('aria-label')
+          const snap = async (year, number) => {
+            await page.waitForTimeout(180)
+            if (await page.locator('.courseware-unfinished').count()) throw new Error(`${year} page ${number} is unfinished`)
+            if (await page.locator('.courseware-artboard__image').count() !== 1) throw new Error(`${year} page ${number} has no canonical artboard`)
+            await page.screenshot({ path: `courseware-final-qa/1440x900/${year}-${String(number).padStart(2, '0')}.png`, fullPage: true })
+          }
+
+          await lesson(/Living Things and the Environment/).click()
+          await snap('j1', 1)
+          await page.getByRole('button', { name: 'Simple mode' }).click()
+          await next()
+          if (await stageLabel() !== 'Page 1 of 15') throw new Error('Interactive reveal did not retain page 1')
+          await next()
+          if (await stageLabel() !== 'Page 2 of 15') throw new Error('Interactive navigation did not advance after reveal')
+          await page.getByRole('button', { name: 'Interactive mode' }).click()
+          await snap('j1', 2)
+          for (let number = 3; number <= 15; number += 1) { await next(); await snap('j1', number) }
+
+          await page.getByRole('button', { name: /Highlight/ }).click()
+          if (await page.getByRole('button', { name: /Highlight/ }).getAttribute('aria-pressed') !== 'false') throw new Error('Highlight control is not reversible')
+          await page.getByRole('button', { name: '中文' }).click()
+          await page.getByLabel('Traditional Chinese support').waitFor()
+          await page.getByRole('button', { name: 'Enlarge the page text' }).click()
+          await page.getByRole('dialog', { name: 'Enlarged teaching text' }).waitFor()
+          await page.getByRole('button', { name: 'Close enlarged text' }).click()
+          await page.getByRole('button', { name: 'Enlarge the page visual' }).click()
+          await page.getByRole('dialog', { name: 'Enlarged teaching visual' }).waitFor()
+          await page.getByRole('button', { name: 'Close enlarged text' }).click()
+          await page.setViewportSize({ width: 1366, height: 768 })
+          await page.screenshot({ path: 'courseware-final-qa/1366x768/j1-15.png', fullPage: true })
+          await page.setViewportSize({ width: 1440, height: 900 })
+
+          await page.getByRole('button', { name: 'Open teacher tools' }).click()
+          if (!String(await page.getByRole('link', { name: 'Open authoritative PowerPoint' }).getAttribute('href')).includes('1STwllX6-z931Hsqst_A1FvN7xwLCVI0g')) throw new Error('Wrong J1 source link')
+          await page.getByRole('button', { name: /Back to classes/ }).click()
+          await page.getByLabel('New class').fill('Final QA B')
+          await page.getByRole('button', { name: 'Create class' }).click()
+          await lesson(/Living Things and the Environment/).click()
+          if (await stageLabel() !== 'Page 1 of 15') throw new Error('New class did not receive independent progress')
+          await page.getByRole('button', { name: 'Open teacher tools' }).click()
+          await page.getByRole('button', { name: /Back to classes/ }).click()
+          await page.getByRole('button', { name: /Final QA A/ }).click()
+          await lesson(/Elements and Atoms/).click()
+
+          for (let number = 1; number <= 15; number += 1) { await snap('j2', number); if (number < 15) await next() }
+          await page.setViewportSize({ width: 1366, height: 768 })
+          await page.screenshot({ path: 'courseware-final-qa/1366x768/j2-15.png', fullPage: true })
+          await page.setViewportSize({ width: 1440, height: 900 })
+          await page.getByRole('button', { name: 'Open teacher tools' }).click()
+          if (!String(await page.getByRole('link', { name: 'Open authoritative PowerPoint' }).getAttribute('href')).includes('14AUxNBq96_rRR9exiieSsHBdvuth4ofh')) throw new Error('Wrong J2 source link')
+          await page.getByRole('button', { name: 'Close teacher tools' }).click()
+
+          const accessibility = await new AxeBuilder({ page }).analyze()
+          const serious = accessibility.violations.filter((item) => item.impact === 'critical' || item.impact === 'serious')
+          if (serious.length) throw new Error(`Accessibility violations: ${serious.map((item) => item.id).join(', ')}`)
+          await browser.close()
+          EOF
+          node /tmp/courseware-final-qa.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: science-courseware-final-qa
+          path: courseware-final-qa
+          retention-days: 14

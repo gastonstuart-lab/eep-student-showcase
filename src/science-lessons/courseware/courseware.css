@@ -125,3 +125,55 @@
 
 .courseware-shell.is-fullscreen{position:fixed;z-index:150;inset:0;padding:0!important;background:#000}
 .courseware-shell.is-fullscreen .courseware-stage{width:min(100vw,177.778vh);height:min(100vh,56.25vw);max-width:none;box-shadow:none}
+
+/* Production artwork layer. The page art stays authoritative; the shell supplies reversible teaching controls. */
+.courseware-artboard{overflow:hidden;background:#071a1f}
+.courseware-artboard__image{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:fill}
+.courseware-artboard__neutralized{position:absolute!important;inset:0;z-index:8!important;width:100%;height:100%;object-fit:fill;filter:grayscale(1) saturate(0) contrast(1.02);opacity:.96;pointer-events:none}
+.courseware-reveal-mask{position:absolute;z-index:18;display:block;border-radius:16px;background:linear-gradient(145deg,rgba(6,37,38,.99),rgba(4,23,29,.99));box-shadow:0 12px 28px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.08)}
+.courseware-artboard--approved .courseware-reveal-mask,.courseware-artboard--final .courseware-reveal-mask{background:linear-gradient(145deg,rgba(6,35,37,.995),rgba(5,24,30,.995))}
+.courseware-focus-hotspot{position:absolute;z-index:20;border:0;border-radius:18px;background:transparent;cursor:zoom-in}
+.courseware-focus-hotspot:focus-visible,.courseware-focus-hotspot:hover{outline:3px solid rgba(211,238,127,.72);outline-offset:3px;background:rgba(211,238,127,.035)}
+.courseware-chinese-panel{position:absolute;z-index:32;left:2.3%;top:11%;width:43%;max-height:72%;overflow:auto;box-sizing:border-box;padding:clamp(16px,2vw,30px);border:1px solid rgba(216,242,165,.52);border-radius:22px;background:rgba(3,30,34,.97);box-shadow:0 24px 60px rgba(0,0,0,.48);color:#f5fbf7}
+.courseware-chinese-panel strong{display:block;margin-bottom:12px;color:#dff2a5;font-size:clamp(14px,1.2vw,20px);letter-spacing:.08em}
+.courseware-chinese-panel p{margin:8px 0;font-size:clamp(17px,1.55vw,27px);line-height:1.35;font-weight:800}
+.courseware-highlight-control.is-on{background:#f6ffd9;box-shadow:0 0 0 4px rgba(185,217,93,.28),0 9px 24px rgba(0,0,0,.18)}
+.courseware-identity{pointer-events:auto}
+.courseware-identity button{margin-left:auto;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 13px;background:rgba(6,31,35,.9);color:#eaf4f2;font:inherit;font-weight:900;cursor:pointer}
+
+.courseware-unfinished{position:absolute;inset:0;display:grid;align-content:center;justify-items:start;gap:18px;padding:8%;box-sizing:border-box;background:repeating-linear-gradient(-45deg,#141c22 0,#141c22 18px,#1d2730 18px,#1d2730 36px);color:#f6f8f8}
+.courseware-unfinished__flag{padding:10px 14px;border:2px solid #ffcf59;background:#402e02;color:#ffe59a;font-weight:1000;letter-spacing:.08em}
+.courseware-unfinished>span{text-transform:uppercase;letter-spacing:.1em;color:#aebcc5;font-weight:900}
+.courseware-unfinished h2{max-width:750px;margin:0;font-size:clamp(34px,5vw,74px);line-height:.96}
+.courseware-unfinished p{max-width:900px;margin:0;color:#d6dee3;font-size:clamp(17px,1.8vw,29px);line-height:1.35}
+.courseware-unfinished>strong{position:absolute;right:4%;bottom:8%;transform:rotate(-8deg);border:6px solid #ff6673;padding:15px;color:#ff8a94;font-size:clamp(22px,3vw,48px);letter-spacing:.06em;opacity:.9}
+
+.courseware-focus-card--image{width:min(1500px,94vw);height:min(84vh,844px);min-height:0;padding:18px;background:#02080b}
+.courseware-focus-card--image img{width:100%;height:100%;display:block;object-fit:contain;border-radius:20px}
+.courseware-focus-card--image>button{z-index:2;background:rgba(0,0,0,.7)}
+
+.courseware-class-manager{max-width:1100px;margin:0 auto 34px;display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,340px);gap:20px;padding:22px;border:1px solid rgba(255,255,255,.13);border-radius:26px;background:rgba(255,255,255,.055)}
+.courseware-class-manager>div>strong,.courseware-class-manager form label{display:block;margin-bottom:12px;color:#dff2a5;font-size:14px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase}
+.courseware-class-list{display:flex;flex-wrap:wrap;gap:10px}
+.courseware-class-list>p{margin:0;font-size:16px}
+.courseware-class-list button{min-width:160px;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;background:rgba(255,255,255,.07);color:#fff;text-align:left;cursor:pointer}
+.courseware-class-list button.is-selected{border-color:#c7e45a;background:rgba(199,228,90,.18);box-shadow:0 0 0 2px rgba(199,228,90,.15)}
+.courseware-class-list b,.courseware-class-list small{display:block}
+.courseware-class-list small{margin-top:4px;color:#a9c8c6}
+.courseware-class-manager form{display:grid;grid-template-columns:1fr auto;align-content:start;gap:9px}
+.courseware-class-manager form label{grid-column:1/-1}
+.courseware-class-manager input{min-width:0;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px;background:#071b20;color:#fff;font:inherit}
+.courseware-class-manager form button{border:0;border-radius:12px;padding:0 16px;background:#c7e45a;color:#183024;font-weight:1000;cursor:pointer}
+.courseware-lesson-picker{max-width:1100px;margin:0 auto}
+.courseware-lesson-picker>h2{margin:0 0 16px;font-size:22px;color:#dbecea}
+.courseware-section-card:disabled{cursor:not-allowed;filter:saturate(.3);opacity:.45}
+.courseware-section-card:disabled:hover{transform:none;border-color:rgba(255,255,255,.13)}
+.courseware-drawer__mode{display:grid!important;grid-template-columns:1fr 1fr;gap:7px}
+.courseware-drawer__mode>strong{grid-column:1/-1}
+.courseware-drawer__mode button{border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px;background:rgba(255,255,255,.06);color:#fff;font-weight:850;cursor:pointer}
+.courseware-drawer__mode button.is-current{border-color:#c7e45a;background:rgba(199,228,90,.2)}
+
+@media(max-width:820px){
+  .courseware-class-manager{grid-template-columns:1fr}
+  .courseware-chinese-panel{left:3%;top:8%;width:62%;max-height:78%}
+}
