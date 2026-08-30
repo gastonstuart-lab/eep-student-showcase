@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { LessonSlide, ScienceLesson } from '../types/lesson'
+import type { LessonResource, LessonSlide, LessonSourceReference, ScienceLesson } from '../types/lesson'
 import { coursewareArtwork, type CoursewareArtwork } from './coursewareArtwork'
 import { FocusOverlay, type FocusContent } from './CoursewareInteractions'
 import { coursewareSections, getCoursewareLesson, type CoursewareSection } from './coursewareManifest'
@@ -40,6 +40,12 @@ const chineseCopy = (slide: LessonSlide) => [
   slide.body.zhHant,
   ...(slide.reveals ?? []).map((item) => item.text.zhHant),
 ].filter(Boolean) as string[]
+
+const driveFileHref = (driveFileId: string) => `https://drive.google.com/file/d/${driveFileId}/view`
+
+const resourceHref = (resource: LessonResource) => resource.href ?? (resource.driveFileId ? driveFileHref(resource.driveFileId) : null)
+
+const sourceHref = (source: LessonSourceReference) => source.url ?? (source.driveFileId ? driveFileHref(source.driveFileId) : null)
 
 function ArtworkPage({
   artwork,
@@ -287,6 +293,15 @@ export function CoursewareLessonPlayer({
           <p>PowerPoint page {sourcePage?.sourceSlide ?? slideIndex + 1}: {sourcePage?.subheading ?? sourcePage?.heading ?? slide.title.en}</p>
           <small>{section.sourceTitle}</small>
         </section>
+        <section className="courseware-drawer__context">
+          <strong>Lesson identity</strong>
+          <p>{lesson.chapter}: {lesson.title}</p>
+          <small>{lesson.year} · {lesson.semester} · {lesson.duration} minutes</small>
+        </section>
+        <section className="courseware-drawer__objectives">
+          <strong>Lesson objectives</strong>
+          <ul>{lesson.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul>
+        </section>
         <section>
           <strong>Jump to page</strong>
           <div className="courseware-page-list">
@@ -298,9 +313,42 @@ export function CoursewareLessonPlayer({
           </div>
         </section>
         <section><strong>Teacher note</strong><p>{slide.teacherNote}</p></section>
+        <section className="courseware-drawer__resources">
+          <strong>Lesson resources</strong>
+          <div>
+            {lesson.resources.map((resource) => {
+              const href = resourceHref(resource)
+              return (
+                <article key={resource.id}>
+                  <span>{resource.type} · {resource.format}{resource.teacherOnly ? ' · Teacher' : ''}</span>
+                  {href
+                    ? <a href={href} target="_blank" rel="noreferrer">{resource.title}</a>
+                    : <b>{resource.title}</b>}
+                  <small>{resource.detail}</small>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+        <section className="courseware-drawer__sources">
+          <strong>Source references</strong>
+          <ul>
+            {lesson.sourceReferences.map((source) => {
+              const href = sourceHref(source)
+              return (
+                <li key={source.id}>
+                  {href
+                    ? <a href={href} target="_blank" rel="noreferrer">{source.title}</a>
+                    : <b>{source.title}</b>}
+                  <small>{source.slideRange ?? source.location}{source.notes ? ` · ${source.notes}` : ''}</small>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
         <section>
           <strong>Source</strong>
-          <a href={`https://drive.google.com/file/d/${section.sourceDriveId}/view`} target="_blank" rel="noreferrer">Open authoritative PowerPoint</a>
+          <a href={driveFileHref(section.sourceDriveId)} target="_blank" rel="noreferrer">Open authoritative PowerPoint</a>
         </section>
       </aside>
 

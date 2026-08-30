@@ -8,10 +8,12 @@ const j1ReactionSources = [
   {
     id: 'src-j1-ch2-reactions-ppt',
     type: 'presentation' as const,
-    title: 'Copy of J1 PPT.pptx',
-    location: 'Google Drive / J1Science',
+    title: 'J2 PPT (updated).pptx',
+    location: 'Google Drive / J2Science / original PPT slides 52-106',
+    driveFileId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
+    slideRange: 'Slides 52-106',
     notes:
-      'Recovered J1 source presentation used by the pilot Chemical Reactions lessons. Exact source slide ranges are not yet mapped; this production pass preserves the recovered activation energy, catalyst, and endothermic/exothermic sequence without claiming a verified slide range.',
+      'Direct original-PPT inspection places Chemical Reactions in J2 PPT (updated).pptx, Chapter 2 slides 52-106; this product J1 sequence preserves the recovered activation energy, catalyst, and endothermic/exothermic teaching flow.',
   },
   {
     id: 'src-j1-ch2-reactions-pilot',
@@ -26,10 +28,11 @@ const j1ReactionSources = [
 const reactionResources = [
   {
     id: 'j1-ch2-reactions-source-ppt',
-    title: 'Source PPT: Copy of J1 PPT.pptx',
+    title: 'Source PPT: J2 PPT (updated).pptx',
     type: 'Presentation' as const,
     format: 'PPTX' as const,
-    detail: 'Drive source - J1 Chapter 2 reaction sequence; exact slide range pending',
+    detail: 'Drive source - original J2 Chapter 2 Chemical Reactions, slides 52-106',
+    driveFileId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
     sourceId: 'src-j1-ch2-reactions-ppt',
     teacherOnly: true,
   },
@@ -48,10 +51,12 @@ const j1SolutionSources = [
   {
     id: 'src-j1-ch3-solutions-ppt',
     type: 'presentation' as const,
-    title: 'Copy of J1 PPT.pptx',
-    location: 'Google Drive / J1Science',
+    title: 'J2 PPT (updated).pptx',
+    location: 'Google Drive / J2Science / original PPT slides 107-130',
+    driveFileId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
+    slideRange: 'Slides 107-130',
     notes:
-      'Recovered J1 source presentation for Unit 3: Solutions and Solubility. Exact source slide ranges and original solubility-curve data are not yet mapped, so this production pass preserves the recovered concepts without inventing numeric curve values.',
+      'Direct original-PPT inspection places Concentration and Solubility in J2 PPT (updated).pptx, Chapter 3 Section 2 slides 107-130; this product J1 sequence preserves the recovered concepts without inventing numeric curve values.',
   },
   {
     id: 'src-j1-ch3-solutions-pilot',
@@ -66,10 +71,11 @@ const j1SolutionSources = [
 const solutionResources = [
   {
     id: 'j1-ch3-solutions-source-ppt',
-    title: 'Source PPT: Copy of J1 PPT.pptx',
+    title: 'Source PPT: J2 PPT (updated).pptx',
     type: 'Presentation' as const,
     format: 'PPTX' as const,
-    detail: 'Drive source - J1 Unit 3 solutions sequence; exact slide range pending',
+    detail: 'Drive source - original J2 Chapter 3 Section 2 Concentration and Solubility, slides 107-130',
+    driveFileId: '14AUxNBq96_rRR9exiieSsHBdvuth4ofh',
     sourceId: 'src-j1-ch3-solutions-ppt',
     teacherOnly: true,
   },

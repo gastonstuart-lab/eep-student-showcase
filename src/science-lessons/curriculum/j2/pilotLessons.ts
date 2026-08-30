@@ -7,10 +7,12 @@ const j2EcosystemSources = [
   {
     id: 'src-j2-ch2-ecosystems-ppt',
     type: 'presentation' as const,
-    title: 'J2 PPT (updated).pptx',
-    location: 'Google Drive / J2Science',
+    title: 'Copy of J1 PPT.pptx',
+    location: 'Google Drive / J1Science / original PPT slides 117-132',
+    driveFileId: '1STwllX6-z931Hsqst_A1FvN7xwLCVI0g',
+    slideRange: 'Slides 117-132',
     notes:
-      'Recovered J2 source presentation for Unit 2 ecosystems. Exact source slide ranges are not yet mapped; this production pass preserves the recovered aquatic habitats, biotic/abiotic factors, food-web change, and interaction sequence without inventing slide numbers.',
+      'Direct original-PPT inspection places Aquatic Ecosystems in Copy of J1 PPT.pptx, Chapter 2 Section 5 slides 117-132; this product J2 sequence preserves the recovered aquatic habitats, biotic/abiotic factors, food-web change, and interaction sequence.',
   },
   {
     id: 'src-j2-ch2-ecosystems-pilot',
@@ -25,10 +27,11 @@ const j2EcosystemSources = [
 const ecosystemResources = [
   {
     id: 'j2-ch2-ecosystems-source-ppt',
-    title: 'Source PPT: J2 PPT (updated).pptx',
+    title: 'Source PPT: Copy of J1 PPT.pptx',
     type: 'Presentation' as const,
     format: 'PPTX' as const,
-    detail: 'Drive source - J2 Unit 2 ecosystems sequence; exact slide range pending',
+    detail: 'Drive source - original J1 Chapter 2 Section 5 Aquatic Ecosystems, slides 117-132',
+    driveFileId: '1STwllX6-z931Hsqst_A1FvN7xwLCVI0g',
     sourceId: 'src-j2-ch2-ecosystems-ppt',
     teacherOnly: true,
   },

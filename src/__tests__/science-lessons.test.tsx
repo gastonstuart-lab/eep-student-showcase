@@ -8,6 +8,7 @@ import { findLesson, scienceLessons, scienceUnits, scienceVisualAssets } from '.
 import { BiomesV2Prototype } from '../science-lessons/presentation-v2/BiomesV2Prototype'
 import { PresentationShell } from '../science-lessons/presentation-v2/PresentationShell'
 import { validateScienceCurriculum } from '../science-lessons/validation'
+import { classifyScienceLessonMigration } from '../science-lessons/curriculum/lessonMigration'
 
 const biomesLesson1 = findLesson('j1-ch2-4-biomes-lesson-1')
 const biomesLesson2 = findLesson('j1-ch2-4-biomes-lesson-2')
@@ -47,20 +48,24 @@ describe('Science Lessons curriculum', () => {
     expect(scienceLessons.some((lesson) => lesson.semester === 'Spring / Summer')).toBe(true)
   })
 
-  it('keeps source-backed unit and lesson hierarchy aligned to the PPT structure', () => {
-    const verified = sourceSectionMappings.filter((mapping) => mapping.status === 'verified')
+  it('keeps source-backed unit and lesson hierarchy aligned to the original PPT structure', () => {
+    const verified = sourceSectionMappings.filter((mapping) => mapping.status === 'verified-from-original-ppt')
 
     expect(verified.map((mapping) => ({
       id: mapping.id,
       label: formatSourceSectionLabel(mapping),
       range: mapping.sourceSlideRange,
+      sourceTitle: mapping.sourceTitle,
     }))).toEqual([
-      { id: 'j1-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15' },
-      { id: 'j1-ch1-s2', label: 'Chapter 1 · Section 2', range: '16-34' },
-      { id: 'j1-ch1-s3', label: 'Chapter 1 · Section 3', range: '35-44' },
-      { id: 'j1-ch1-s4', label: 'Chapter 1 · Section 4', range: '45-53' },
-      { id: 'j1-ch2-s4', label: 'Chapter 2 · Section 4', range: '99-116' },
-      { id: 'j2-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15' },
+      { id: 'j1-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15', sourceTitle: 'Copy of J1 PPT.pptx' },
+      { id: 'j1-ch1-s2', label: 'Chapter 1 · Section 2', range: '16-34', sourceTitle: 'Copy of J1 PPT.pptx' },
+      { id: 'j1-ch1-s3', label: 'Chapter 1 · Section 3', range: '35-44', sourceTitle: 'Copy of J1 PPT.pptx' },
+      { id: 'j1-ch1-s4', label: 'Chapter 1 · Section 4', range: '45-53', sourceTitle: 'Copy of J1 PPT.pptx' },
+      { id: 'j1-ch2-s4', label: 'Chapter 2 · Section 4', range: '99-116', sourceTitle: 'Copy of J1 PPT.pptx' },
+      { id: 'j2-ch1-s1', label: 'Chapter 1 · Section 1', range: '1-15', sourceTitle: 'J2 PPT (updated).pptx' },
+      { id: 'j1-ch2-reactions', label: 'Chapter 2', range: '52-106', sourceTitle: 'J2 PPT (updated).pptx' },
+      { id: 'j1-ch3-s1', label: 'Chapter 3 · Section 2', range: '107-130', sourceTitle: 'J2 PPT (updated).pptx' },
+      { id: 'j2-ch2-s5', label: 'Chapter 2 · Section 5', range: '117-132', sourceTitle: 'Copy of J1 PPT.pptx' },
     ])
 
     for (const mapping of sourceSectionMappings) {
@@ -73,6 +78,23 @@ describe('Science Lessons curriculum', () => {
 
     expect(scienceUnits.map((unit) => unit.number)).not.toContain('Chapter 1.1')
     expect(scienceUnits.map((unit) => unit.number)).not.toContain('Chapter 2.4')
+  })
+
+  it('classifies modern courseware separately from source-backed legacy lessons', () => {
+    expect(classifyScienceLessonMigration(j1OpeningLesson)).toMatchObject({
+      status: 'modern-courseware',
+      sourceSectionId: 'j1-ch1-s1',
+      sourceSlideRange: '1-15',
+    })
+    expect(classifyScienceLessonMigration(j2OpeningLesson)).toMatchObject({
+      status: 'modern-courseware',
+      sourceSectionId: 'j2-ch1-s1',
+      sourceSlideRange: '1-15',
+    })
+
+    for (const lesson of [...biomesLessons, ...reactionLessons, ...solutionLessons, ...j2EcosystemLessons]) {
+      expect(classifyScienceLessonMigration(lesson).status).toBe('source-backed-legacy')
+    }
   })
 
   it('loads exactly two canonical Biomes lessons in teaching order', () => {

@@ -95,5 +95,22 @@ export function validateScienceCurriculum() {
     }
   }
 
+  for (const mapping of sourceSectionMappings) {
+    if (mapping.status === 'verified-from-original-ppt') {
+      if (mapping.verificationBasis !== 'direct-original-ppt') {
+        issues.push({ severity: 'error', message: `Source mapping ${mapping.id} claims original-PPT verification without direct-original-ppt basis.` })
+      }
+      if (!mapping.sourceSlideRange?.trim()) {
+        issues.push({ severity: 'error', message: `Source mapping ${mapping.id} is verified but has no source slide range.` })
+      }
+      if (!mapping.driveFileId?.trim()) {
+        issues.push({ severity: 'error', message: `Source mapping ${mapping.id} is verified but has no Drive file id.` })
+      }
+      if (!mapping.verificationNote.trim()) {
+        issues.push({ severity: 'error', message: `Source mapping ${mapping.id} is verified but has no verification note.` })
+      }
+    }
+  }
+
   return issues
 }

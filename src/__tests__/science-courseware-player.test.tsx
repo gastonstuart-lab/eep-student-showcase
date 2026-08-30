@@ -65,6 +65,24 @@ describe('Science courseware class sessions', () => {
     expect(screen.getByLabelText('Traditional Chinese support')).toBeInTheDocument()
   })
 
+  it('surfaces Science teacher context inside the modern Courseware drawer', () => {
+    render(<CoursewareApp />)
+    createClass('J1 Silver')
+    openJ1()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open teacher tools' }))
+
+    expect(screen.getByText('Lesson objectives')).toBeInTheDocument()
+    expect(screen.getByText(/Define habitat using food, water, shelter, growth and reproduction/i)).toBeInTheDocument()
+    expect(screen.getByText('Lesson resources')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Source PPT: Copy of J1 PPT.pptx' })).toHaveAttribute(
+      'href',
+      'https://docs.google.com/presentation/d/1STwllX6-z931Hsqst_A1FvN7xwLCVI0g/edit',
+    )
+    expect(screen.getByText('Source references')).toBeInTheDocument()
+    expect(screen.getByText(/Slides 1-15/i)).toBeInTheDocument()
+  })
+
   it('clamps stale restored reveal progress to the current page artwork', () => {
     const section = coursewareSections[0]
     render(
